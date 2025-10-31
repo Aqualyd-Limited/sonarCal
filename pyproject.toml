@@ -36,6 +36,9 @@ classifiers = [
 ]
 dynamic = [ 'version']
 
+[project.scripts]
+sonarcal = "sonarcal.__main__:main"
+
 [tool.hatch.version]
 source = 'vcs'
 
