@@ -1,0 +1,21 @@
+[calibration]
+numpingstoshow = 100
+maxrange = 30
+maxsv = -20
+minsv = -60
+replayRate = "fast"
+horizontalbeamgrouppath = "Sonar/Beam_group1"
+watchdir = "C:\Users\GavinMacaulay\OneDrive - Aqualyd Limited\Documents\IMR working\sonar cal for Peru"
+livedata = false
+logdir = "C:\Users\GavinMacaulay\OneDrive - Aqualyd Limited\Documents\IMR working\sonar cal for Peru"
+
+[gain]
+spherets = -35.75
+maxrange = 20
+beamgrouppath = "Sonar/Beam_group1"
+datadir = "C:\Users\gavin\OneDrive - Havforskningsinstituttet\CAMPAÑA TIO GEL II\20210608_CALIB"
+logdir = "C:\Users\gavin\OneDrive - Havforskningsinstituttet\Projects\sonarCal\log"
+callogfile = "C:\Users\gavin\OneDrive - Havforskningsinstituttet\CAMPAÑA TIO GEL II\20210608_Tio_Celii_calibration.csv"
+rangewindowwidth = 3.0
+resultsDir = "C:\Users\gavin\OneDrive - Havforskningsinstituttet\Projects\sonarCal\results"
+

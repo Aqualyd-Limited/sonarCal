@@ -1,11 +1,16 @@
 site_name: sonarcal
+repo_url: https://github.com/Aqualyd-Limited/sonarCal
+edit_uri: edit/main/docs/
+site_url: https://Aqualyd-Limited.github.io/sonarCal
+
 nav:
-    - Introduction: index.md
+    - User Manual: index.md
+    - Technical Manual: technical.md
 
 theme: 
     name: material 
-    logo: resources/sonarcal_logo.png
-    favicon: resources/sonarcal_logo.png
+    logo: assets/sonarcal_logo.png
+    favicon: assets/sonarcal_logo.png
     icon:
         repo: fontawesome/brands/github
     features:
@@ -24,7 +29,8 @@ theme:
 
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
-      scheme: default 
+      scheme: default
+      primary: amber
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
@@ -32,13 +38,10 @@ theme:
     # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
+      primary: blue grey
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
-
-repo_url: https://github.com/Aqualyd-Limited/sonarCal
-edit_uri: edit/main/docs/
-site_url: https://Aqualyd-Limited.github.io/sonarCal
 
 plugins:
     - search
@@ -66,6 +69,8 @@ watch:
 
 markdown_extensions:
     - attr_list
+    - md_in_html
+    - pymdownx.blocks.caption
     - footnotes
     - tables
     - pymdownx.highlight:
