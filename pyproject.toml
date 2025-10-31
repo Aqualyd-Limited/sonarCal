@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 packages = ["src/sonarcal"]
 
 [project]
-name = 'echosms'
+name = 'sonarcal'
 license = {file = "LICENSE"}
 keywords = ["acoustic", "sonar", "calibration"]
 authors = [
