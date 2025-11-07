@@ -1,8 +1,4 @@
-import sonarcal
-
-def main():
-    print('Running sonarcal main function!')
+import controller
 
 if __name__ == "__main__":
-    main()
-
+    controller.main()
