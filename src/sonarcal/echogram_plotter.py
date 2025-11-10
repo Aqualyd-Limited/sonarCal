@@ -10,6 +10,7 @@ from .utils import app_name
 from .gui_utils import draggable_ring, draggable_radial
 import humanize
 import logging
+import pandas as pd
 
 logger = logging.getLogger(app_name)
 
@@ -25,7 +26,6 @@ class echogramPlotter:
         # come from a config file.
         self.beamLineAngle = 0.0  # [deg]
         self.beam = 0  # dummy value. Is updated once some data are received.
-        self.beamFrozen = False
 
         self.minTargetRange = 0.33*maxRange
         self.maxTargetRange = 0.66*maxRange
@@ -39,6 +39,8 @@ class echogramPlotter:
         self.maxSv = maxSv  # [dB] max Sv to show in the echograms
         self.minSv = minSv  # [dB] min Sv to show in the echograms
 
+        self.sphere_ts = []  # timestamp, ts, and range of sphere echo when on-axis
+
         self.checkQueueInterval = 200  # [ms] duration between checking the queue for new data
 
         self.movingAveragePoints = 10  # number of points for moving average for smoothed plots
@@ -49,7 +51,6 @@ class echogramPlotter:
         # of data is received.
         self.fig = plt.figure(figsize=(10, 5))
         plt.ion()
-        self.fig.tight_layout()
 
         self.firstPing = True
 
@@ -76,6 +77,9 @@ class echogramPlotter:
         # Amplitude of sphere
         self.amp = np.ones((3, self.numPings), dtype=float) * np.nan
         self.ampSmooth = np.ones((3, self.numPings), dtype=float) * np.nan
+        # Range of the max amplitude within the range range on the selected beam
+        self.rangeMax = None  # [m]
+
         # Differences in sphere amplitudes, smoothed version
         self.ampDiffPort = np.ones((self.numPings), dtype=float) * np.nan
         self.ampDiffStbd = np.ones((self.numPings), dtype=float) * np.nan
@@ -90,7 +94,7 @@ class echogramPlotter:
         self.ampPlotAx = plt.subplot2grid((3, 3), (0, 2), rowspan=2)
         self.ampDiffPlotAx = plt.subplot2grid((3, 3), (2, 2))
 
-        plt.tight_layout(pad=2, w_pad=0.05, h_pad=0.05)
+        plt.tight_layout(pad=4, w_pad=0.05, h_pad=0.05)
 
         # Configure the echogram axes
         self.portEchogramAx.invert_yaxis()
@@ -278,7 +282,7 @@ class echogramPlotter:
                     self.amp[0, -1] = np.max(backscatter[beamPort][minSample:maxSample])
                     max_i = np.argmax(backscatter[self.beam][minSample:maxSample])
                     self.amp[1, -1] = backscatter[self.beam][minSample+max_i]
-                    rangeMax = (minSample+max_i) * samInt * c / 2.0
+                    self.rangeMax = (minSample+max_i) * samInt * c / 2.0
                     self.amp[2, -1] = np.max(backscatter[beamStbd][minSample:maxSample])
 
                     # Store the amplitude for the 3 beams for the echograms
@@ -305,7 +309,7 @@ class echogramPlotter:
                     self.ampPlotLineMainSmooth.set_ydata(self.ampSmooth[1, :])
                     self.ampPlotLineStbdSmooth.set_ydata(self.ampSmooth[2, :])
 
-                    self.ampPlotAx.set_title(f'Maximum amplitude at {rangeMax:.1f} m')
+                    self.ampPlotAx.set_title(f'Maximum amplitude at {self.rangeMax:.1f} m')
                     self.ampPlotAx.relim()
                     self.ampPlotAx.autoscale_view()
 
@@ -344,11 +348,9 @@ class echogramPlotter:
 
                     self.polarPlot.set_array(self.polar.ravel())
 
-                    # This line is necessary to get updates of the plot shown when the
-                    # program is run from within Spyder. Including has the side effect
-                    # that if there are continuous GUI events, the plots don't get updated
-                    # until the GUI events slow down...
-                    # self.fig.canvas.draw()
+                    # If we're calibrating, store sphere TS info
+                    if self.beamLine.frozen():
+                        self.accumulate_sphere_ts()
 
                 except Exception:  # if anything goes wrong, just ignore it...
                     logger.warning('Error when processing and displaying echo data:')
@@ -357,15 +359,22 @@ class echogramPlotter:
 
         self.job = self.root.after(self.checkQueueInterval, self.newPing, label)
 
+    def accumulate_sphere_ts(self, ):
+        self.sphere_ts.append((datetime.now().isoformat(), self.amp[1, -1], self.rangeMax))
+
     def onaxis(self, state: bool):
         """Calculate calibration values when on-axis."""
         if state:  # turn on, so start calculating
             self.beamLine.freeze(True)
-            pass
+
         else:  # turned off, so estimate gains
             self.beamLine.freeze(False)
-            # mean gain, rms, range, num
-            return (self.beam, 1.1, .2, 12.4, 34)
+            # TODO - move these calculations into a separate class and file
+            df = pd.DataFrame(self.sphere_ts, columns=['timestamp', 'ts', 'range'])
+            self.sphere_ts = []
+            results = (self.beam, df['ts'].mean(), df['ts'].std(), df['range'].mean(), len(df))
+        
+            return results
         
     def updateEchogramData(self, data, pingData):
         """Shift the ping data to the left and add in the new ping data."""

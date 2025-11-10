@@ -69,6 +69,9 @@ class draggable_radial:
         
         self.radial_frozen = False
 
+    def frozen(self):
+        return self.radial_frozen
+
     def freeze(self, state: bool):
         self.radial_frozen = state
 

@@ -34,7 +34,7 @@ class calibrationGUI:
 
         # Put the matplotlib plots into the GUI window.
         canvas = FigureCanvasTkAgg(self.echogram.fig, master=self.echogram.root)
-        canvas.get_tk_widget().pack(side='top', fill='both', expand=True)
+        canvas.get_tk_widget().pack(side='top', fill='both', expand=True, padx=5, pady=5)
 
         # Styles. These apply to all widgets, not just the ones create in this function
         s = ttk.Style()
@@ -151,7 +151,7 @@ class gainDialog:
         save = ttk.Button(frame, text="Save")
         close = ttk.Button(frame, text="Close", command=self.close_dialog)
 
-        self.tree.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.tree.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5)
         close.pack(side=tk.RIGHT)
         save.pack(side=tk.RIGHT)
         frame.pack(side=tk.TOP, fill=tk.BOTH)
@@ -186,12 +186,24 @@ class gainDialog:
         """Update dialog's display with given calibration data."""
 
         for beam, row in data.df().iterrows():
+
+            # TODO
+            # This is hacky and fragile - find a better way that doesn't need to name the
+            # columns
+            values = [beam, 
+                      row['Time'],
+                      f"{row['Gain (dB)']:0.1f}",
+                      f"{row['RMS (dB)']:0.1f}",
+                      f"{row['Range (m)']:0.1f}",
+                      row['Echoes']]
+            # values = [beam] + list(row)
+
             if beam in self.item_ids:
                 # row for this beam already exists, so update it
-                self.tree.item(self.item_ids[beam], values=[beam]+list(row))
+                self.tree.item(self.item_ids[beam], values=values)
             else:
                 # new beam, so add a row
-                item_id = self.tree.insert('', 'end', values=[beam]+list(row))
+                item_id = self.tree.insert('', 'end', values=values)
                 self.item_ids[beam] = item_id
 
         # Then sort the display by beam number and update tags for odd/even rows

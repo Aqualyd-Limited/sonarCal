@@ -4,7 +4,7 @@ class calibrationData():
     """Storage for sonar caliration results."""
 
     def __init__(self):
-        self.data = pd.DataFrame(columns=['Time', 'Gain (dB)', 'RMS (dB)', 'Range (m)', 'Count'])
+        self.data = pd.DataFrame(columns=['Time', 'Gain (dB)', 'RMS (dB)', 'Range (m)', 'Echoes'])
         self.data.index.name = 'Beam'
     
     def add(self, beam: int, timestamp: str, gain: float, rms: float, r: float, num: int):
