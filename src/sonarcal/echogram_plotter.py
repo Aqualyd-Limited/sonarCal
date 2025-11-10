@@ -16,8 +16,8 @@ logger = logging.getLogger(app_name)
 class echogramPlotter:
     """Receive via a queue new ping data and use that to update the display."""
 
-    def __init__(self, numPings, maxRange, maxSv, minSv, q, root, job):
-        self.queue = q
+    def __init__(self, numPings, maxRange, maxSv, minSv, msg_queue, root, job):
+        self.queue = msg_queue
         self.root = root
         self.job = job
 

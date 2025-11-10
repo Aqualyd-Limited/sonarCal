@@ -1,5 +1,4 @@
 import sys
-import queue
 from time import sleep
 from datetime import datetime, timedelta
 import h5py
@@ -9,7 +8,19 @@ import logging
 
 logger = logging.getLogger(app_name)
 
-def file_listen(watchDir, beamGroup):
+def most_recent_file(watch_dir, wait_interval):
+    """Get the most recent .nc file in the directory."""
+
+    while True:
+        files = sorted(list(watch_dir.glob('*.nc')))
+        if files:
+            return files[-1]
+
+        logger.info("No .nc file found in '%s'", watch_dir)
+        sleep(wait_interval)
+
+
+def file_listen(watchDir, beamGroup, msg_queue):
     """Listen for new data in a file.
 
     Find new data in the most recent file (and keep checking for more new data).
@@ -32,14 +43,7 @@ def file_listen(watchDir, beamGroup):
     f_previous = ''  # previously used file
 
     while True:  # could add a timeout on this loop...
-        # Find the most recent file in the directory
-        while True:
-            files = sorted(list(watchDir.glob('*.nc')))
-            if files:
-                mostRecentFile = files[-1]
-                break
-            logger.info('No .nc file found in %s.', watchDir)
-            sleep(waitIntervalFile)
+        mostRecentFile = most_recent_file(watchDir, waitIntervalFile)
 
         if mostRecentFile == f_previous:  # no new file was found
             logger.info('No newer file found. Will try again in %s s.', str(waitIntervalFile))
@@ -73,7 +77,7 @@ def file_listen(watchDir, beamGroup):
 
                         logger.info('Finished reading ping from time %s', pingTime)
                         # send the data off to be plotted
-                        queue.put((t, samInt, c, sv, theta, labels))
+                        msg_queue.put((t, samInt, c, sv, theta, labels))
                     else:
                         noNewDataCount += 1
                         if noNewDataCount > maxNoNewDataCount:
@@ -93,20 +97,13 @@ def file_listen(watchDir, beamGroup):
                     sleep(errorWaitInterval)
 
 
-def file_replay(watchDir, beamGroup, replayRate):
+def file_replay(watchDir, beamGroup, replayRate, msg_queue):
     """Replay all data in the newest file. Used for testing."""
     waitIntervalFile = 1.0  # [s] time period between checking for new files
 
-    # Find the most recent file in the directory
-    while True:
-        files = sorted(list(watchDir.glob('*.nc')))
-        if files:
-            mostRecentFile = files[-1]
-            break
-        logger.info('No .nc file found in %s.', watchDir)
-        sleep(waitIntervalFile)
+    mostRecentFile = most_recent_file(watchDir, waitIntervalFile)
 
-    logger.info('Listening to file: %s.', mostRecentFile)
+    logger.info('Reading from file: %s.', mostRecentFile)
 
     # open netcdf file
     f = h5py.File(mostRecentFile, 'r')
@@ -124,7 +121,7 @@ def file_replay(watchDir, beamGroup, replayRate):
         labels = f[beamGroup + '/beam']
 
         # send the data off to be plotted
-        queue.put((t[i], samInt, c, sv, theta, labels))
+        msg_queue.put((t[i], samInt, c, sv, theta, labels))
 
         # Ping at recorded ping rate if asked
         if replayRate == 'realtime' and i > 0:

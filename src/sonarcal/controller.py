@@ -7,7 +7,6 @@ calibrating omni-directional sonars.
 # Choose beam_group based on beam type rather than requiring it in the config file
 
 import configparser
-
 import tkinter as tk
 import tkinter.font as tkFont
 from functools import partial
@@ -16,10 +15,8 @@ import queue
 import logging
 import sys
 from pathlib import Path
-
 import matplotlib as mpl
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
 from platformdirs import PlatformDirs
 
 from .echogram_plotter import echogramPlotter
@@ -29,21 +26,18 @@ from .file_ops import file_listen, file_replay
 if sys.platform == "win32":
     import win32api
 
+# Configure logging
 dirs = PlatformDirs(appname=app_name, appauthor="Aqualyd")
 log_dir = Path(dirs.user_log_dir)
 log_dir.mkdir(parents=True, exist_ok=True)
 setupLogging(log_dir, app_name)
 
-config_filename = Path(dirs.user_config_dir)/'config.ini'
-
-mpl.use('TkAgg')
-
 
 def main():
-    """Omnisonar calibration graphical user interface."""
-    
+    """Omnisonar calibration graphical user interface."""    
     ##########################################
     # Sort out the configuration file
+    config_filename = Path(dirs.user_config_dir)/'config.ini'
     config_filename.parent.mkdir(parents=True, exist_ok=True)
     
     config = configparser.ConfigParser()
@@ -80,15 +74,18 @@ def main():
     ##########################################
     # Start things...
 
+    mpl.use('TkAgg')
+
+
     # queue to communicate between two threads
-    q = queue.Queue()
+    msg_queue = queue.Queue()
     root = tk.Tk()
     root.wm_title('Sonar calibrator')
 
     job = None  # handle to the function that does the echogram drawing
 
     # Does the message parsing and echogram display
-    echogram = echogramPlotter(numPings, maxRange, maxSv, minSv, q, root, job)
+    echogram = echogramPlotter(numPings, maxRange, maxSv, minSv, msg_queue, root, job)
 
     # The GUI window
     root.title('Sonar calibration')
@@ -104,9 +101,10 @@ def main():
 
     # Start receive in a separate thread
     if liveData:
-        t = threading.Thread(target=file_listen, args=(watchDir, horizontalBeamGroup))
+        t = threading.Thread(target=file_listen, args=(watchDir, horizontalBeamGroup, msg_queue))
     else:
-        t = threading.Thread(target=file_replay, args=(watchDir, horizontalBeamGroup, replayRate))
+        t = threading.Thread(target=file_replay, args=(watchDir, horizontalBeamGroup, 
+                                                       replayRate, msg_queue))
 
     t.daemon = True  # makes the thread close when main() ends
     t.start()
@@ -136,4 +134,5 @@ def window_closed(root, job):
     """Call to nicely end the whole program."""
     root.after_cancel(job)
     logging.info('Program ending...')
+    logging.shutdown()  # not working???
     root.quit()
