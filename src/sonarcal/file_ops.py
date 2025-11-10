@@ -24,9 +24,44 @@ def file_type(watch_dir):
     
     # Options will be 'sonar-netcdf4', 'CS90-raw', 'SN90-raw'
 
-    return ''
+    return 'sonar-netcdf4'
 
 def file_listen(watchDir, beamGroup, msg_queue):
+    """ """
+    f_type = file_type(watchDir)
+    
+    params = (watchDir, beamGroup, msg_queue)
+    
+    match f_type:
+        case 'sonar-netcdf4':
+            file_listen_netcdf(*params)
+        case 'CS90-raw':
+            file_listen_cs90_raw(*params)
+        case 'SN90-raw':
+            file_listen_sn90_raw(*params)
+        case _:
+            logger.error('Unsupported file type')
+
+
+def file_replay(watchDir, beamGroup, msg_queue, replayRate):
+    """ """
+    f_type = file_type(watchDir)
+
+    params = (watchDir, beamGroup, msg_queue, replayRate)
+    
+    match f_type:
+        case 'sonar-netcdf4':
+            file_replay_netcdf(*params)
+        case 'CS90-raw':
+            file_replay_cs90_raw(*params)
+        case 'SN90-raw':
+            file_replay_sn90_raw(*params)
+        case _:
+            logger.error('Unsupported file type')
+
+
+
+def file_listen_netcdf(watchDir, beamGroup, msg_queue):
     """Listen for new data in a file.
 
     Find new data in the most recent file (and keep checking for more new data).
@@ -103,7 +138,7 @@ def file_listen(watchDir, beamGroup, msg_queue):
                     sleep(errorWaitInterval)
 
 
-def file_replay(watchDir, beamGroup, replayRate, msg_queue):
+def file_replay_netcdf(watchDir, beamGroup, msg_queue, replayRate):
     """Replay all data in the newest file. Used for testing."""
     waitIntervalFile = 1.0  # [s] time period between checking for new files
 
@@ -139,3 +174,25 @@ def file_replay(watchDir, beamGroup, replayRate, msg_queue):
     f.close()
 
     logger.info('Finished replaying file: %s', mostRecentFile)
+
+
+def file_replay_cs90_raw(watchDir, beamGroup, msg_queue, replayRate):
+    """Replay all data in the newest file. Used for testing."""
+
+    logger.error('CS90 raw files are not yet supported')
+
+
+def file_replay_sn90_raw(watchDir, beamGroup, msg_queue, replayRate):
+    """Replay all data in the newest file. Used for testing."""
+
+    logger.error('SN90 raw files are not yet supported')
+
+
+def file_listen_cs90_raw(watchDir, beamGroup, msg_queue):
+    """XXX"""
+    logger.error('CS90 raw files are not yet supported')
+    
+
+def file_listen_sn90_raw(watchDir, beamGroup, msg_queue):
+    """XXX"""
+    logger.error('SN90 raw files are not yet supported')
