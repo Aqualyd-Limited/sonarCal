@@ -19,6 +19,7 @@ dependencies = [
 	"numpy",
 	"scipy",
   "matplotlib",
+  "pandas",
   "humanize",
   "h5py",
   "Pillow",
