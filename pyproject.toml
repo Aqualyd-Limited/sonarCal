@@ -18,9 +18,10 @@ requires-python = ">=3.11"
 dependencies = [
 	"numpy",
 	"scipy",
-	"pandas",
   "matplotlib",
-  "tqdm",
+  "humanize",
+  "h5py",
+  "platformdirs"
 ]
 classifiers = [
     'Development Status :: 3 - Alpha',
@@ -37,7 +38,7 @@ classifiers = [
 dynamic = [ 'version']
 
 [project.scripts]
-sonarcal = "sonarcal.__main__:main"
+sonarcal = "sonarcal.controller:main"
 
 [tool.hatch.version]
 source = 'vcs'

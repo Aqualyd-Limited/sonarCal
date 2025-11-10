@@ -1,5 +1,4 @@
 import sys
-import queue
 from queue import Empty
 from datetime import datetime, timedelta, timezone
 import matplotlib.pyplot as plt
@@ -7,16 +6,21 @@ import matplotlib as mpl
 import numpy as np
 from scipy import signal
 from matplotlib.widgets import RangeSlider
+from .utils import app_name
 from .gui_utils import draggable_ring, draggable_radial
 import humanize
 import logging
 
-logger = logging.getLogger("sonar_cal")
+logger = logging.getLogger(app_name)
 
 class echogramPlotter:
     """Receive via a queue new ping data and use that to update the display."""
 
-    def __init__(self, numPings, maxRange, maxSv, minSv):
+    def __init__(self, numPings, maxRange, maxSv, minSv, q, root, job):
+        self.queue = q
+        self.root = root
+        self.job = job
+
         # Various user-changable lines on the plots that could in the future
         # come from a config file.
         self.beamLineAngle = 0.0  # [deg]
@@ -220,9 +224,9 @@ class echogramPlotter:
 
     def newPing(self, label):
         """Receive messages from the queue, decodes them and updates the echogram."""
-        while not queue.empty():
+        while not self.queue.empty():
             try:
-                message = queue.get(block=False)
+                message = self.queue.get(block=False)
             except Empty:
                 logger.info('No new data in received message.')
             else:
@@ -349,7 +353,7 @@ class echogramPlotter:
                     logger.warning(e)
                     logger.warning('Ignoring the above and waiting for next ping.')
         global job
-        job = root.after(self.checkQueueInterval, self.newPing, label)
+        self.job = self.root.after(self.checkQueueInterval, self.newPing, label)
 
     def updateEchogramData(self, data, pingData):
         """Shift the ping data to the left and add in the new ping data."""

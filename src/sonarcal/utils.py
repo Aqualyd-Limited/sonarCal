@@ -2,13 +2,15 @@ import os
 from datetime import datetime, timezone
 import numpy as np
 import logging
+import logging.handlers
 
+app_name = 'sonarcal'
 
 def setupLogging(log_dir, label):
     """Set info, warning, and error message logger to a file and to the console."""
     now = datetime.now(timezone.utc)
     logger_filename = os.path.join(log_dir, now.strftime('log_' + label + '-%Y%m%d-T%H%M%S.log'))
-    logger = logging.getLogger("sonar_cal")
+    logger = logging.getLogger(app_name)
     logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
@@ -24,7 +26,7 @@ def setupLogging(log_dir, label):
     console.setFormatter(formatter)
     logger.addHandler(console)
 
-    logging.info('Log files are in %s.', log_dir.as_posix())
+    logger.info('Log files are in %s.', log_dir.as_posix())
 
 
 

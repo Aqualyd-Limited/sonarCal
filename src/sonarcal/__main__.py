@@ -1,4 +1,4 @@
-import controller
+"""Provides a command line interface to the calibration program."""
+from sonarcal import controller
 
-if __name__ == "__main__":
-    controller.main()
+controller.main()

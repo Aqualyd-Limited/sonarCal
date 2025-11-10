@@ -3,11 +3,11 @@ import queue
 from time import sleep
 from datetime import datetime, timedelta
 import h5py
-from .utils import beamAnglesFromNetCDF4, SvFromSonarNetCDF4
+from .utils import beamAnglesFromNetCDF4, SvFromSonarNetCDF4, app_name
 import logging
 
 
-logger = logging.getLogger("sonar_cal")
+logger = logging.getLogger(app_name)
 
 def file_listen(watchDir, beamGroup):
     """Listen for new data in a file.
