@@ -95,8 +95,8 @@ def main():
     if liveData:
         t = threading.Thread(target=file_listen, args=(watchDir, horizontalBeamGroup, msg_queue))
     else:
-        t = threading.Thread(target=file_replay, args=(watchDir, horizontalBeamGroup, 
-                                                       replayRate, msg_queue))
+        t = threading.Thread(target=file_replay, args=(watchDir, horizontalBeamGroup, msg_queue,
+                                                       replayRate))
     t.daemon = True  # makes the thread close when main() ends
     t.start()
 

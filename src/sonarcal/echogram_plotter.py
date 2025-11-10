@@ -1,4 +1,5 @@
 import sys
+import traceback
 from queue import Empty
 from datetime import datetime, timedelta, timezone
 import matplotlib.pyplot as plt
@@ -347,10 +348,9 @@ class echogramPlotter:
                     # until the GUI events slow down...
                     self.fig.canvas.draw()
 
-                except Exception as e:  # if anything goes wrong, just ignore it...
-                    e = sys.exc_info()
+                except Exception:  # if anything goes wrong, just ignore it...
                     logger.warning('Error when processing and displaying echo data:')
-                    logger.warning(e)
+                    logger.warning(traceback.print_exc())
                     logger.warning('Ignoring the above and waiting for next ping.')
 
         self.job = self.root.after(self.checkQueueInterval, self.newPing, label)
