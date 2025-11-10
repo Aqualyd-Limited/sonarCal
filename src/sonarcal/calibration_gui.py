@@ -55,7 +55,7 @@ class calibrationGUI:
         self.onaxis_value = tk.BooleanVar(value=False)
 
         frame = ttk.Frame(self.echogram.root)
-        gains = ttk.Button(frame, text='Gains', command=self.gains)
+        gains = ttk.Button(frame, text='Results', command=self.gains)
         config = ttk.Button(frame, text='Config', command=self.config)
         onaxis = ttk.Checkbutton(frame, text='on-axis', variable=self.onaxis_value,
                                  command=self.onaxis_changed)
