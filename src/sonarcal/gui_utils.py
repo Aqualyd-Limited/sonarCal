@@ -62,10 +62,15 @@ class draggable_radial:
         self.ax.add_line(self.line)
         self.c.draw_idle()
         self.sid = self.c.mpl_connect('pick_event', self.clickonline)
+        
+        self.radial_frozen = False
+
+    def freeze(self, state: bool):
+        self.radial_frozen = state
 
     def clickonline(self, event):
         """Capture clicks on lines."""
-        if event.artist == self.line:
+        if not self.radial_frozen and event.artist == self.line:
             self.follower = self.c.mpl_connect("motion_notify_event", self.followmouse)
             self.releaser = self.c.mpl_connect("button_release_event", self.releaseonclick)
 
@@ -101,7 +106,8 @@ class draggable_radial:
 
     def releaseonclick(self, _event):
         """Stop following events once mouse button is released."""
-        self.value = self.line.get_xdata()[0]
+        if not self.radial_frozen:
+            self.value = self.line.get_xdata()[0]
 
-        self.c.mpl_disconnect(self.releaser)
-        self.c.mpl_disconnect(self.follower)
+            self.c.mpl_disconnect(self.releaser)
+            self.c.mpl_disconnect(self.follower)

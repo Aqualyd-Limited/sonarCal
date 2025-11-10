@@ -1,4 +1,3 @@
-import sys
 import traceback
 from queue import Empty
 from datetime import datetime, timedelta, timezone
@@ -26,6 +25,7 @@ class echogramPlotter:
         # come from a config file.
         self.beamLineAngle = 0.0  # [deg]
         self.beam = 0  # dummy value. Is updated once some data are received.
+        self.beamFrozen = False
 
         self.minTargetRange = 0.33*maxRange
         self.maxTargetRange = 0.66*maxRange
@@ -122,11 +122,13 @@ class echogramPlotter:
         self.ampPlotLinePort, = self.ampPlotAx.plot(self.amp[0, :], 'r-', linewidth=1)
         self.ampPlotLineMain, = self.ampPlotAx.plot(self.amp[1, :], 'k-', linewidth=1)
         self.ampPlotLineStbd, = self.ampPlotAx.plot(self.amp[2, :], 'g-', linewidth=1)
+     
         # Smoothed curves for the TS from 3 beams
         self.ampPlotLinePortSmooth, = self.ampPlotAx.plot(self.ampSmooth[0, :], 'r-', linewidth=2)
         self.ampPlotLineMainSmooth, = self.ampPlotAx.plot(self.ampSmooth[1, :], 'k-', linewidth=2)
         self.ampPlotLineStbdSmooth, = self.ampPlotAx.plot(self.ampSmooth[2, :], 'g-', linewidth=2)
         self.ampPlotAx.set_xlim(0, self.numPings)
+     
         # a informative number on the TS plot
         self.diffVariability = self.ampPlotAx.text(0.05, 0.95, '', ha='left', va='top',
                                                    transform=self.ampPlotAx.transAxes)
@@ -176,7 +178,7 @@ class echogramPlotter:
         # Colorbar for the omni echogram
         cb = plt.colorbar(self.polarPlot, ax=self.polarPlotAx, orientation='horizontal',
                           extend='both', fraction=0.05, location='bottom')
-        cb.set_label('Sv (dB re 1 $m^{-1}$)')
+        cb.set_label('$S_v$ re 1 m$^{-1}$ [dB]')
 
         # range slider to adjust the echogram thresholds
 
@@ -209,7 +211,7 @@ class echogramPlotter:
         self.stbdEchogramAx.set_ylabel('Range (m)')
 
         self.ampDiffPlotAx.set_xlabel('Pings')
-        self.ampPlotAx.set_ylabel('Sv (dB re 1 $m^{-1}$)')
+        self.ampPlotAx.set_ylabel('$S_v$ re 1 m$^{-1}$ [dB]')
         self.ampDiffPlotAx.set_ylabel(r'$\Delta$ (dB)')
         self.ampPlotAx.set_title('Maximum amplitude at 0 m')
 
@@ -346,7 +348,7 @@ class echogramPlotter:
                     # program is run from within Spyder. Including has the side effect
                     # that if there are continuous GUI events, the plots don't get updated
                     # until the GUI events slow down...
-                    self.fig.canvas.draw()
+                    # self.fig.canvas.draw()
 
                 except Exception:  # if anything goes wrong, just ignore it...
                     logger.warning('Error when processing and displaying echo data:')
@@ -355,6 +357,16 @@ class echogramPlotter:
 
         self.job = self.root.after(self.checkQueueInterval, self.newPing, label)
 
+    def onaxis(self, state: bool):
+        """Calculate calibration values when on-axis."""
+        if state:  # turn on, so start calculating
+            self.beamLine.freeze(True)
+            pass
+        else:  # turned off, so estimate gains
+            self.beamLine.freeze(False)
+            # mean gain, rms, range, num
+            return (self.beam, 1.1, .2, 12.4, 34)
+        
     def updateEchogramData(self, data, pingData):
         """Shift the ping data to the left and add in the new ping data."""
         data = np.roll(data, -1, 1)

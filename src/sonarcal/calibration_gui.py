@@ -1,13 +1,16 @@
 
 import webbrowser
 import logging
+from datetime import datetime
 import tkinter as tk
 from PIL import Image, ImageTk
 from tkinter import ttk
 from .utils import window_closed, app_name
+from .calibration_data import calibrationData
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 logger = logging.getLogger(app_name)
+icon_file = r'.\assets\icon.png'  # TODO get via a config file
 
 class calibrationGUI:
     """Provides the main GUI container and misc labels/buttons."""
@@ -16,22 +19,30 @@ class calibrationGUI:
         self.echogram = echogram
         self.help_uri = help_uri
 
+        # Calibration gains are stored in here
+        self.cal_data = calibrationData()
+
         # The GUI window
         self.echogram.root.title(title)
+
+        # Dialogs that we keep around
+        self.gain_dialog = None
         
         # The toolbar and window icon/logo
-        self.tk_icon = ImageTk.PhotoImage(Image.open(r'.\assets\logo.png'))  # TODO
-        self.echogram.root.iconphoto(True, self.tk_icon)
+        self.icon = ImageTk.PhotoImage(Image.open(icon_file))
+        self.echogram.root.iconphoto(False, self.icon)
 
         # Put the matplotlib plots into the GUI window.
         canvas = FigureCanvasTkAgg(self.echogram.fig, master=self.echogram.root)
         canvas.get_tk_widget().pack(side='top', fill='both', expand=True)
 
-        # Styles
+        # Styles. These apply to all widgets, not just the ones create in this function
         s = ttk.Style()
         s.configure('TButton', font=('Arial', 16))
         s.configure('TLabel', font=('Arial', 12))
         s.configure('TCheckbutton', font=('Arial', 16))
+        s.configure('Treeview.Heading', font=('Arial', 12, 'bold'))
+        s.configure('Treeview', font=('Arial', 12))
 
         # A label to show the last received message time
         self.label = ttk.Label(self.echogram.root)
@@ -46,7 +57,8 @@ class calibrationGUI:
         frame = ttk.Frame(self.echogram.root)
         gains = ttk.Button(frame, text='Gains', command=self.gains)
         config = ttk.Button(frame, text='Config', command=self.config)
-        onaxis = ttk.Checkbutton(frame, text='on-axis', variable=self.onaxis_value)
+        onaxis = ttk.Checkbutton(frame, text='on-axis', variable=self.onaxis_value,
+                                 command=self.onaxis_changed)
         help = ttk.Button(frame, text='Help', command=self.help)
         close = ttk.Button(frame, text='Close', command=self.close)
 
@@ -67,27 +79,49 @@ class calibrationGUI:
     def root(self):
         return self.echogram.root
 
+    def onaxis_changed(self):
+        """Manages calculation of on-axis calibration values."""
+
+        if self.onaxis_value.get():  # start calibrating a beam
+            self.echogram.onaxis(True)
+            logger.info('Beam %d calibration started', self.echogram.beam)
+        else:  # finished calibrating a beam
+            (beam, gain, rms, r, num) = self.echogram.onaxis(False)
+            logger.info('Beam %d calibration complete', beam)
+            # and then store for use and exporting later
+            self.cal_data.add(beam, datetime.now().strftime('%H:%M:%S'), gain, rms, r, num)
+            # and update the gains dialog box
+            if self.gain_dialog:
+                self.gain_dialog.update_with(self.cal_data)
+
     def close(self):
         window_closed(self.echogram.root, self.echogram.job)
 
     def gains(self):
-        gainDialog(self.echogram.root)
+
+        # want one lasting instance of this dialog so manage that here
+        if not self.gain_dialog:
+            self.gain_dialog = gainDialog(self.echogram.root, self.cal_data, self.icon)
+        else:
+            self.gain_dialog.reopen()
 
     def help(self):
         if not webbrowser.open(self.help_uri, new=2):
             logging.warning('Failed to start a webbrowser to show the help documentation')
         
     def config(self):
-        configDialog(self.echogram.root)
+        configDialog(self.echogram.root, self.icon)
 
     def status_label(self):
         return self.label
 
 
 class configDialog:
-    def __init__(self, parent):
+    def __init__(self, parent, icon=None):
         self.top = tk.Toplevel(parent)
         self.top.title("Config")
+        if icon:
+            self.top.iconphoto(False, icon)
 
         ttk.Label(self.top, text="Configs").pack(padx=20, pady=10)
         ttk.Button(self.top, text="Close", command=self.close_dialog).pack(pady=5)
@@ -101,12 +135,73 @@ class configDialog:
 
 
 class gainDialog:
-    def __init__(self, parent):
+    """A dialog box to show completed calibration results per beam."""
+
+    def __init__(self, parent, data: dict=None, icon=None):
         self.top = tk.Toplevel(parent)
         self.top.title("Gains")
+        if icon:
+            self.top.iconphoto(False, icon)
 
-        ttk.Label(self.top, text="Table of gain value done so far").pack(padx=20, pady=10)
-        ttk.Button(self.top, text="Close", command=self.close_dialog).pack(pady=5)
+        # use a ttk.Treeview to show a table of the gains
+        self.item_ids = {}  # contains ids to rows that get added to the treeview
+        self.setup_treeview(data)  # creates self.tree
+
+        frame = ttk.Frame(self.top)
+        save = ttk.Button(frame, text="Save")
+        close = ttk.Button(frame, text="Close", command=self.close_dialog)
+
+        self.tree.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        close.pack(side=tk.RIGHT)
+        save.pack(side=tk.RIGHT)
+        frame.pack(side=tk.TOP, fill=tk.BOTH)
+
+    def setup_treeview(self, data):
+        """Create the treeview columns, etc."""
+        
+        headings = [data.df().index.name] + list(data.df().columns)
+        
+        self.tree = ttk.Treeview(self.top, columns=headings, show='headings')
+
+        # colour odd and even rows
+        self.tree.tag_configure('evenrow', background='white smoke')
+        self.tree.tag_configure('oddrow', background='white')
+        
+        for col in headings:
+            self.tree.heading(col, text=col, anchor='e')
+            self.tree.column(col, width=100, anchor='e')
+
+        # Add rows (if any)
+        self.update_with(data)
+            
+        # Make scrollbars
+        # vsb = ttk.Scrollbar(self.top, orient="vertical", command=tree.yview)
+        # hsb = ttk.Scrollbar(self.top, orient="horizontal", command=tree.xview)
+        # tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+
+        # vsb.pack(side="right", fill="y")
+        # hsb.pack(side="bottom", fill="x")
+                    
+    def update_with(self, data):
+        """Update dialog's display with given calibration data."""
+
+        for beam, row in data.df().iterrows():
+            if beam in self.item_ids:
+                # row for this beam already exists, so update it
+                self.tree.item(self.item_ids[beam], values=[beam]+list(row))
+            else:
+                # new beam, so add a row
+                item_id = self.tree.insert('', 'end', values=[beam]+list(row))
+                self.item_ids[beam] = item_id
+
+        # Then sort the display by beam number and update tags for odd/even rows
+        for beam, index in zip(sorted(self.item_ids.keys()), range(len(self.item_ids))):
+            self.tree.move(self.item_ids[beam], '', index)
+            rowness = 'oddrow' if index % 2 == 0 else 'evenrow'
+            self.tree.item(self.item_ids[beam], tags=(rowness,))    
+
+    def reopen(self):
+        self.top.deiconify()
 
     def close_dialog(self):
-        self.top.destroy()
+        self.top.withdraw()
