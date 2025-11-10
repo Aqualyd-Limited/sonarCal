@@ -8,20 +8,18 @@ calibrating omni-directional sonars.
 
 import configparser
 import tkinter as tk
-import tkinter.font as tkFont
 from functools import partial
 import threading
 import queue
-import logging
 import sys
 from pathlib import Path
 import matplotlib as mpl
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from platformdirs import PlatformDirs
 
 from .echogram_plotter import echogramPlotter
-from .utils import setupLogging, app_name
+from .utils import setupLogging, app_name, on_exit, window_closed
 from .file_ops import file_listen, file_replay
+from .calibration_gui import calibrationGUI
 
 if sys.platform == "win32":
     import win32api
@@ -51,7 +49,8 @@ def main():
                              'replayRate': 'realtime',
                              'horizontalBeamGroupPath': 'Sonar/Beam_group1',
                              'watchDir': '.',
-                             'liveData': 'yes'
+                             'liveData': 'yes',
+                             'helpURI': 'https://ices-tools-dev.github.io/echoSMs/'
                              }
 
         with open(config_filename, 'w', encoding='utf-8') as configfile:
@@ -70,34 +69,27 @@ def main():
     horizontalBeamGroup = config.get('DEFAULT', 'horizontalBeamGroupPath')
     watchDir = Path(config.get('DEFAULT', 'watchDir'))
     liveData = config.getboolean('DEFAULT', 'liveData')
+    helpURI = config.get('DEFAULT', 'helpURI')
 
     ##########################################
     # Start things...
 
+    # Matplotlib for tkinter
     mpl.use('TkAgg')
-
 
     # queue to communicate between two threads
     msg_queue = queue.Queue()
+    
+    # Tk GUI
     root = tk.Tk()
-    root.wm_title('Sonar calibrator')
 
-    job = None  # handle to the function that does the echogram drawing
+    # handle to the function that does the echogram drawing
+    # job = None  
 
-    # Does the message parsing and echogram display
-    echogram = echogramPlotter(numPings, maxRange, maxSv, minSv, msg_queue, root, job)
-
-    # The GUI window
-    root.title('Sonar calibration')
-    # Put the echogram plot into the GUI window.
-    canvas = FigureCanvasTkAgg(echogram.fig, master=root)
-    canvas.get_tk_widget().pack(side='top', fill='both', expand=True)
-
-    # and a label to show the last received message time
-    fontStyle = tkFont.Font(size=16)
-    label = tk.Label(root, font=fontStyle)
-    label.pack(side='left')
-    label.config(text='Waiting for data...', width=100, anchor=tk.W)
+    echogram = echogramPlotter(numPings, maxRange, maxSv, minSv, msg_queue, root)
+    gui = calibrationGUI(echogram, title='Sonar calibration', help_uri=helpURI)
+    # Check periodically for new echogram data
+    # job = root.after(echogram.checkQueueInterval, echogram.newPing, gui.status_label())
 
     # Start receive in a separate thread
     if liveData:
@@ -105,34 +97,15 @@ def main():
     else:
         t = threading.Thread(target=file_replay, args=(watchDir, horizontalBeamGroup, 
                                                        replayRate, msg_queue))
-
     t.daemon = True  # makes the thread close when main() ends
     t.start()
 
-    # Check periodically for new echogram data
-    job = root.after(echogram.checkQueueInterval, echogram.newPing, label)
-
     # For Windows, catch when the console is closed
     if sys.platform == "win32":
-        win32api.SetConsoleCtrlHandler(partial(on_exit, root, job), True)
+        win32api.SetConsoleCtrlHandler(partial(on_exit, gui.root(), gui.job()), True)
 
     # And start things...
-    root.protocol("WM_DELETE_WINDOW", lambda: window_closed(root, job))
+    root.protocol("WM_DELETE_WINDOW", lambda: window_closed(gui.root(), gui.job()))
     root.mainloop()
 
 
-def on_exit(root, job, sig):
-    """Call when the Windows cmd console closes."""
-    root.after_cancel(job)
-    logging.info('Program ending...')
-    root.quit()
-    # not sure why this call is needed...
-    window_closed(root, job)
-
-
-def window_closed(root, job):
-    """Call to nicely end the whole program."""
-    root.after_cancel(job)
-    logging.info('Program ending...')
-    logging.shutdown()  # not working???
-    root.quit()

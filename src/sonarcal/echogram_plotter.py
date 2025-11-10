@@ -16,10 +16,10 @@ logger = logging.getLogger(app_name)
 class echogramPlotter:
     """Receive via a queue new ping data and use that to update the display."""
 
-    def __init__(self, numPings, maxRange, maxSv, minSv, msg_queue, root, job):
+    def __init__(self, numPings, maxRange, maxSv, minSv, msg_queue, root):
         self.queue = msg_queue
         self.root = root
-        self.job = job
+        self.job = None
 
         # Various user-changable lines on the plots that could in the future
         # come from a config file.
@@ -352,7 +352,7 @@ class echogramPlotter:
                     logger.warning('Error when processing and displaying echo data:')
                     logger.warning(e)
                     logger.warning('Ignoring the above and waiting for next ping.')
-        global job
+
         self.job = self.root.after(self.checkQueueInterval, self.newPing, label)
 
     def updateEchogramData(self, data, pingData):

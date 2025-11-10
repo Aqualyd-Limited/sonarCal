@@ -29,6 +29,22 @@ def setupLogging(log_dir, label):
     logger.info('Log files are in %s.', log_dir.as_posix())
 
 
+def on_exit(root, job, sig):
+    """Call when the Windows cmd console closes."""
+    root.after_cancel(job)
+    logging.info('Program ending...')
+    root.quit()
+    # not sure why this call is needed...
+    window_closed(root, job)
+
+
+def window_closed(root, job):
+    """Call to nicely end the whole program."""
+    root.after_cancel(job)
+    logging.info('Program ending...')
+    logging.shutdown()  # not working???
+    root.quit()
+
 
 def beamAnglesFromNetCDF4(f, beamGroup, i):
     """Calculate the beam angles as per the convention for the given beamGroup and ping index."""

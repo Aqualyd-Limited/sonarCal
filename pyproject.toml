@@ -21,6 +21,7 @@ dependencies = [
   "matplotlib",
   "humanize",
   "h5py",
+  "Pillow",
   "platformdirs"
 ]
 classifiers = [

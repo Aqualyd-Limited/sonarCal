@@ -19,6 +19,12 @@ def most_recent_file(watch_dir, wait_interval):
         logger.info("No .nc file found in '%s'", watch_dir)
         sleep(wait_interval)
 
+def file_type(watch_dir):
+    """Works out what sonar the data came from, and what format it is."""
+    
+    # Options will be 'sonar-netcdf4', 'CS90-raw', 'SN90-raw'
+
+    return ''
 
 def file_listen(watchDir, beamGroup, msg_queue):
     """Listen for new data in a file.
