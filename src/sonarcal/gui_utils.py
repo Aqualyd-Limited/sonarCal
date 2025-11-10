@@ -12,7 +12,7 @@ class draggable_ring:
 
         self.line = lines.Line2D(np.linspace(-np.pi, np.pi, num=self.numPoints),
                                  np.ones(self.numPoints)*self.range,
-                                 linewidth=1, color='k', picker=True)
+                                 linewidth=2, color='k', picker=True)
         self.line.set_pickradius(5)
         self.ax.add_line(self.line)
         self.c.draw_idle()
@@ -42,6 +42,10 @@ class draggable_radial:
     """Provide a radial line on a polar plot that the user can move with the mouse."""
 
     def __init__(self, ax, angle, maxRange, theta, labels):
+        
+        self.line_color_unfrozen = 'black'
+        self.line_color_frozen = 'orange'
+        
         self.ax = ax
         self.c = ax.get_figure().canvas
         self.angle = angle
@@ -52,7 +56,7 @@ class draggable_radial:
         self.value = 0.0  # is updated to a true value once data is received
 
         self.line = lines.Line2D([self.angle, self.angle], [0, self.maxRange],
-                                 linewidth=1, color='k', picker=True)
+                                 linewidth=2, color=self.line_color_unfrozen, picker=True)
         self.text = self.ax.text(self.angle, 1.12*self.maxRange, '',
                                  horizontalalignment='center', verticalalignment='center')
         self.text.set_bbox({'color': 'w', 'alpha': 0.5, 'boxstyle': 'round,rounding_size=0.6'})
@@ -67,6 +71,11 @@ class draggable_radial:
 
     def freeze(self, state: bool):
         self.radial_frozen = state
+
+        if self.radial_frozen:
+            self.line.set_color(self.line_color_frozen)
+        else:
+            self.line.set_color(self.line_color_unfrozen)
 
     def clickonline(self, event):
         """Capture clicks on lines."""
