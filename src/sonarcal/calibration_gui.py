@@ -31,7 +31,7 @@ class calibrationGUI:
         self.echogram.root.title(title)
         
         # Dialogs that we keep around
-        self.gain_dialog = None
+        self.results_dialog = None
         
         # The toolbar and window icon/logo
         self.icon = ImageTk.PhotoImage(Image.open(icon_file))
@@ -63,7 +63,7 @@ class calibrationGUI:
         self.onaxis_value = tk.BooleanVar(value=False)
 
         frame = ttk.Frame(self.echogram.root)
-        gains = ttk.Button(frame, text='Results', command=self.gains)
+        results = ttk.Button(frame, text='Results', command=self.results)
         config = ttk.Button(frame, text='Config', command=self.config)
         onaxis = ttk.Checkbutton(frame, text='On-axis', variable=self.onaxis_value,
                                  command=self.onaxis_changed)
@@ -74,7 +74,7 @@ class calibrationGUI:
         close.pack(side=tk.RIGHT)
         help.pack(side=tk.RIGHT)
         config.pack(side=tk.RIGHT)
-        gains.pack(side=tk.RIGHT)
+        results.pack(side=tk.RIGHT)
 
         frame.pack(side=tk.TOP, fill=tk.BOTH)
 
@@ -96,7 +96,7 @@ class calibrationGUI:
             logger.info('Beam %d calibration complete', self.echogram.beam)
             self.echogram.beamLine.freeze(False)
             self.sphere_ts = []
-            self.gain_dialog.update_rows(None)  # unhighlights the previously active row
+            self.results_dialog.update_rows(None)  # unhighlights the previously active row
 
     def new_ping(self):
         """Orchestrates things for each new ping."""
@@ -109,19 +109,19 @@ class calibrationGUI:
             # store the latest beam gain values
             self.cal_data.update(e.beam, datetime.now().strftime('%H:%M:%S'), gain, rms, r, num)
             # update the results dialog if present
-            if self.gain_dialog:
-                self.gain_dialog.update_with(self.cal_data, e.beam)
+            if self.results_dialog:
+                self.results_dialog.update_with(self.cal_data, e.beam)
 
     def close(self):
         window_closed(self.echogram.root, self.echogram.job)
 
-    def gains(self):
+    def results(self):
         """Open the Results dialog box."""
         # want one lasting instance of this dialog so manage that here
-        if not self.gain_dialog:
-            self.gain_dialog = gainDialog(self.echogram.root, self.cal_data, self.icon)
+        if not self.results_dialog:
+            self.results_dialog = resultsDialog(self.echogram.root, self.cal_data, self.icon)
         else:
-            self.gain_dialog.reopen()
+            self.results_dialog.reopen()
 
     def help(self):
         """Open the help documentation in a web browser."""
@@ -155,23 +155,23 @@ class configDialog:
         self.top.destroy()
 
 
-class gainDialog:
+class resultsDialog:
     """A dialog box to show completed calibration results per beam."""
 
     def __init__(self, parent, data: dict=None, icon=None):
         
-        self.data = None
+        self.data = data
         
         self.top = tk.Toplevel(parent)
-        self.top.title("Gains")
+        self.top.title("Resultss")
         if icon:
             self.top.iconphoto(False, icon)
 
         tree_frame = ttk.Frame(self.top)
 
-        # use a ttk.Treeview to show a table of the gains
+        # use a ttk.Treeview to show a table of the results
         self.item_ids = {}  # contains ids to rows that get added to the treeview
-        self.setup_treeview(tree_frame, data)  # creates self.tree
+        self.setup_treeview(tree_frame, self.data)  # creates self.tree
 
         # Make scrollbars for the treeview widget
         vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
@@ -181,11 +181,14 @@ class gainDialog:
         vsb.pack(side="right", fill="y")
         self.tree.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5)
 
+        # create and pack the buttons
         btn_frame = ttk.Frame(self.top)
+        remove = ttk.Button(btn_frame, text="Remove selected", command=self.remove_rows)
         save = ttk.Button(btn_frame, text="Save", command=self.save)
         close = ttk.Button(btn_frame, text="Close", command=self.close_dialog)
         close.pack(side=tk.RIGHT)
         save.pack(side=tk.RIGHT)
+        remove.pack(side=tk.RIGHT)
 
         tree_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         btn_frame.pack(side=tk.BOTTOM, fill=tk.X)
@@ -235,7 +238,7 @@ class gainDialog:
 
         self.update_rows(active_beam)
 
-        # keep this to use in the save functionality
+        # keep this to use in the save and remove functionalities
         self.data = data
 
     def update_rows(self, active_beam: int|None):
@@ -248,6 +251,31 @@ class gainDialog:
                 rowness = 'active'
 
             self.tree.item(self.item_ids[beam], tags=(rowness,))    
+
+    def remove_rows(self):
+        return
+        """Remove selected rows from the results table."""
+
+        selected = self.tree.selection()  # returns a tuple of item_ids
+        
+        to_remove = []
+        for iid in selected:
+            item_data = self.tree.item(iid)
+            values = item_data['values']
+            to_remove.append(values[0])
+
+        print(to_remove)
+            
+        if to_remove:
+            # remove rows from cal_data
+            self.data.remove(to_remove)
+
+            # remove all rows from treeview
+            for row in self.tree.get_children():
+                self.tree.delete(row)
+
+            # add the cal_data back in
+            self.update_with(self.data)
 
     def save(self):
         """Save the results to a file."""
