@@ -286,6 +286,7 @@ class resultsDialog:
                 self.item_ids.pop(beam)
             # remove beams from the cal_data store
             self.data.remove(to_remove)
+            self.update_rows(None)
 
     def save(self):
         """Save the results to a file."""
