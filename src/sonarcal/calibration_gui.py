@@ -199,6 +199,7 @@ class resultsDialog:
         headings = [data.df().index.name] + list(data.df().columns)
         
         self.tree = ttk.Treeview(top, columns=headings, show='headings')
+        self.tree.bind('<Button-1>', self.on_row_click)
 
         # colour odd and even rows
         self.tree.tag_configure('evenrow', background='white smoke')
@@ -253,29 +254,25 @@ class resultsDialog:
             self.tree.item(self.item_ids[beam], tags=(rowness,))    
 
     def remove_rows(self):
-        return
         """Remove selected rows from the results table."""
 
         selected = self.tree.selection()  # returns a tuple of item_ids
         
+        # Pick out the beam numbers of the selected rows
         to_remove = []
         for iid in selected:
             item_data = self.tree.item(iid)
             values = item_data['values']
             to_remove.append(values[0])
 
-        print(to_remove)
-            
         if to_remove:
-            # remove rows from cal_data
+            for beam in to_remove:
+                # remove selected rows from treeview
+                self.tree.delete(self.item_ids[beam])
+                # remove beam imtem from the map between beam and item ids
+                self.item_ids.pop(beam)
+            # remove beams from the cal_data store
             self.data.remove(to_remove)
-
-            # remove all rows from treeview
-            for row in self.tree.get_children():
-                self.tree.delete(row)
-
-            # add the cal_data back in
-            self.update_with(self.data)
 
     def save(self):
         """Save the results to a file."""
@@ -288,6 +285,14 @@ class resultsDialog:
         if save_filename:
             logger.info('Saved results to %s', save_filename)
             self.data.df().to_csv(save_filename)
+
+    def on_row_click(self, event):
+        """Implement selection and deselection."""
+        # TODO - work out why it can take multiple clicks on a row to get it unselected
+        item_id = self.tree.identify_row(event.y)
+        if item_id and item_id in self.tree.selection():
+            self.tree.selection_remove(item_id)
+
 
     def reopen(self):
         self.top.deiconify()
