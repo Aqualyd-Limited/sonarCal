@@ -7,6 +7,7 @@ from PIL import Image, ImageTk
 from tkinter import ttk
 from .utils import window_closed, app_name
 from .calibration_data import calibrationData
+from .calculate_gains import calculate_gain
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 logger = logging.getLogger(app_name)
@@ -21,16 +22,21 @@ class calibrationGUI:
 
         # Calibration gains are stored in here
         self.cal_data = calibrationData()
+        # sphere ts for the current beam calibration is stored in here
+        self.sphere_ts = []
 
         # The GUI window
         self.echogram.root.title(title)
-
+        
         # Dialogs that we keep around
         self.gain_dialog = None
         
         # The toolbar and window icon/logo
         self.icon = ImageTk.PhotoImage(Image.open(icon_file))
         self.echogram.root.iconphoto(False, self.icon)
+
+        # Things to do with new pings 
+        self.echogram.set_ping_callback(self.new_ping)
 
         # Put the matplotlib plots into the GUI window.
         canvas = FigureCanvasTkAgg(self.echogram.fig, master=self.echogram.root)
@@ -80,25 +86,35 @@ class calibrationGUI:
         return self.echogram.root
 
     def onaxis_changed(self):
-        """Manages calculation of on-axis calibration values."""
-
+        """A beam calibration has either started or ended."""
         if self.onaxis_value.get():  # start calibrating a beam
-            self.echogram.onaxis(True)
+            self.echogram.beamLine.freeze(True)
             logger.info('Beam %d calibration started', self.echogram.beam)
         else:  # finished calibrating a beam
-            (beam, gain, rms, r, num) = self.echogram.onaxis(False)
-            logger.info('Beam %d calibration complete', beam)
-            # and then store for use and exporting later
-            self.cal_data.add(beam, datetime.now().strftime('%H:%M:%S'), gain, rms, r, num)
-            # and update the gains dialog box
+            logger.info('Beam %d calibration complete', self.echogram.beam)
+            self.echogram.beamLine.freeze(False)
+            self.sphere_ts = []
+            self.gain_dialog.update_rows(None)  # unhighlights the previously active row
+
+    def new_ping(self):
+        """Orchestrates things for each new ping."""
+        e = self.echogram
+        if e.beamLine.frozen():  # a beam is being calibrated
+            # store the current ping's sphere echo info
+            self.sphere_ts.append((datetime.now().isoformat(), e.amp[1, -1], e.rangeMax))
+            # calculate the beam gain and other stats
+            (gain, rms, r, num) = calculate_gain(self.sphere_ts)
+            # store the latest beam gain values
+            self.cal_data.update(e.beam, datetime.now().strftime('%H:%M:%S'), gain, rms, r, num)
+            # update the results dialog if present
             if self.gain_dialog:
-                self.gain_dialog.update_with(self.cal_data)
+                self.gain_dialog.update_with(self.cal_data, e.beam)
 
     def close(self):
         window_closed(self.echogram.root, self.echogram.job)
 
     def gains(self):
-
+        """Open the Results dialog box."""
         # want one lasting instance of this dialog so manage that here
         if not self.gain_dialog:
             self.gain_dialog = gainDialog(self.echogram.root, self.cal_data, self.icon)
@@ -106,10 +122,12 @@ class calibrationGUI:
             self.gain_dialog.reopen()
 
     def help(self):
+        """Open the help documentation in a web browser."""
         if not webbrowser.open(self.help_uri, new=2):
             logging.warning('Failed to start a webbrowser to show the help documentation')
         
     def config(self):
+        """Open the Config dialog box."""
         configDialog(self.echogram.root, self.icon)
 
     def status_label(self):
@@ -117,6 +135,7 @@ class calibrationGUI:
 
 
 class configDialog:
+    """A dialog box to set and change application parameters."""
     def __init__(self, parent, icon=None):
         self.top = tk.Toplevel(parent)
         self.top.title("Config")
@@ -166,6 +185,7 @@ class gainDialog:
         # colour odd and even rows
         self.tree.tag_configure('evenrow', background='white smoke')
         self.tree.tag_configure('oddrow', background='white')
+        self.tree.tag_configure('active', background='orange2')
         
         for col in headings:
             self.tree.heading(col, text=col, anchor='e')
@@ -182,7 +202,7 @@ class gainDialog:
         # vsb.pack(side="right", fill="y")
         # hsb.pack(side="bottom", fill="x")
                     
-    def update_with(self, data):
+    def update_with(self, data, active_beam: int|None = None):
         """Update dialog's display with given calibration data."""
 
         for beam, row in data.df().iterrows():
@@ -206,10 +226,17 @@ class gainDialog:
                 item_id = self.tree.insert('', 'end', values=values)
                 self.item_ids[beam] = item_id
 
-        # Then sort the display by beam number and update tags for odd/even rows
+        self.update_rows(active_beam)
+
+    def update_rows(self, active_beam: int|None):
+        """Sorts calibration results rows by beam and sets background colours to look nice."""
         for beam, index in zip(sorted(self.item_ids.keys()), range(len(self.item_ids))):
             self.tree.move(self.item_ids[beam], '', index)
+
             rowness = 'oddrow' if index % 2 == 0 else 'evenrow'
+            if active_beam and beam == active_beam:
+                rowness = 'active'
+
             self.tree.item(self.item_ids[beam], tags=(rowness,))    
 
     def reopen(self):

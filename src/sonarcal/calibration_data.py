@@ -7,7 +7,7 @@ class calibrationData():
         self.data = pd.DataFrame(columns=['Time', 'Gain (dB)', 'RMS (dB)', 'Range (m)', 'Echoes'])
         self.data.index.name = 'Beam'
     
-    def add(self, beam: int, timestamp: str, gain: float, rms: float, r: float, num: int):
+    def update(self, beam: int, timestamp: str, gain: float, rms: float, r: float, num: int):
         self.data.loc[beam] = (timestamp, gain, rms, r, num)
         
     def df(self):

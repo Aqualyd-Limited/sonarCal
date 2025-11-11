@@ -10,7 +10,6 @@ from .utils import app_name
 from .gui_utils import draggable_ring, draggable_radial
 import humanize
 import logging
-import pandas as pd
 
 logger = logging.getLogger(app_name)
 
@@ -21,6 +20,9 @@ class echogramPlotter:
         self.queue = msg_queue
         self.root = root
         self.job = None
+
+        # All callback that is called whenever a new ping has finished drawing
+        self.new_ping_cb = None
 
         # Various user-changable lines on the plots that could in the future
         # come from a config file.
@@ -38,8 +40,6 @@ class echogramPlotter:
         self.maxRange = maxRange  # [m] of the echograms
         self.maxSv = maxSv  # [dB] max Sv to show in the echograms
         self.minSv = minSv  # [dB] min Sv to show in the echograms
-
-        self.sphere_ts = []  # timestamp, ts, and range of sphere echo when on-axis
 
         self.checkQueueInterval = 200  # [ms] duration between checking the queue for new data
 
@@ -229,6 +229,10 @@ class echogramPlotter:
         # Redraw the figure to ensure it updates
         self.fig.canvas.draw_idle()
 
+    def set_ping_callback(self, cb):
+        """Set the callback that is called after each new ping is displayed."""
+        self.new_ping_cb = cb
+
     def newPing(self, label):
         """Receive messages from the queue, decodes them and updates the echogram."""
         while not self.queue.empty():
@@ -348,9 +352,8 @@ class echogramPlotter:
 
                     self.polarPlot.set_array(self.polar.ravel())
 
-                    # If we're calibrating, store sphere TS info
-                    if self.beamLine.frozen():
-                        self.accumulate_sphere_ts()
+                    if self.new_ping_cb:
+                        self.new_ping_cb()
 
                 except Exception:  # if anything goes wrong, just ignore it...
                     logger.warning('Error when processing and displaying echo data:')
@@ -359,23 +362,6 @@ class echogramPlotter:
 
         self.job = self.root.after(self.checkQueueInterval, self.newPing, label)
 
-    def accumulate_sphere_ts(self, ):
-        self.sphere_ts.append((datetime.now().isoformat(), self.amp[1, -1], self.rangeMax))
-
-    def onaxis(self, state: bool):
-        """Calculate calibration values when on-axis."""
-        if state:  # turn on, so start calculating
-            self.beamLine.freeze(True)
-
-        else:  # turned off, so estimate gains
-            self.beamLine.freeze(False)
-            # TODO - move these calculations into a separate class and file
-            df = pd.DataFrame(self.sphere_ts, columns=['timestamp', 'ts', 'range'])
-            self.sphere_ts = []
-            results = (self.beam, df['ts'].mean(), df['ts'].std(), df['range'].mean(), len(df))
-        
-            return results
-        
     def updateEchogramData(self, data, pingData):
         """Shift the ping data to the left and add in the new ping data."""
         data = np.roll(data, -1, 1)
