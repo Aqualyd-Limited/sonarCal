@@ -5,6 +5,8 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog as fd
+from tkinter import messagebox
+from importlib.metadata import version
 from PIL import Image, ImageTk
 from .utils import window_closed, app_name
 from .calibration_data import calibrationData
@@ -68,10 +70,12 @@ class calibrationGUI:
         onaxis = ttk.Checkbutton(frame, text='On-axis', variable=self.onaxis_value,
                                  command=self.onaxis_changed)
         help = ttk.Button(frame, text='Help', command=self.help)
+        about = ttk.Button(frame, text='About', command=self.about)
         close = ttk.Button(frame, text='Close', command=self.close)
 
         onaxis.pack(side=tk.LEFT)
         close.pack(side=tk.RIGHT)
+        about.pack(side=tk.RIGHT)
         help.pack(side=tk.RIGHT)
         config.pack(side=tk.RIGHT)
         results.pack(side=tk.RIGHT)
@@ -111,6 +115,14 @@ class calibrationGUI:
             # update the results dialog if present
             if self.results_dialog:
                 self.results_dialog.update_with(self.cal_data, e.beam)
+
+    def about(self):
+        message = (f'Sonarcal, version {version("sonarcal")}\n\n'
+                   'A program to assist with calibrating omni-directional sonars.\n\n'
+                   'Developed by Aqualyd Ltd\n\n'
+                   'www.aqualyd.nz')
+
+        messagebox.showinfo(title='About', message=message)
 
     def close(self):
         window_closed(self.echogram.root, self.echogram.job)
@@ -186,6 +198,7 @@ class resultsDialog:
         remove = ttk.Button(btn_frame, text="Remove selected", command=self.remove_rows)
         save = ttk.Button(btn_frame, text="Save", command=self.save)
         close = ttk.Button(btn_frame, text="Close", command=self.close_dialog)
+        
         close.pack(side=tk.RIGHT)
         save.pack(side=tk.RIGHT)
         remove.pack(side=tk.RIGHT)

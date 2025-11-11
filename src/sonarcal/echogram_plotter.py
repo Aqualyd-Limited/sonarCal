@@ -49,7 +49,7 @@ class echogramPlotter:
 
         # Make the plots. It gets filled with pretty things once the first ping
         # of data is received.
-        self.fig = plt.figure(figsize=(10, 5))
+        self.fig = plt.figure(figsize=(11.5, 5))
         plt.ion()
 
         self.firstPing = True
@@ -206,13 +206,11 @@ class echogramPlotter:
         self.stbdEchogramAx.set_xlabel('Pings')
 
         self.portEchogramAx.yaxis.set_label_position('right')
-        self.portEchogramAx.set_ylabel('Range (m)')
 
         self.mainEchogramAx.yaxis.set_label_position('right')
         self.mainEchogramAx.set_ylabel('Range (m)')
 
         self.stbdEchogramAx.yaxis.set_label_position('right')
-        self.stbdEchogramAx.set_ylabel('Range (m)')
 
         self.ampDiffPlotAx.set_xlabel('Pings')
         self.ampPlotAx.set_ylabel('$S_v$ re 1 m$^{-1}$ [dB]')
