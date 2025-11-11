@@ -256,7 +256,7 @@ class gainDialog:
         save_filename = fd.asksaveasfilename(title='Save as CSV', defaultextension='.csv',
                                              initialdir=PlatformDirs.user_documents_dir,
                                              initialfile=default_filename,
-                                             filetypes=[('csv', '*.csv')])
+                                             filetypes=[('CSV', '*.csv')])
         if save_filename:
             logger.info('Saved results to %s', save_filename)
             self.data.df().to_csv(save_filename)
