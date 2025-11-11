@@ -3,12 +3,14 @@ import webbrowser
 import logging
 from datetime import datetime
 import tkinter as tk
-from PIL import Image, ImageTk
 from tkinter import ttk
+from tkinter import filedialog as fd
+from PIL import Image, ImageTk
 from .utils import window_closed, app_name
 from .calibration_data import calibrationData
 from .calculate_gains import calculate_gain
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from platformdirs import PlatformDirs
 
 logger = logging.getLogger(app_name)
 icon_file = r'.\assets\icon.png'  # TODO get via a config file
@@ -63,7 +65,7 @@ class calibrationGUI:
         frame = ttk.Frame(self.echogram.root)
         gains = ttk.Button(frame, text='Results', command=self.gains)
         config = ttk.Button(frame, text='Config', command=self.config)
-        onaxis = ttk.Checkbutton(frame, text='on-axis', variable=self.onaxis_value,
+        onaxis = ttk.Checkbutton(frame, text='On-axis', variable=self.onaxis_value,
                                  command=self.onaxis_changed)
         help = ttk.Button(frame, text='Help', command=self.help)
         close = ttk.Button(frame, text='Close', command=self.close)
@@ -157,30 +159,43 @@ class gainDialog:
     """A dialog box to show completed calibration results per beam."""
 
     def __init__(self, parent, data: dict=None, icon=None):
+        
+        self.data = None
+        
         self.top = tk.Toplevel(parent)
         self.top.title("Gains")
         if icon:
             self.top.iconphoto(False, icon)
 
+        tree_frame = ttk.Frame(self.top)
+
         # use a ttk.Treeview to show a table of the gains
         self.item_ids = {}  # contains ids to rows that get added to the treeview
-        self.setup_treeview(data)  # creates self.tree
+        self.setup_treeview(tree_frame, data)  # creates self.tree
 
-        frame = ttk.Frame(self.top)
-        save = ttk.Button(frame, text="Save")
-        close = ttk.Button(frame, text="Close", command=self.close_dialog)
-
+        # Make scrollbars for the treeview widget
+        vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=vsb.set)
+        
+        # pack the scrollbars and treeview
+        vsb.pack(side="right", fill="y")
         self.tree.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5)
+
+        btn_frame = ttk.Frame(self.top)
+        save = ttk.Button(btn_frame, text="Save", command=self.save)
+        close = ttk.Button(btn_frame, text="Close", command=self.close_dialog)
         close.pack(side=tk.RIGHT)
         save.pack(side=tk.RIGHT)
-        frame.pack(side=tk.TOP, fill=tk.BOTH)
 
-    def setup_treeview(self, data):
+        tree_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        btn_frame.pack(side=tk.BOTTOM, fill=tk.X)
+
+    def setup_treeview(self, top, data):
         """Create the treeview columns, etc."""
         
         headings = [data.df().index.name] + list(data.df().columns)
         
-        self.tree = ttk.Treeview(self.top, columns=headings, show='headings')
+        self.tree = ttk.Treeview(top, columns=headings, show='headings')
 
         # colour odd and even rows
         self.tree.tag_configure('evenrow', background='white smoke')
@@ -192,15 +207,7 @@ class gainDialog:
             self.tree.column(col, width=100, anchor='e')
 
         # Add rows (if any)
-        self.update_with(data)
-            
-        # Make scrollbars
-        # vsb = ttk.Scrollbar(self.top, orient="vertical", command=tree.yview)
-        # hsb = ttk.Scrollbar(self.top, orient="horizontal", command=tree.xview)
-        # tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
-
-        # vsb.pack(side="right", fill="y")
-        # hsb.pack(side="bottom", fill="x")
+        self.update_with(data)            
                     
     def update_with(self, data, active_beam: int|None = None):
         """Update dialog's display with given calibration data."""
@@ -228,6 +235,9 @@ class gainDialog:
 
         self.update_rows(active_beam)
 
+        # keep this to use in the save functionality
+        self.data = data
+
     def update_rows(self, active_beam: int|None):
         """Sorts calibration results rows by beam and sets background colours to look nice."""
         for beam, index in zip(sorted(self.item_ids.keys()), range(len(self.item_ids))):
@@ -238,6 +248,18 @@ class gainDialog:
                 rowness = 'active'
 
             self.tree.item(self.item_ids[beam], tags=(rowness,))    
+
+    def save(self):
+        """Save the results to a file."""
+        timestamp = datetime.now().strftime('%Y%m%dT%H%M%S')
+        default_filename = 'sonar_calibration_' + timestamp + '.csv'
+        save_filename = fd.asksaveasfilename(title='Save as CSV', defaultextension='.csv',
+                                             initialdir=PlatformDirs.user_documents_dir,
+                                             initialfile=default_filename,
+                                             filetypes=[('csv', '*.csv')])
+        if save_filename:
+            logger.info('Saved results to %s', save_filename)
+            self.data.df().to_csv(save_filename)
 
     def reopen(self):
         self.top.deiconify()
