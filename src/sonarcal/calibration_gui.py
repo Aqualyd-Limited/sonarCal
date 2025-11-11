@@ -100,7 +100,8 @@ class calibrationGUI:
             logger.info('Beam %d calibration complete', self.echogram.beam)
             self.echogram.beamLine.freeze(False)
             self.sphere_ts = []
-            self.results_dialog.update_rows(None)  # unhighlights the previously active row
+            if self.results_dialog:
+                self.results_dialog.update_rows(None)  # unhighlights the previously active row
 
     def new_ping(self):
         """Orchestrates things for each new ping."""
@@ -175,7 +176,7 @@ class resultsDialog:
         self.data = data
         
         self.top = tk.Toplevel(parent)
-        self.top.title("Resultss")
+        self.top.title("Results")
         if icon:
             self.top.iconphoto(False, icon)
 

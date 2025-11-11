@@ -13,7 +13,7 @@ import threading
 import queue
 import sys
 from pathlib import Path
-import matplotlib as mpl
+
 from platformdirs import PlatformDirs
 
 from .echogram_plotter import echogramPlotter
@@ -73,9 +73,6 @@ def main():
 
     ##########################################
     # Start things...
-
-    # Matplotlib for tkinter
-    mpl.use('TkAgg')
 
     # queue to communicate between two threads
     msg_queue = queue.Queue()

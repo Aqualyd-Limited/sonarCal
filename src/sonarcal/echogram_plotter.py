@@ -11,6 +11,9 @@ from .gui_utils import draggable_ring, draggable_radial
 import humanize
 import logging
 
+# Matplotlib for tkinter
+mpl.use('TkAgg')
+
 logger = logging.getLogger(app_name)
 
 class echogramPlotter:
