@@ -300,7 +300,7 @@ class resultsDialog:
                                              filetypes=[('CSV', '*.csv')])
         if save_filename:
             logger.info('Saved results to %s', save_filename)
-            self.data.df().to_csv(save_filename)
+            self.data.df().sort_index().to_csv(save_filename)
 
     def on_row_click(self, event):
         """Implement selection and deselection."""
