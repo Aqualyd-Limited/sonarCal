@@ -49,7 +49,7 @@ def main():
                              'replayRate': 'realtime',
                              'horizontalBeamGroupPath': 'Sonar/Beam_group1',
                              'watchDir': '.',
-                             'liveData': 'yes',
+                             'liveData': 'no',
                              'helpURI': 'https://aqualyd-limited.github.io/sonarCal/'
                              }
 
