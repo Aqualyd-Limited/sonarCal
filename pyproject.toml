@@ -63,7 +63,6 @@ dev = [
 
 [project.urls]
 Homepage = 'https://github.com/Aqualyd-Limited/sonarCal'
-Issues = 'https://github.com/Aqualyd-Limited/sonarCal/issues'
-Documentation = 'https://Aqualyd-Limited/sonarCal'
+Issues =  'https://github.com/Aqualyd-Limited/sonarCal/issues'
+Documentation = 'https://aqualyd-limited.github.io/sonarCal/'
 Repository = 'https://github.com/Aqualyd-Limited/sonarCal'
-Discussions = 'https://github.com/Aqualyd-Limited/sonarCal/discussions'
