@@ -4,31 +4,38 @@ from datetime import datetime, timedelta
 import h5py
 from .utils import beamAnglesFromNetCDF4, SvFromSonarNetCDF4, app_name
 import logging
-
+from pathlib import Path
 
 logger = logging.getLogger(app_name)
 
-def most_recent_file(watch_dir, wait_interval):
-    """Get the most recent .nc file in the directory."""
+def most_recent_file(watch_dir: Path, wait_interval: float=1.0):
+    """Get the most recent .nc or .raw file in the directory."""
 
     while True:
-        files = sorted(list(watch_dir.glob('*.nc')))
+        files = sorted(list(watch_dir.glob('*.nc')) + list(watch_dir.glob('*.raw')))
         if files:
             return files[-1]
 
-        logger.info("No .nc file found in '%s'", watch_dir)
+        logger.info("No .nc or .raw file found in '%s'", watch_dir)
         sleep(wait_interval)
 
-def file_type(watch_dir):
-    """Works out what sonar the data came from, and what format it is."""
+def file_type(filename: Path):
+    """Works out what sonar the data file is from and what format it is."""
     
     # Options will be 'sonar-netcdf4', 'CS90-raw', 'SN90-raw'
 
-    return 'sonar-netcdf4'
+    match filename.suffix:
+        case '.nc':
+            return 'sonar-netcdf4'
+        case '.raw':
+            # could be several, so read some datagrams from the file...
+            return ''
 
 def file_listen(watchDir, beamGroup, msg_queue):
     """ """
-    f_type = file_type(watchDir)
+    
+    last_file = most_recent_file(watchDir)
+    f_type = file_type(last_file)
     
     params = (watchDir, beamGroup, msg_queue)
     
@@ -44,10 +51,12 @@ def file_listen(watchDir, beamGroup, msg_queue):
 
 
 def file_replay(watchDir, beamGroup, msg_queue, replayRate):
-    """ """
-    f_type = file_type(watchDir)
+    """Replay the most recent sonar file in the watched directory."""
 
-    params = (watchDir, beamGroup, msg_queue, replayRate)
+    replay_file = most_recent_file(watchDir)
+    f_type = file_type(replay_file)
+
+    params = (replay_file, beamGroup, msg_queue, replayRate)
     
     match f_type:
         case 'sonar-netcdf4':
@@ -58,7 +67,6 @@ def file_replay(watchDir, beamGroup, msg_queue, replayRate):
             file_replay_sn90_raw(*params)
         case _:
             logger.error('Unsupported file type')
-
 
 
 def file_listen_netcdf(watchDir, beamGroup, msg_queue):
@@ -138,16 +146,12 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                     sleep(errorWaitInterval)
 
 
-def file_replay_netcdf(watchDir, beamGroup, msg_queue, replayRate):
+def file_replay_netcdf(replay_file, beamGroup, msg_queue, replayRate):
     """Replay all data in the newest file. Used for testing."""
-    waitIntervalFile = 1.0  # [s] time period between checking for new files
-
-    mostRecentFile = most_recent_file(watchDir, waitIntervalFile)
-
-    logger.info('Reading from file: %s.', mostRecentFile)
+    logger.info('Reading from file: %s.', replay_file)
 
     # open netcdf file
-    f = h5py.File(mostRecentFile, 'r')
+    f = h5py.File(replay_file, 'r')
 
     t = f[beamGroup + '/ping_time']
 
@@ -173,16 +177,16 @@ def file_replay_netcdf(watchDir, beamGroup, msg_queue, replayRate):
 
     f.close()
 
-    logger.info('Finished replaying file: %s', mostRecentFile)
+    logger.info('Finished replaying file: %s', replay_file)
 
 
-def file_replay_cs90_raw(watchDir, beamGroup, msg_queue, replayRate):
+def file_replay_cs90_raw(replay_file, beamGroup, msg_queue, replayRate):
     """Replay all data in the newest file. Used for testing."""
 
     logger.error('CS90 raw files are not yet supported')
 
 
-def file_replay_sn90_raw(watchDir, beamGroup, msg_queue, replayRate):
+def file_replay_sn90_raw(replay_file, beamGroup, msg_queue, replayRate):
     """Replay all data in the newest file. Used for testing."""
 
     logger.error('SN90 raw files are not yet supported')
