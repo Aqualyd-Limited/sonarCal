@@ -1,9 +1,22 @@
+
 This repository contains a Python packages to assist with the calibration of ship-mounted fisheries omni-sonar systems.
 
-This package is under development.
+_This package is under active development_
 
 # Installation
 
+Install using pip:
+
+```
+pip install sonarcal
+```
+
+or upgrade:
+
+```
+pip install sonarcal --upgrade
+```
 
 # Documentation
 
+The user and technical manuals are available [here](https://aqualyd-limited.github.io/sonarCal/).

@@ -1,6 +1,7 @@
 
 import webbrowser
 import logging
+from pathlib import Path
 from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
@@ -15,7 +16,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from platformdirs import PlatformDirs
 
 logger = logging.getLogger(app_name)
-icon_file = r'.\assets\icon.png'  # TODO get via a config file
+icon_file = Path(__file__).parent.parent.parent/'assets'/'icon.png'  # TODO get via a config file
 
 class calibrationGUI:
     """Provides the main GUI container and misc labels/buttons."""

@@ -50,7 +50,7 @@ def main():
                              'horizontalBeamGroupPath': 'Sonar/Beam_group1',
                              'watchDir': '.',
                              'liveData': 'yes',
-                             'helpURI': 'https://github.com/Aqualyd-Limited/sonarCal'
+                             'helpURI': 'https://aqualyd-limited.github.io/sonarCal/'
                              }
 
         with open(config_filename, 'w', encoding='utf-8') as configfile:
