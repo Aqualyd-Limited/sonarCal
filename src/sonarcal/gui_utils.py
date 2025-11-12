@@ -47,6 +47,8 @@ class draggable_radial:
         self.line_color_frozen = 'orange'
         
         self.ax = ax
+        self.inv = self.ax.transData.inverted()  # used in followmouse()
+
         self.c = ax.get_figure().canvas
         self.angle = angle
         self.maxRange = maxRange
@@ -93,12 +95,18 @@ class draggable_radial:
     def followmouse(self, event):
         """Beam line follower.
 
-        Snap the beam line to beam centres (make it easier to get the beam
+        Snap the beam line to beam centres (makes it easier to get the beam
         line on a specific beam in the sonar display)
         """
-        if event.xdata is not None:
-            x = float(event.xdata)
-            # When the polar plot has an offset (applied setting up the plot),
+
+        # Could just use event.xdata here, but that doesn't return values when the motion notify
+        # event is outside of the axes that the radial line is in. So we do the conversion
+        # between mouse coordinates and axes coordinates ourselves, which works over the 
+        # entire computer screen.
+
+        if event.x and event.y:  # avoid None's
+            x, _ = self.inv.transform((event.x, event.y))
+            # When the polar plot has an offset (applied when setting up the plot),
             # the angles in one quadrant become negative (which we don't want).
             # This fixes that.
             if x < 0:
