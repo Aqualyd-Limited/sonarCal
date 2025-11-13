@@ -97,7 +97,7 @@ class echogramPlotter:
         self.ampPlotAx = plt.subplot2grid((3, 3), (0, 2), rowspan=2)
         self.ampDiffPlotAx = plt.subplot2grid((3, 3), (2, 2))
 
-        plt.tight_layout(pad=4, w_pad=0.05, h_pad=0.05)
+        plt.tight_layout(pad=1.5, w_pad=0.0, h_pad=0.0)
 
         # Configure the echogram axes
         self.portEchogramAx.invert_yaxis()
@@ -190,11 +190,11 @@ class echogramPlotter:
         # range slider to adjust the echogram thresholds
 
         slider_ax = plt.axes([0.028, 0.20, 0.015, 0.65])
-        self.slider = RangeSlider(slider_ax, "Thresholds", lowestSv, highestSv,
+        self.slider = RangeSlider(slider_ax, label="Thresholds", valmin=lowestSv, valmax=highestSv,
+                                  valinit=((self.minSv, self.maxSv)),
                                   valstep=np.arange(lowestSv, highestSv+1, 1),
                                   orientation='vertical', facecolor='blue')
-        # using valinit in the constructor fails due to a bug, so use this workaround
-        self.slider.set_val((self.minSv, self.maxSv))
+
         self.slider.on_changed(self.updateEchogramThresholds)
 
         # Range rings on the omni echogram
