@@ -3,8 +3,17 @@ from datetime import datetime, timezone
 import numpy as np
 import logging
 import logging.handlers
+from pathlib import Path
+from platformdirs import PlatformDirs
 
 app_name = 'sonarcal'
+app_author = 'Aqualyd'
+
+# Setup logging, etc, directories
+dirs = PlatformDirs(appname=app_name, appauthor=app_author)
+autosave_dir = Path(dirs.user_data_dir)/'autosave'
+
+autosave_dir.mkdir(parents=True, exist_ok=True)
 
 def setupLogging(log_dir, label):
     """Set info, warning, and error message logger to a file and to the console."""
@@ -53,12 +62,18 @@ def beamAnglesFromNetCDF4(f, beamGroup, i):
     z = f[beamGroup + '/beam_direction_z'][i]
     tilt = np.arctan(z / np.sqrt(x**2 + y**2))  # [rad]
 
-    # convert x,y,z direction into a horizontal angle for use elsewhere
-    theta = np.arctan2(-y, x)
-    # Make angles go 0 to 2pi, not -pi to 0 to pi (all anti-clockwise)
-    theta = np.mod(theta, 2*np.pi)
+    # convert x,y,z direction into a horizontal angle for use elsewhere as per the 
+    # coordinate system in the sonar-netcdf4 convention. This is the x-axis to forward
+    # and the y-axis to starboard (and z-axis down).
 
-    return theta, tilt
+    # Due to the -y below, the arctan2 angles are 0 to forward, decreasing to -pi to port and 
+    # increasing to +pi to starboard
+    theta = np.arctan2(-y, x)
+    # sometimes the angles can be non-monotonic and will cause problems when plotting the
+    # omni echogram, so sort and also return the sorting order for other functions to use
+    sort_i = np.argsort(theta)
+
+    return theta, tilt, sort_i
 
 
 def SvFromSonarNetCDF4(f, beamGroup, i, tilt):

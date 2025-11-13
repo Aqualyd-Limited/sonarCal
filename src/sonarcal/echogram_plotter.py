@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
-from scipy import signal
+# from scipy import signal
 from matplotlib.widgets import RangeSlider
 from .utils import app_name
 from .gui_utils import draggable_ring, draggable_radial
@@ -30,7 +30,8 @@ class echogramPlotter:
         # Various user-changable lines on the plots that could in the future
         # come from a config file.
         self.beamLineAngle = 0.0  # [deg]
-        self.beam = 0  # dummy value. Is updated once some data are received.
+        self.beamIdx = 0  # dummy value. Is updated once some data are received.
+        self.beamLabel = ''
 
         self.minTargetRange = 0.33*maxRange
         self.maxTargetRange = 0.66*maxRange
@@ -121,7 +122,7 @@ class echogramPlotter:
         self.ampDiffPlotAx.grid(axis='y', linestyle=':')
 
         self.portEchogramAx.set_title('Port', loc='left')
-        self.mainEchogramAx.set_title(f'Beam {self.beam}', loc='left')
+        self.mainEchogramAx.set_title(f'Beam {self.beamLabel}', loc='left')
         self.stbdEchogramAx.set_title('Starboard', loc='left')
 
         # Create the lines in the plots
@@ -203,7 +204,8 @@ class echogramPlotter:
         self.beamLine = draggable_radial(self.polarPlotAx, self.beamLineAngle,
                                          self.maxRange, theta, labels)
 
-        self.updateBeamNum(theta)  # sets self.beam from the positon of the radial line
+        # sets self.beamIdx and self.beamLabel from the positon of the radial line
+        self.updateBeamNum(theta)  
 
         # Axes labels
         self.stbdEchogramAx.set_xlabel('Pings')
@@ -270,29 +272,29 @@ class echogramPlotter:
                     self.updateBeamNum(theta)  # sets self.beam from self.beamLineAngle
 
                     # work out the beam indices
-                    if self.beam == 0:
+                    if self.beamIdx == 0:
                         beamPort = self.numBeams-1
                     else:
-                        beamPort = self.beam-1
+                        beamPort = self.beamIdx-1
 
-                    if self.beam == self.numBeams-1:
+                    if self.beamIdx == self.numBeams-1:
                         beamStbd = 0
                     else:
-                        beamStbd = self.beam+1
+                        beamStbd = self.beamIdx+1
 
                     # print('{}, {}, {}'.format(beamPort, self.beam, beamStbd))
                     # Find the max amplitude between the min and max ranges set by the UI
                     # and store for plotting
                     self.amp = np.roll(self.amp, -1, 1)
                     self.amp[0, -1] = np.max(backscatter[beamPort][minSample:maxSample])
-                    max_i = np.argmax(backscatter[self.beam][minSample:maxSample])
-                    self.amp[1, -1] = backscatter[self.beam][minSample+max_i]
+                    max_i = np.argmax(backscatter[self.beamIdx][minSample:maxSample])
+                    self.amp[1, -1] = backscatter[self.beamIdx][minSample+max_i]
                     self.rangeMax = (minSample+max_i) * samInt * c / 2.0
                     self.amp[2, -1] = np.max(backscatter[beamStbd][minSample:maxSample])
 
                     # Store the amplitude for the 3 beams for the echograms
                     self.port = self.updateEchogramData(self.port, backscatter[beamPort])
-                    self.main = self.updateEchogramData(self.main, backscatter[self.beam])
+                    self.main = self.updateEchogramData(self.main, backscatter[self.beamIdx])
                     self.stbd = self.updateEchogramData(self.stbd, backscatter[beamStbd])
 
                     # Update the plots
@@ -307,6 +309,7 @@ class echogramPlotter:
                     if not np.isnan(variability):
                         self.diffVariability.set_text(rf'$\sigma$ = {variability:.1f} dB')
 
+                    from scipy import signal  # deferred to save startup time
                     self.ampSmooth[0, :] = signal.filtfilt(coeff, 1, self.amp[0, :])
                     self.ampSmooth[1, :] = signal.filtfilt(coeff, 1, self.amp[1, :])
                     self.ampSmooth[2, :] = signal.filtfilt(coeff, 1, self.amp[2, :])
@@ -337,9 +340,9 @@ class echogramPlotter:
                     self.mainEchogram.set_data(self.main)
                     self.stbdEchogram.set_data(self.stbd)
 
-                    self.portEchogramAx.set_title(f'Beam {labels[beamPort].decode()}', loc='left')
-                    self.mainEchogramAx.set_title(f'Beam {labels[self.beam].decode()}', loc='left')
-                    self.stbdEchogramAx.set_title(f'Beam {labels[beamStbd].decode()}', loc='left')
+                    self.portEchogramAx.set_title(f'Beam {labels[beamPort]}', loc='left')
+                    self.mainEchogramAx.set_title(f'Beam {labels[self.beamIdx]}', loc='left')
+                    self.stbdEchogramAx.set_title(f'Beam {labels[beamStbd]}', loc='left')
 
                     # Polar plot
                     for i, b in enumerate(backscatter):
@@ -376,7 +379,10 @@ class echogramPlotter:
 
     def updateBeamNum(self, theta):
         """Get the beam number from the beam line angle and the latest theta."""
-        self.beamLineAngle = self.beamLine.value
+        # self.beamLineAngle = self.beamLine.value
 
-        idx = (np.abs(theta - self.beamLineAngle)).argmin()
-        self.beam = idx
+        # idx = (np.abs(theta - self.beamLineAngle)).argmin()
+        # self.beam = idx
+
+        self.beamIdx = self.beamLine.selected_beam_idx
+        self.beamLabel = self.beamLine.selected_beam_label

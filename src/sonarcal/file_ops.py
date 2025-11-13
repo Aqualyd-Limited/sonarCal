@@ -1,7 +1,8 @@
 import sys
 from time import sleep
 from datetime import datetime, timedelta
-import h5py
+# import h5py
+import numpy as np
 from .utils import beamAnglesFromNetCDF4, SvFromSonarNetCDF4, app_name
 import logging
 from pathlib import Path
@@ -104,6 +105,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
             while noNewDataCount <= maxNoNewDataCount:
                 # open netcdf file
                 try:
+                    import h5py  # deferred to save startup time
                     f = h5py.File(mostRecentFile, 'r', libver='latest', swmr=True)
                     # f = h5py.File(mostRecentFile, 'r') # without HDF5 swmr option
                     f_previous = mostRecentFile
@@ -151,6 +153,7 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue, replayRate):
     logger.info('Reading from file: %s.', replay_file)
 
     # open netcdf file
+    import h5py  # deferred to save startup time
     f = h5py.File(replay_file, 'r')
 
     t = f[beamGroup + '/ping_time']
@@ -158,12 +161,21 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue, replayRate):
     # Send off each ping at a sedate rate...
     for i in range(0, t.shape[0]):
         # print('ping')
-        theta, tilt = beamAnglesFromNetCDF4(f, beamGroup, i)
+        theta, tilt, sort_i = beamAnglesFromNetCDF4(f, beamGroup, i)
         sv = SvFromSonarNetCDF4(f, beamGroup, i, tilt)
 
         samInt = f[beamGroup + '/sample_interval'][i]
         c = f['Environment/sound_speed_indicative'][()]
         labels = f[beamGroup + '/beam']
+
+        # convert HDF5 text to list of str
+        labels = np.array([s.decode('utf-8') for s in labels])
+
+        # Sort everything so that the theta angles are monotonic
+        sv = sv[sort_i]
+        theta = theta[sort_i]
+        tilt = tilt[sort_i]
+        labels = labels[sort_i] 
 
         # send the data off to be plotted
         msg_queue.put((t[i], samInt, c, sv, theta, labels))
@@ -173,7 +185,7 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue, replayRate):
             # t has units of nanoseconds
             sleep((t[i] - t[i-1])/1e9)
         else:
-            sleep(0.2)
+            sleep(0.2)  # TODO - why not set to 0.0?
 
     f.close()
 

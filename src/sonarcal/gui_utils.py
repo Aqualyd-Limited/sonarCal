@@ -1,16 +1,20 @@
 import numpy as np
-from matplotlib import lines
+from math import pi
+# from matplotlib import lines
 
 class draggable_ring:
     """Provides a range ring on a polar plot that the user can move with the mouse."""
 
     def __init__(self, ax, r):
+        # deferred imports
+        from matplotlib import lines
+
         self.ax = ax
         self.c = ax.get_figure().canvas
         self.range = r
         self.numPoints = 50  # used to draw the range circle
 
-        self.line = lines.Line2D(np.linspace(-np.pi, np.pi, num=self.numPoints),
+        self.line = lines.Line2D(np.linspace(-pi, pi, num=self.numPoints),
                                  np.ones(self.numPoints)*self.range,
                                  linewidth=2, color='k', picker=True)
         self.line.set_pickradius(5)
@@ -42,7 +46,8 @@ class draggable_radial:
     """Provide a radial line on a polar plot that the user can move with the mouse."""
 
     def __init__(self, ax, angle: float, maxRange: float, theta: float, labels):
-        
+        from matplotlib import lines  # deferred to save import time
+
         self.line_color_unfrozen = 'black'
         self.line_color_frozen = 'orange'
         
@@ -50,21 +55,22 @@ class draggable_radial:
         self.inv = self.ax.transData.inverted()  # used in followmouse()
 
         self.c = ax.get_figure().canvas
-        self.angle = angle
+        # self.angle = angle
         self.maxRange = maxRange
         self.labels = labels
         self.theta = theta  # the sonar-provided beam pointing angles.
 
-        self.value = 0.0  # is updated to a true value once data is received
+        #self.value = 0.0  # is updated to a true value once data is received
+        self.selected_beam_idx = 0
 
-        self.line = lines.Line2D([self.angle, self.angle], [0, self.maxRange],
+        self.line = lines.Line2D([angle, angle], [0, self.maxRange],
                                  linewidth=2, marker='o', markevery=[-1],
                                  color=self.line_color_unfrozen, picker=True)
-        self.text = self.ax.text(self.angle, 1.2*self.maxRange, '',
+        self.text = self.ax.text(angle, 1.2*self.maxRange, '',
                                  color=self.line_color_unfrozen,
                                  horizontalalignment='center', verticalalignment='center')
         # self.text.set_bbox({'color': 'w', 'alpha': 0.5, 'boxstyle': 'round,rounding_size=0.6'})
-        self.snapAngle(self.angle)
+        self.snapAngle(angle)
 
         self.line.set_pickradius(5)
         self.ax.add_line(self.line)
@@ -106,25 +112,30 @@ class draggable_radial:
 
         if event.x and event.y:  # avoid None's
             x, _ = self.inv.transform((event.x, event.y))
-            # When the polar plot has an offset (applied when setting up the plot),
-            # the angles in one quadrant become negative (which we don't want).
-            # This fixes that.
-            if x < 0:
-                x += 2*np.pi
+            # The matplotlib inverse transform gives angles from -90 to 270 (but in radians) 
+            # with increasing values in an anticlockwise direction.
+            # Convert the 180 to 270 to be -90 to -180 (in radians).
+            if x > np.pi:
+                x -= 2*np.pi
+
             self.snapAngle(x)
 
-    def snapAngle(self, x):
+    def snapAngle(self, x: float):
         """Snap the mouse position to the cente of a beam.
 
         Updates the beam line and beam number text.
         """
         idx = (np.abs(self.theta - x)).argmin()
+
+        self.selected_beam_idx = idx
+        self.selected_beam_label = self.labels[idx]
+
         snappedAngle = self.theta[idx]
         self.line.set_data([snappedAngle, snappedAngle], [0, self.maxRange])
 
         # update beam number display at the end of the radial line
         self.text.set_position((snappedAngle, 1.12*self.maxRange))
-        self.text.set_text(f'{self.labels[idx].decode()}')
+        self.text.set_text(f'{self.labels[idx]}')
 
         self.c.draw_idle()
 

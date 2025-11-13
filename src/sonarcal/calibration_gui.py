@@ -95,10 +95,10 @@ class calibrationGUI:
         """A beam calibration has either started or ended."""
         if self.onaxis_value.get():  # start calibrating a beam
             self.echogram.beamLine.freeze(True)
-            logger.info('Beam %d calibration started', self.echogram.beam)
+            logger.info('Beam %s calibration started', self.echogram.beamLabel)
         else:  # finished calibrating a beam
             self.auto_save()
-            logger.info('Beam %d calibration complete', self.echogram.beam)
+            logger.info('Beam %s calibration complete', self.echogram.beamLabel)
             self.echogram.beamLine.freeze(False)
             self.sphere_ts = []
             if self.results_dialog:
@@ -119,10 +119,10 @@ class calibrationGUI:
             # calculate the beam gain and other stats
             (gain, rms, r, num) = calculate_gain(self.sphere_ts)
             # store the latest beam gain values
-            self.cal_data.update(e.beam, datetime.now().strftime('%H:%M:%S'), gain, rms, r, num)
+            self.cal_data.update(e.beamLabel, datetime.now().strftime('%H:%M:%S'), gain, rms, r, num)
             # update the results dialog if present
             if self.results_dialog:
-                self.results_dialog.update_with(self.cal_data, e.beam)
+                self.results_dialog.update_with(self.cal_data, e.beamLabel)
 
     def about(self):
         message = (f'Sonarcal, version {version("sonarcal")}\n\n'
@@ -234,7 +234,7 @@ class resultsDialog:
         # Add rows (if any)
         self.update_with(data)            
                     
-    def update_with(self, data, active_beam: int|None = None):
+    def update_with(self, data, active_beam_label: str = ''):
         """Update dialog's display with given calibration data."""
 
         for beam, row in data.df().iterrows():
@@ -258,21 +258,21 @@ class resultsDialog:
                 item_id = self.tree.insert('', 'end', values=values)
                 self.item_ids[beam] = item_id
 
-        self.update_rows(active_beam)
+        self.update_rows(active_beam_label)
 
         # keep this to use in the save and remove functionalities
         self.data = data
 
-    def update_rows(self, active_beam: int|None):
+    def update_rows(self, active_beam_label: str):
         """Sorts calibration results rows by beam and sets background colours to look nice."""
-        for beam, index in zip(sorted(self.item_ids.keys()), range(len(self.item_ids))):
-            self.tree.move(self.item_ids[beam], '', index)
+        for beam_label, index in zip(sorted(self.item_ids.keys(), key=int), range(len(self.item_ids))):
+            self.tree.move(self.item_ids[beam_label], '', index)
 
             rowness = 'oddrow' if index % 2 == 0 else 'evenrow'
-            if active_beam and beam == active_beam:
+            if active_beam_label and beam_label == active_beam_label:
                 rowness = 'active'
 
-            self.tree.item(self.item_ids[beam], tags=(rowness,))    
+            self.tree.item(self.item_ids[beam_label], tags=(rowness,))    
 
     def remove_rows(self):
         """Remove selected rows from the results table."""
@@ -287,11 +287,11 @@ class resultsDialog:
             to_remove.append(values[0])
 
         if to_remove:
-            for beam in to_remove:
+            for beam_label in to_remove:
                 # remove selected rows from treeview
-                self.tree.delete(self.item_ids[beam])
+                self.tree.delete(self.item_ids[beam_label])
                 # remove beam imtem from the map between beam and item ids
-                self.item_ids.pop(beam)
+                self.item_ids.pop(beam_label)
             # remove beams from the cal_data store
             self.data.remove(to_remove)
             self.update_rows(None)

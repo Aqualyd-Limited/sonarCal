@@ -14,10 +14,8 @@ import queue
 import sys
 from pathlib import Path
 
-from platformdirs import PlatformDirs
-
 from .echogram_plotter import echogramPlotter
-from .utils import setupLogging, app_name, on_exit, window_closed
+from .utils import setupLogging, app_name, on_exit, window_closed, dirs
 from .file_ops import file_listen, file_replay
 from .calibration_gui import calibrationGUI
 
@@ -25,7 +23,6 @@ if sys.platform == "win32":
     import win32api
 
 # Configure logging
-dirs = PlatformDirs(appname=app_name, appauthor="Aqualyd")
 log_dir = Path(dirs.user_log_dir)
 log_dir.mkdir(parents=True, exist_ok=True)
 setupLogging(log_dir, app_name)
