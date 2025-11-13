@@ -27,6 +27,11 @@ class calibrationData():
 
         if filename:
             logger.info('Saved results to %s', filename)
-            self.data.sort_index().to_csv(filename)
+
+            # the dataframe index is str, but it will mostly be integer values, so make things
+            # sort numerically if an int followed by non-ints.
+            int_order = sorted((x for x in self.data.index if x.isdigit()), key=lambda i: int(i))
+            str_order = sorted(x for x in self.data.index if not x.isdigit())
+            self.data.loc[int_order+str_order].to_csv(filename)
 
     
