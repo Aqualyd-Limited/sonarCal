@@ -116,7 +116,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                         pingTime = datetime(1601, 1, 1) + timedelta(microseconds=t/1000.0)
                         logger.info('Start reading ping from time %s', pingTime)
 
-                        theta, tilt = beamAnglesFromNetCDF4(f, beamGroup, pingIndex)
+                        theta, tilt, sort_i = beamAnglesFromNetCDF4(f, beamGroup, pingIndex)
                         sv = SvFromSonarNetCDF4(f, beamGroup, pingIndex, tilt)
 
                         samInt = f[beamGroup + '/sample_interval'][pingIndex]
@@ -127,6 +127,13 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                         noNewDataCount = 0  # reset the count
 
                         logger.info('Finished reading ping from time %s', pingTime)
+                        
+                        # Sort everything so that the theta angles are monotonic
+                        sv = sv[sort_i]
+                        theta = theta[sort_i]
+                        tilt = tilt[sort_i]
+                        labels = labels[sort_i] 
+                        
                         # send the data off to be plotted
                         msg_queue.put((t, samInt, c, sv, theta, labels))
                     else:
