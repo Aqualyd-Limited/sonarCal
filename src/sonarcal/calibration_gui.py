@@ -9,11 +9,10 @@ from tkinter import filedialog as fd
 from tkinter import messagebox
 from importlib.metadata import version
 from PIL import Image, ImageTk
-from .utils import window_closed, app_name
+from .utils import window_closed, app_name, dirs, autosave_dir
 from .calibration_data import calibrationData
 from .calculate_gains import calculate_gain
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from platformdirs import PlatformDirs
 
 logger = logging.getLogger(app_name)
 icon_file = Path(__file__).parent/'assets'/'logo.png'  # TODO get via a config file
@@ -98,11 +97,18 @@ class calibrationGUI:
             self.echogram.beamLine.freeze(True)
             logger.info('Beam %d calibration started', self.echogram.beam)
         else:  # finished calibrating a beam
+            self.auto_save()
             logger.info('Beam %d calibration complete', self.echogram.beam)
             self.echogram.beamLine.freeze(False)
             self.sphere_ts = []
             if self.results_dialog:
                 self.results_dialog.update_rows(None)  # unhighlights the previously active row
+
+    def auto_save(self):
+        """Save cal results to an autosave location."""
+        timestamp = datetime.now().strftime('%Y%m%dT%H%M%S')
+        filename = autosave_dir/('results_' + timestamp + '.csv')
+        self.cal_data.save(filename)
 
     def new_ping(self):
         """Orchestrates things for each new ping."""
@@ -295,12 +301,11 @@ class resultsDialog:
         timestamp = datetime.now().strftime('%Y%m%dT%H%M%S')
         default_filename = 'sonar_calibration_' + timestamp + '.csv'
         save_filename = fd.asksaveasfilename(title='Save as CSV', defaultextension='.csv',
-                                             initialdir=PlatformDirs.user_documents_dir,
+                                             initialdir=dirs.user_documents_dir,
                                              initialfile=default_filename,
                                              filetypes=[('CSV', '*.csv')])
         if save_filename:
-            logger.info('Saved results to %s', save_filename)
-            self.data.df().sort_index().to_csv(save_filename)
+            self.data.save(save_filename)
 
     def on_row_click(self, event):
         """Implement selection and deselection."""
