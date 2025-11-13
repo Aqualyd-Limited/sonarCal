@@ -53,6 +53,7 @@ class draggable_radial:
         
         self.ax = ax
         self.inv = self.ax.transData.inverted()  # used in followmouse()
+        self.ax.set_zorder(2) # so that it is on top of the rangeslider
 
         self.c = ax.get_figure().canvas
         # self.angle = angle
@@ -68,6 +69,7 @@ class draggable_radial:
                                  color=self.line_color_unfrozen, picker=True)
         self.text = self.ax.text(angle, 1.2*self.maxRange, '',
                                  color=self.line_color_unfrozen,
+                                 bbox={'boxstyle':'square,pad=0.0', 'fc': 'white', 'ec': 'none'},
                                  horizontalalignment='center', verticalalignment='center')
         # self.text.set_bbox({'color': 'w', 'alpha': 0.5, 'boxstyle': 'round,rounding_size=0.6'})
         self.snapAngle(angle)
@@ -134,7 +136,7 @@ class draggable_radial:
         self.line.set_data([snappedAngle, snappedAngle], [0, self.maxRange])
 
         # update beam number display at the end of the radial line
-        self.text.set_position((snappedAngle, 1.12*self.maxRange))
+        self.text.set_position((snappedAngle, 1.15*self.maxRange))
         self.text.set_text(f'{self.labels[idx]}')
 
         self.c.draw_idle()
