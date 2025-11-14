@@ -2,16 +2,16 @@ import pytest
 
 def test_import_sonarcal():
     """Check that importing the sonarcal files works."""
-    from sonarcal import calculate_gains
-    from sonarcal import calibration_data
-    from sonarcal import calibration_gui
-    from sonarcal import controller
-    from sonarcal import dialog_config
-    from sonarcal import dialog_results
-    from sonarcal import echogram_plotter
-    from sonarcal import file_ops
-    from sonarcal import gui_utils
-    from sonarcal import utils
+    from sonarcal import calculate_gains  # noqa: F401
+    from sonarcal import calibration_data  # noqa: F401
+    from sonarcal import calibration_gui  # noqa: F401
+    from sonarcal import controller  # noqa: F401
+    from sonarcal import dialog_config  # noqa: F401
+    from sonarcal import dialog_results  # noqa: F401
+    from sonarcal import echogram_plotter  # noqa: F401
+    from sonarcal import file_ops  # noqa: F401
+    from sonarcal import gui_utils  # noqa: F401
+    from sonarcal import utils  # noqa: F401
 
 def test_calibration_data():
     """Accumulate, delete, and save calibration results."""
