@@ -3,6 +3,8 @@ from tkinter import ttk
 from tkinter import filedialog as fd
 from datetime import datetime
 from .utils import dirs
+from .configuration import sonarcalConfig
+
 
 class resultsDialog:
     """A dialog box to show completed calibration results per beam."""
@@ -45,6 +47,7 @@ class resultsDialog:
 
     def setup_treeview(self, top, data):
         """Create the treeview columns, etc."""
+        c = sonarcalConfig()
         
         headings = [data.df().index.name] + list(data.df().columns)
         
@@ -54,7 +57,7 @@ class resultsDialog:
         # colour odd and even rows
         self.tree.tag_configure('evenrow', background='white smoke')
         self.tree.tag_configure('oddrow', background='white')
-        self.tree.tag_configure('active', background='orange2')
+        self.tree.tag_configure('active', background=c.calibrating_colour())
         
         for col in headings:
             self.tree.heading(col, text=col, anchor='e')

@@ -13,16 +13,18 @@ from .utils import window_closed, app_name, autosave_dir
 from .calibration_data import calibrationData
 from .calculate_gains import calculate_gain
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from .configuration import sonarcalConfig
 
 logger = logging.getLogger(app_name)
-icon_file = Path(__file__).parent/'assets'/'logo.png'  # TODO get via a config file
 
 class calibrationGUI:
     """Provides the main GUI container and misc labels/buttons."""
 
-    def __init__(self, echogram, title='TITLE', help_uri=None):
+    def __init__(self, echogram):
+        c = sonarcalConfig()
+
         self.echogram = echogram
-        self.help_uri = help_uri
+        self.help_uri = c.helpURI()
 
         # Calibration gains are stored in here
         self.cal_data = calibrationData()
@@ -30,13 +32,13 @@ class calibrationGUI:
         self.sphere_ts = []
 
         # The GUI window
-        self.echogram.root.title(title)
+        self.echogram.root.title(c.title())
         
         # Dialogs that we keep around
         self.results_dialog = None
         
         # The toolbar and window icon/logo
-        self.icon = ImageTk.PhotoImage(Image.open(icon_file))
+        self.icon = ImageTk.PhotoImage(Image.open(c.iconFile()))
         self.echogram.root.iconphoto(False, self.icon)
 
         # Things to do with new pings 

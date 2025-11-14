@@ -1,6 +1,8 @@
 import numpy as np
 from math import pi
 # from matplotlib import lines
+from .configuration import sonarcalConfig
+
 
 class draggable_ring:
     """Provides a range ring on a polar plot that the user can move with the mouse."""
@@ -47,9 +49,10 @@ class draggable_radial:
 
     def __init__(self, ax, angle: float, maxRange: float, theta: float, labels):
         from matplotlib import lines  # deferred to save import time
+        c = sonarcalConfig()
 
         self.line_color_unfrozen = 'black'
-        self.line_color_frozen = 'orange'
+        self.line_color_frozen = c.calibrating_colour()
         
         self.ax = ax
         self.inv = self.ax.transData.inverted()  # used in followmouse()

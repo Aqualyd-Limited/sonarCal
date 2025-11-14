@@ -10,6 +10,7 @@ from .utils import app_name
 from .gui_utils import draggable_ring, draggable_radial
 import humanize
 import logging
+from .configuration import sonarcalConfig
 
 # Matplotlib for tkinter
 mpl.use('TkAgg')
@@ -19,7 +20,9 @@ logger = logging.getLogger(app_name)
 class echogramPlotter:
     """Receive via a queue new ping data and use that to update the display."""
 
-    def __init__(self, numPings, maxRange, maxSv, minSv, msg_queue, root):
+    def __init__(self, msg_queue, root):
+        c = sonarcalConfig()
+
         self.queue = msg_queue
         self.root = root
         self.job = None
@@ -33,17 +36,17 @@ class echogramPlotter:
         self.beamIdx = 0  # dummy value. Is updated once some data are received.
         self.beamLabel = ''
 
-        self.minTargetRange = 0.33*maxRange
-        self.maxTargetRange = 0.66*maxRange
+        self.minTargetRange = 0.33*c.maxRange()
+        self.maxTargetRange = 0.66*c.maxRange()
 
         self.varNum = 5  # number of sphere values to use for the ping-to-ping variability
 
         self.diffPlotXlim = (-3, 0)  # [dB]
 
-        self.numPings = numPings  # to show in the echograms
-        self.maxRange = maxRange  # [m] of the echograms
-        self.maxSv = maxSv  # [dB] max Sv to show in the echograms
-        self.minSv = minSv  # [dB] min Sv to show in the echograms
+        self.numPings = c.numPings()  # to show in the echograms
+        self.maxRange = c.maxRange()  # [m] of the echograms
+        self.maxSv = c.maxSv()  # [dB] max Sv to show in the echograms
+        self.minSv = c.minSv()  # [dB] min Sv to show in the echograms
 
         self.checkQueueInterval = 200  # [ms] duration between checking the queue for new data
 
