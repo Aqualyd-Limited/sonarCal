@@ -282,7 +282,6 @@ class echogramPlotter:
                     else:
                         beamStbd = self.beamIdx+1
 
-                    # print('{}, {}, {}'.format(beamPort, self.beam, beamStbd))
                     # Find the max amplitude between the min and max ranges set by the UI
                     # and store for plotting
                     self.amp = np.roll(self.amp, -1, 1)
@@ -379,10 +378,5 @@ class echogramPlotter:
 
     def updateBeamNum(self, theta):
         """Get the beam number from the beam line angle and the latest theta."""
-        # self.beamLineAngle = self.beamLine.value
-
-        # idx = (np.abs(theta - self.beamLineAngle)).argmin()
-        # self.beam = idx
-
         self.beamIdx = self.beamLine.selected_beam_idx
         self.beamLabel = self.beamLine.selected_beam_label
