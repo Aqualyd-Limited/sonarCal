@@ -7,6 +7,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 from importlib.metadata import version
+from platform import python_version
 from PIL import Image, ImageTk
 from .utils import window_closed, app_name, autosave_dir
 from .calibration_data import calibrationData
@@ -125,6 +126,7 @@ class calibrationGUI:
 
     def about(self):
         message = (f'Sonarcal, version {version("sonarcal")}\n\n'
+                   f'Running on Python {python_version()}\n\n'
                    'A program to assist with calibrating omni-directional sonars.\n\n'
                    'Developed by Aqualyd Ltd\n\n'
                    'www.aqualyd.nz')
