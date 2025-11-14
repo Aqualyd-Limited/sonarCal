@@ -23,7 +23,8 @@ dependencies = [
   "humanize",
   "h5py",
   "Pillow",
-  "platformdirs"
+  "platformdirs",
+  'pywin32; platform_system == "Windows"'
 ]
 classifiers = [
     'Development Status :: 3 - Alpha',
