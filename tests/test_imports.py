@@ -1,0 +1,67 @@
+import pytest
+
+def test_import_sonarcal():
+    """Check that importing the sonarcal files works."""
+    from sonarcal import calculate_gains
+    from sonarcal import calibration_data
+    from sonarcal import calibration_gui
+    from sonarcal import controller
+    from sonarcal import dialog_config
+    from sonarcal import dialog_results
+    from sonarcal import echogram_plotter
+    from sonarcal import file_ops
+    from sonarcal import gui_utils
+    from sonarcal import utils
+
+def test_calibration_data():
+    """Accumulate, delete, and save calibration results."""
+
+    import os
+    from sonarcal import calibration_data
+    from datetime import datetime
+    
+    c = calibration_data.calibrationData()
+    
+    c.update('34', datetime.now().isoformat(), 45.1, 0.2, 25.4, 16)
+    c.update('64', datetime.now().isoformat(), 44.1, 0.3, 23.4, 26)
+    c.update('S123', datetime.now().isoformat(), 40.1, 0.25, 20.4, 56)
+    c.update('4', datetime.now().isoformat(), 30.1, 0.55, 29.4, 12)
+    assert len(c.df()) == 4
+    
+    c.remove('4')
+    assert len(c.df() == 3)
+
+    save_file = 'test_save_results.csv'    
+    if os.path.exists(save_file):
+        os.remove(save_file)
+
+    c.save(save_file)
+    assert os.path.exists(save_file)
+    
+def test_calculate_gain():
+    """Test calculation of transducer gains."""
+    
+    from sonarcal import calculate_gains
+    
+    ts = [('2025-11-14T15:20:57.74092', -42.4, 21.4),
+          ('2025-11-14T15:20:57.74092', -43.2, 22.4),
+          ('2025-11-14T15:20:57.74092', -44.1, 21.6),
+          ('2025-11-14T15:20:57.74092', -40.4, 20.2)]
+    
+    r = calculate_gains.calculate_gain(ts)
+    
+    assert r[0] == pytest.approx(-42.525, abs=1e-3)
+    assert r[1] == pytest.approx(1.5777, abs=1e-4)
+    assert r[2] == pytest.approx(21.4, abs=1e-1)
+    assert r[3] == 4
+
+def test_absorption():
+    """Test calculation of acoustic absorption."""
+    
+    from sonarcal import utils
+
+    a = utils.acousticAbsorption(12.5, 35.2, 11.2, 38000)
+
+    assert a == pytest.approx(0.00995, abs=1e-5)
+
+    
