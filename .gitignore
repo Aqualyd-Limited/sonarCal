@@ -1,3 +1,4 @@
 
 /src/sonarcal/__pycache__
 /dist
+*.pyc
