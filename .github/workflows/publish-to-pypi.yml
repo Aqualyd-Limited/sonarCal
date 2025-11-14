@@ -39,10 +39,27 @@ jobs:
           # Xvfb :99 &
           python -m pytest -v -s
 
+  offline_docs:
+    name: Build offline documentation
+    runs-on: ubunut-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - run: pip install mkdocs mkdocstrings[python] mkdocs-material
+      - run: |
+          export OFFLINE_PLUGIN_ENABLED=true
+          mkdocs build --clean --verbose --site-dir src/sonarcal/offline-docs
+
   build:
     name: Build distribution
     runs-on: ubuntu-latest
-    needs: test
+    needs: 
+      - test
+      - offline_docs
 
     steps:
     - uses: actions/checkout@v4
