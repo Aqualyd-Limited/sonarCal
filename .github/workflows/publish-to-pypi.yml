@@ -41,7 +41,7 @@ jobs:
 
   offline_docs:
     name: Build offline documentation
-    runs-on: ubunut-latest
+    runs-on: ubuntu-latest
     needs: test
 
     steps:
@@ -50,9 +50,16 @@ jobs:
         with:
           python-version: 3.x
       - run: pip install mkdocs mkdocstrings[python] mkdocs-material
-      - run: |
+      - name: Build documentation
+        run: |
           export OFFLINE_PLUGIN_ENABLED=true
           mkdocs build --clean --verbose --site-dir src/sonarcal/offline-docs
+      - name: Store the offline documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-docs
+          path: src/sonarcal/offline-docs
+          overwrite: true
 
   build:
     name: Build distribution
@@ -78,6 +85,11 @@ jobs:
         git branch
         git fetch --prune --unshallow
         git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+    - name: Download the offline documentation
+      uses: actions/download-artifact@v5
+      with:
+        name: offline-docs
+        path: src/sonarcal/offline-docs
     - name: Build a binary wheel and a source tarball
       run: python3 -m build
     - name: Store the distribution packages

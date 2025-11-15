@@ -56,6 +56,7 @@ class sonarcalConfig():
     def __init__(self):
         self.app_name = 'sonarcal'
         self.app_author = 'Aqualyd'
+        self.ini_section_name = 'sonarcal'
         
         self.dirs = PlatformDirs(appname=self.app_name, appauthor=self.app_author)
 
@@ -64,7 +65,6 @@ class sonarcalConfig():
 
         self.config = configparser.ConfigParser()
         c = self.config.read(self.config_filename, encoding='utf8')
-        self.sc = self.config['sonarcal']
 
         # default values, used if an entry is not present in the config file or 
         # the config file doesn't exist.
@@ -85,18 +85,22 @@ class sonarcalConfig():
                     }
 
         if not c:  # config file not found, so make one
-            self.config['sonarcal'] = defaults
+            self.config[self.ini_section_name] = defaults
             self.save_config()
         else:
             # if the config file doesn't have all of the entries in the defaults, add 
             # the missing ones in.
+            if not self.config.has_section(self.ini_section_name):
+                self.config.add_section(self.ini_section_name)
             added = False
             for k, v in defaults.items():
-                if k not in self.config['sonarcal']:
+                if k not in self.config[self.ini_section_name]:
                     added = True
-                    self.config['sonarcal'][k] = v
+                    self.config[self.ini_section_name][k] = v
             if added:
                 self.save_config()
+
+        self.sc = self.config[self.ini_section_name]
 
     # Note: decorated functions below can get and set config values.
     # Non-decorated functions only get config values.
@@ -192,4 +196,3 @@ class sonarcalConfig():
 
 # Simple way to get a singleton...
 config = sonarcalConfig()
-
