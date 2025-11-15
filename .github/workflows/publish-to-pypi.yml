@@ -51,27 +51,18 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.x"
-    - name: Install pypa/build
-      run: >-
-        python3 -m
-        pip install
-        build
-        --user
     - name: Build offline documentation
       run: |
         pip install mkdocs mkdocstrings[python] mkdocs-material
         export OFFLINE_PLUGIN_ENABLED=true
         mkdocs build --clean --verbose 
+    - name: Install pypa/build
+      run: python3 -m pip install build --user
     - name: Get history and tags for SCM versioning to work
       run: |
         git branch
         git fetch --prune --unshallow
         git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-    - name: Download the offline documentation
-      uses: actions/download-artifact@v5
-      with:
-        name: offline-docs
-        path: offline-docs
     - name: Build a binary wheel and a source tarball
       run: python3 -m build
     - name: Store the distribution packages
