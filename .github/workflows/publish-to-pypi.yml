@@ -20,6 +20,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Build offline documentation (should get this done via pyproject.toml settings)
+        run: |
+          pip install mkdocs mkdocstrings[python] mkdocs-material
+          export OFFLINE_PLUGIN_ENABLED=true
+          mkdocs build --clean --verbose 
       - name: Install packages
         run: |
           python -m pip install --upgrade pip
