@@ -41,7 +41,7 @@ jobs:
 
   offline_docs:
     name: Build offline documentation
-    runs-on: ubunut-latest
+    runs-on: ubuntu-latest
     needs: test
 
     steps:
