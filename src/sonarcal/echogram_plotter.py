@@ -6,22 +6,20 @@ import matplotlib as mpl
 import numpy as np
 # from scipy import signal
 from matplotlib.widgets import RangeSlider
-from .utils import app_name
 from .gui_utils import draggable_ring, draggable_radial
 import humanize
 import logging
-from .configuration import sonarcalConfig
+from .configuration import config
 
 # Matplotlib for tkinter
 mpl.use('TkAgg')
 
-logger = logging.getLogger(app_name)
+logger = logging.getLogger(config.appName())
 
 class echogramPlotter:
     """Receive via a queue new ping data and use that to update the display."""
 
     def __init__(self, msg_queue, root):
-        c = sonarcalConfig()
 
         self.queue = msg_queue
         self.root = root
@@ -36,21 +34,21 @@ class echogramPlotter:
         self.beamIdx = 0  # dummy value. Is updated once some data are received.
         self.beamLabel = ''
 
-        self.minTargetRange = 0.33*c.maxRange()
-        self.maxTargetRange = 0.66*c.maxRange()
+        self.minTargetRange = 0.33*config.maxRange()
+        self.maxTargetRange = 0.66*config.maxRange()
 
-        self.varNum = 5  # number of sphere values to use for the ping-to-ping variability
+        self.varNum = config.sphereStatsOver()
 
         self.diffPlotXlim = (-3, 0)  # [dB]
 
-        self.numPings = c.numPings()  # to show in the echograms
-        self.maxRange = c.maxRange()  # [m] of the echograms
-        self.maxSv = c.maxSv()  # [dB] max Sv to show in the echograms
-        self.minSv = c.minSv()  # [dB] min Sv to show in the echograms
+        self.numPings = config.numPings()  # to show in the echograms
+        self.maxRange = config.maxRange()  # [m] of the echograms
+        self.maxSv = config.maxSv()  # [dB] max Sv to show in the echograms
+        self.minSv = config.minSv()  # [dB] min Sv to show in the echograms
 
         self.checkQueueInterval = 200  # [ms] duration between checking the queue for new data
 
-        self.movingAveragePoints = 10  # number of points for moving average for smoothed plots
+        self.movingAveragePoints = config.movingAveragePoints()
 
         self.emptySv = -999.0  # initialisation value of echogram data
 
@@ -65,10 +63,6 @@ class echogramPlotter:
         """Create the GUI."""
         cmap = mpl.colormaps['jet']  # viridis looks nice too...
         cmap.set_under('w')  # and for values below self.minSv, if desired
-
-        # the max extend of the threshold range slider
-        lowestSv = -100
-        highestSv = 10
 
         # number of samples to store per ping
         self.maxSamples = int(np.ceil(self.maxRange / (samInt*c/2.0)))
@@ -194,6 +188,9 @@ class echogramPlotter:
         # range slider to adjust the echogram thresholds
 
         slider_ax = plt.axes([0.028, 0.20, 0.015, 0.65])
+        lowestSv = config.slider_lowest_Sv()
+        highestSv = config.slider_highest_Sv()
+
         self.slider = RangeSlider(slider_ax, label="Thresholds", valmin=lowestSv, valmax=highestSv,
                                   valinit=((self.minSv, self.maxSv)),
                                   valstep=np.arange(lowestSv, highestSv+1, 1),

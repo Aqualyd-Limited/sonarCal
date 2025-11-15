@@ -2,8 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog as fd
 from datetime import datetime
-from .utils import dirs
-from .configuration import sonarcalConfig
+from .configuration import config
 
 
 class resultsDialog:
@@ -47,7 +46,6 @@ class resultsDialog:
 
     def setup_treeview(self, top, data):
         """Create the treeview columns, etc."""
-        c = sonarcalConfig()
         
         headings = [data.df().index.name] + list(data.df().columns)
         
@@ -57,7 +55,7 @@ class resultsDialog:
         # colour odd and even rows
         self.tree.tag_configure('evenrow', background='white smoke')
         self.tree.tag_configure('oddrow', background='white')
-        self.tree.tag_configure('active', background=c.calibrating_colour())
+        self.tree.tag_configure('active', background=config.calibrating_colour())
         
         for col in headings:
             self.tree.heading(col, text=col, anchor='e')
@@ -120,6 +118,8 @@ class resultsDialog:
 
         if to_remove:
             for beam_label in to_remove:
+                print(beam_label)
+                print(self.item_ids)
                 # remove selected rows from treeview
                 self.tree.delete(self.item_ids[beam_label])
                 # remove beam imtem from the map between beam and item ids
@@ -133,7 +133,7 @@ class resultsDialog:
         timestamp = datetime.now().strftime('%Y%m%dT%H%M%S')
         default_filename = 'sonar_calibration_' + timestamp + '.csv'
         save_filename = fd.asksaveasfilename(title='Save as CSV', defaultextension='.csv',
-                                             initialdir=dirs.user_documents_dir,
+                                             initialdir=config.userDocumentsDir(),
                                              initialfile=default_filename,
                                              filetypes=[('CSV', '*.csv')])
         if save_filename:

@@ -3,23 +3,14 @@ from datetime import datetime, timezone
 import numpy as np
 import logging
 import logging.handlers
-from pathlib import Path
-from platformdirs import PlatformDirs
+from .configuration import config
 
-app_name = 'sonarcal'
-app_author = 'Aqualyd'
-
-# Setup logging, etc, directories
-dirs = PlatformDirs(appname=app_name, appauthor=app_author)
-autosave_dir = Path(dirs.user_data_dir)/'autosave'
-
-autosave_dir.mkdir(parents=True, exist_ok=True)
-
-def setupLogging(log_dir, label):
+def setupLogging():
     """Set info, warning, and error message logger to a file and to the console."""
     now = datetime.now(timezone.utc)
-    logger_filename = os.path.join(log_dir, now.strftime('log_' + label + '-%Y%m%d-T%H%M%S.log'))
-    logger = logging.getLogger(app_name)
+    logger_filename = os.path.join(config.logDir(),
+                                   now.strftime('log_' + config.appName() + '-%Y%m%d-T%H%M%S.log'))
+    logger = logging.getLogger(config.appName())
     logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
@@ -35,7 +26,7 @@ def setupLogging(log_dir, label):
     console.setFormatter(formatter)
     logger.addHandler(console)
 
-    logger.info('Log files are in %s.', log_dir.as_posix())
+    logger.info('Log files are in %s.', config.logDir().as_posix())
 
 
 def on_exit(root, job, sig):

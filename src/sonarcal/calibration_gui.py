@@ -1,7 +1,6 @@
 
 import webbrowser
 import logging
-from pathlib import Path
 from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
@@ -9,22 +8,21 @@ from tkinter import messagebox
 from importlib.metadata import version
 from platform import python_version
 from PIL import Image, ImageTk
-from .utils import window_closed, app_name, autosave_dir
+from .utils import window_closed
 from .calibration_data import calibrationData
 from .calculate_gains import calculate_gain
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from .configuration import sonarcalConfig
+from .configuration import config as cfg
 
-logger = logging.getLogger(app_name)
+logger = logging.getLogger(cfg.appName())
 
 class calibrationGUI:
     """Provides the main GUI container and misc labels/buttons."""
 
     def __init__(self, echogram):
-        c = sonarcalConfig()
 
         self.echogram = echogram
-        self.help_uri = c.helpURI()
+        self.help_uri = str(cfg.helpURI())
 
         # Calibration gains are stored in here
         self.cal_data = calibrationData()
@@ -32,13 +30,13 @@ class calibrationGUI:
         self.sphere_ts = []
 
         # The GUI window
-        self.echogram.root.title(c.title())
+        self.echogram.root.title(cfg.title())
         
         # Dialogs that we keep around
         self.results_dialog = None
         
         # The toolbar and window icon/logo
-        self.icon = ImageTk.PhotoImage(Image.open(c.iconFile()))
+        self.icon = ImageTk.PhotoImage(Image.open(cfg.iconFile()))
         self.echogram.root.iconphoto(False, self.icon)
 
         # Things to do with new pings 
@@ -109,7 +107,7 @@ class calibrationGUI:
     def auto_save(self):
         """Save cal results to an autosave location."""
         timestamp = datetime.now().strftime('%Y%m%dT%H%M%S')
-        filename = autosave_dir/('results_' + timestamp + '.csv')
+        filename = cfg.autoSaveDir()/('results_' + timestamp + '.csv')
         self.cal_data.save(filename)
 
     def new_ping(self):

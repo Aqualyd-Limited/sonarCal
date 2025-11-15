@@ -3,11 +3,12 @@ from time import sleep
 from datetime import datetime, timedelta
 # import h5py
 import numpy as np
-from .utils import beamAnglesFromNetCDF4, SvFromSonarNetCDF4, app_name
+from .utils import beamAnglesFromNetCDF4, SvFromSonarNetCDF4
 import logging
 from pathlib import Path
+from .configuration import config
 
-logger = logging.getLogger(app_name)
+logger = logging.getLogger(config.appName())
 
 def most_recent_file(watch_dir: Path, wait_interval: float=1.0):
     """Get the most recent .nc or .raw file in the directory."""

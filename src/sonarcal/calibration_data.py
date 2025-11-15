@@ -1,8 +1,8 @@
 # import pandas as pd
 import logging
-from .utils import app_name
+from .configuration import config
 
-logger = logging.getLogger(app_name)
+logger = logging.getLogger(config.appName())
 
 class calibrationData():
     """Storage for sonar caliration results."""
