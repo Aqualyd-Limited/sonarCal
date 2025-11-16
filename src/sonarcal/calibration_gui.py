@@ -134,6 +134,9 @@ class calibrationGUI:
         messagebox.showinfo(title='About', message=message)
 
     def close(self):
+        # Catch closing the program while still calibrating a beam
+        if self.echogram.beamLine.frozen():
+            self.auto_save()
         window_closed(self.echogram.root, self.echogram.job)
 
     def results(self):
