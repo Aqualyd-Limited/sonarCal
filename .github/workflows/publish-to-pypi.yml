@@ -60,7 +60,7 @@ jobs:
       run: |
         pip install mkdocs mkdocstrings[python] mkdocs-material
         export OFFLINE_PLUGIN_ENABLED=true
-        mkdocs build --clean --verbose 
+        mkdocs build --clean --verbose  # writes offline docs to directory 'site'
     - name: Install pypa/build
       run: python3 -m pip install build --user
     - name: Get history and tags for SCM versioning to work
