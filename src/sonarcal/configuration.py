@@ -137,6 +137,9 @@ class sonarcalConfig():
         d.mkdir(parents=True, exist_ok=True)
         return d
     
+    def userDocumentsDir(self) -> str:
+        return self.dirs.user_documents_dir
+    
     @int_config
     def numPings(self, value=None):
         return 'numPingsToShow'
