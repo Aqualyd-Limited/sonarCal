@@ -188,12 +188,12 @@ class sonarcalConfig():
         return 'movingAveragePoints'
 
     @float_config
-    def slider_lowest_Sv(self, value=None):
+    def sliderLowestSv(self, value=None):
         "Echogram colour scheme lower threshold."
         return 'sliderLowestSv'
         
     @float_config
-    def slider_highest_Sv(self, value=None):
+    def sliderHighestSv(self, value=None):
         "Echogram colour scheme upper threshold."
         return 'sliderHighestSv'
 

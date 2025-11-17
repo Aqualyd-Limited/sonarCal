@@ -30,6 +30,7 @@ class echogramPlotter:
 
         # Various user-changable lines on the plots that could in the future
         # come from a config file.
+        self.beamLine = None
         self.beamLineAngle = 0.0  # [deg]
         self.beamIdx = 0  # dummy value. Is updated once some data are received.
         self.beamLabel = ''
@@ -188,8 +189,8 @@ class echogramPlotter:
         # range slider to adjust the echogram thresholds
 
         slider_ax = plt.axes([0.028, 0.20, 0.015, 0.65])
-        lowestSv = config.slider_lowest_Sv()
-        highestSv = config.slider_highest_Sv()
+        lowestSv = config.sliderLowestSv()
+        highestSv = config.sliderHighestSv()
 
         self.slider = RangeSlider(slider_ax, label="Thresholds", valmin=lowestSv, valmax=highestSv,
                                   valinit=((self.minSv, self.maxSv)),

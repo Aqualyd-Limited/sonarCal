@@ -93,6 +93,9 @@ class calibrationGUI:
 
     def onaxis_changed(self):
         """A beam calibration has either started or ended."""
+        if not self.echogram.beamLine:
+            return
+
         if self.onaxis_value.get():  # start calibrating a beam
             self.echogram.beamLine.freeze(True)
             logger.info('Beam %s calibration started', self.echogram.beamLabel)
@@ -133,7 +136,7 @@ class calibrationGUI:
 
     def close(self):
         # Catch closing the program while still calibrating a beam
-        if self.echogram.beamLine.frozen():
+        if self.echogram.beamLine and self.echogram.beamLine.frozen():
             self.auto_save()
         window_closed(self.echogram.root, self.echogram.job)
 
