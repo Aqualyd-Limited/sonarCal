@@ -125,11 +125,9 @@ class calibrationGUI:
                 self.results_dialog.update_with(self.cal_data, e.beamLabel)
 
     def about(self):
-        message = (f'Sonarcal, version {version("sonarcal")}\n\n'
-                   f'Running on Python {python_version()}\n\n'
-                   'A program to assist with calibrating omni-directional sonars.\n\n'
-                   'Developed by Aqualyd Ltd\n\n'
-                   'www.aqualyd.nz')
+        message = (f'Sonarcal, version {version("sonarcal")}, running on Python {python_version()}\n\n'
+                   'Sonarcal is a program to assist with calibrating omni-directional sonars.\n\n'
+                   'Developed by Aqualyd Ltd, www.aqualyd.nz')
 
         messagebox.showinfo(title='About', message=message)
 
