@@ -26,7 +26,7 @@ class configDialog:
         self.params = [
             Param('', '', 'horizline'),
             Param('Sonar data directory', 'watchDir', 'str', 'filechooser'),
-            Param('Expect live data', 'liveData', 'boolean'),
+            Param('Use live data (otherwise replay)', 'liveData', 'boolean'),
             Param('', '', 'horizline'),
             Param('Number of pings in plots', 'numPings', 'int'),
             Param('Echogram range [m]', 'maxRange', 'float'),
@@ -40,7 +40,7 @@ class configDialog:
             Param('Sphere stats over (pings)', 'sphereStatsOver', 'int'),
         ]
 
-        ttk.Label(self.top, text='Changes to these settings requires restarting the program.')\
+        ttk.Label(self.top, text='Changes require restarting the program.')\
                   .pack(side=tk.TOP, fill=tk.BOTH, expand=tk.TRUE, pady=10)
 
         self.vars = {}  # mapping for name to tkinter Var
@@ -56,7 +56,7 @@ class configDialog:
                 case 'float':
                     self.vars[p.name] = tk.DoubleVar(value=v)
                 case 'boolean':
-                    self.vars[p.name] = tk.BooleanVar(value=v)  # needs to be a tick box
+                    self.vars[p.name] = tk.BooleanVar(value=v)
                 case 'str':
                     self.vars[p.name] = tk.StringVar(value=v)  # needs a callback?
 
@@ -77,12 +77,16 @@ class configDialog:
         lbl = ttk.Label(master=container, text=label, width=35)
         lbl.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=tk.YES)
 
-        ent = ttk.Entry(master=container, textvariable=variable, justify='right', width=15)
+        if isinstance(variable.get(), bool):
+            ent = ttk.Checkbutton(container, variable=variable)
+        else:
+            ent = ttk.Entry(master=container, textvariable=variable, justify='right', width=15)
         ent.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=tk.YES)
 
     def apply(self):
         for p in self.params:
             if p.name:
+                print(p.name, self.vars[p.name].get(), type(self.vars[p.name].get()))
                 getattr(cfg, p.name)(self.vars[p.name].get())
         cfg.save_config()
         logger.info('Saved configuration')

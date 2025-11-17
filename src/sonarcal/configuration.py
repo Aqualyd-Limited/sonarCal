@@ -27,7 +27,7 @@ def bool_config(func):
     """A decorator to set and return a boolean from the configuration."""
     def wrapper(self, value=None):
         n = func(self, value)
-        if value:
+        if value is not None:
             self.sc[n] = str(value)
         return self.sc.getboolean(n)
     return wrapper
