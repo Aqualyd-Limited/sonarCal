@@ -80,8 +80,13 @@ class draggable_radial:
         self.ax.add_line(self.line)
         self.c.draw_idle()
         self.sid = self.c.mpl_connect('pick_event', self.clickonline)
+        self.sid = self.c.mpl_connect('resize_event', self.resized)
         
         self.radial_frozen = False
+
+    def resized(self, event):
+        """Update the inverse polar plot transform when the plot is resized."""
+        self.inv = self.ax.transData.inverted()
 
     def frozen(self):
         return self.radial_frozen
