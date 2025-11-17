@@ -10,7 +10,7 @@ def int_config(func):
     def wrapper(self, value=None):
         n = func(self, value)
         if value:
-            self.sc[n] = value
+            self.sc[n] = str(value)
         return self.sc.getint(n)
     return wrapper
 
@@ -19,7 +19,7 @@ def float_config(func):
     def wrapper(self, value=None):
         n = func(self, value)
         if value:
-            self.sc[n] = value
+            self.sc[n] = str(value)
         return self.sc.getfloat(n)
     return wrapper
 
@@ -28,7 +28,7 @@ def bool_config(func):
     def wrapper(self, value=None):
         n = func(self, value)
         if value:
-            self.sc[n] = value
+            self.sc[n] = str(value)
         return self.sc.getboolean(n)
     return wrapper
 
@@ -46,7 +46,7 @@ def pathlib_config(func):
     def wrapper(self, value=None):
         n = func(self, value)
         if value:
-            self.sc[n] = value
+            self.sc[n] = str(value)
         return Path(self.sc[n])
     return wrapper
 
@@ -136,6 +136,9 @@ class sonarcalConfig():
         d = Path(self.dirs.user_log_dir)
         d.mkdir(parents=True, exist_ok=True)
         return d
+    
+    def userDocumentsDir(self) -> str:
+        return self.dirs.user_documents_dir
     
     @int_config
     def numPings(self, value=None):

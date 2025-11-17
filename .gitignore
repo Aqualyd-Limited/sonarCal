@@ -3,3 +3,4 @@
 /dist
 *.pyc
 /src/sonarcal/offline-docs
+/site

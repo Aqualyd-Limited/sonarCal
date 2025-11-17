@@ -14,12 +14,22 @@ jobs:
       DISPLAY: ":99.0"
 
     steps:
+      - name: Set environment variables (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: echo "OFFLINE_PLUGIN_ENABLED=true" >> $GITHUB_ENV
+      - name: Set environment variables (Windows)
+        if: runner.os == 'Windows'
+        run: echo "OFFLINE_PLUGIN_ENABLED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Checkout sonarcal
         uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Build offline documentation (should get this done via pyproject.toml settings)
+        run: |
+          pip install mkdocs mkdocstrings[python] mkdocs-material
+          mkdocs build --clean --verbose 
       - name: Install packages
         run: |
           python -m pip install --upgrade pip
@@ -39,34 +49,11 @@ jobs:
           # Xvfb :99 &
           python -m pytest -v -s
 
-  offline_docs:
-    name: Build offline documentation
-    runs-on: ubuntu-latest
-    needs: test
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.x
-      - run: pip install mkdocs mkdocstrings[python] mkdocs-material
-      - name: Build documentation
-        run: |
-          export OFFLINE_PLUGIN_ENABLED=true
-          mkdocs build --clean --verbose --site-dir src/sonarcal/offline-docs
-      - name: Store the offline documentation
-        uses: actions/upload-artifact@v4
-        with:
-          name: offline-docs
-          path: src/sonarcal/offline-docs
-          overwrite: true
-
   build:
     name: Build distribution
     runs-on: ubuntu-latest
     needs: 
       - test
-      - offline_docs
 
     steps:
     - uses: actions/checkout@v4
@@ -74,22 +61,18 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.x"
+    - name: Build offline documentation
+      run: |
+        pip install mkdocs mkdocstrings[python] mkdocs-material
+        export OFFLINE_PLUGIN_ENABLED=true
+        mkdocs build --clean --verbose  # writes offline docs to directory 'site'
     - name: Install pypa/build
-      run: >-
-        python3 -m
-        pip install
-        build
-        --user
+      run: python3 -m pip install build --user
     - name: Get history and tags for SCM versioning to work
       run: |
         git branch
         git fetch --prune --unshallow
         git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-    - name: Download the offline documentation
-      uses: actions/download-artifact@v5
-      with:
-        name: offline-docs
-        path: src/sonarcal/offline-docs
     - name: Build a binary wheel and a source tarball
       run: python3 -m build
     - name: Store the distribution packages

@@ -67,27 +67,27 @@ class resultsDialog:
     def update_with(self, data, active_beam_label: str = ''):
         """Update dialog's display with given calibration data."""
 
-        for beam, row in data.df().iterrows():
+        for beam_label, row in data.df().iterrows():
 
             # TODO
             # This is hacky and fragile - find a better way that doesn't need to name the
             # columns
-            values = [beam, 
+            values = [beam_label, 
                       row['Time'],
                       f"{row['Gain (dB)']:0.1f}",
                       f"{row['RMS (dB)']:0.1f}",
                       f"{row['Range (m)']:0.1f}",
                       row['Echoes']]
-            # values = [beam] + list(row)
 
-            if beam in self.item_ids:
+            if beam_label in self.item_ids:
                 # row for this beam already exists, so update it
-                self.tree.item(self.item_ids[beam], values=values)
+                self.tree.item(self.item_ids[beam_label], values=values)
             else:
                 # new beam, so add a row
                 item_id = self.tree.insert('', 'end', values=values)
-                self.item_ids[beam] = item_id
+                self.item_ids[beam_label] = item_id
 
+        # sort rows by beam_label and highlight the active beam (if one is active)
         self.update_rows(active_beam_label)
 
         # keep this to use in the save and remove functionalities
@@ -95,13 +95,16 @@ class resultsDialog:
 
     def update_rows(self, active_beam_label: str):
         """Sorts calibration results rows by beam and sets background colours to look nice."""
+
         for beam_label, index in zip(sorted(self.item_ids.keys(), key=int), range(len(self.item_ids))):
             self.tree.move(self.item_ids[beam_label], '', index)
 
+            # Decide on the row colour
             rowness = 'oddrow' if index % 2 == 0 else 'evenrow'
             if active_beam_label and beam_label == active_beam_label:
-                rowness = 'active'
+                rowness = 'active'  # gets highlighted
 
+            # Set the row colour in the tree widget
             self.tree.item(self.item_ids[beam_label], tags=(rowness,))    
 
     def remove_rows(self):
@@ -109,17 +112,17 @@ class resultsDialog:
 
         selected = self.tree.selection()  # returns a tuple of item_ids
         
-        # Pick out the beam numbers of the selected rows
+        # Get the beam labels of the selected rows
         to_remove = []
         for iid in selected:
             item_data = self.tree.item(iid)
             values = item_data['values']
-            to_remove.append(values[0])
+            # Convert to str because the self.items_id map has str has the key (this
+            # comes from the DataFrame this class has been given).
+            to_remove.append(str(values[0]))
 
         if to_remove:
             for beam_label in to_remove:
-                print(beam_label)
-                print(self.item_ids)
                 # remove selected rows from treeview
                 self.tree.delete(self.item_ids[beam_label])
                 # remove beam imtem from the map between beam and item ids

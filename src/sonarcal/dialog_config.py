@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-
+from .configuration import config as cfg
 
 class configDialog:
     """A dialog box to set and change application parameters."""
@@ -10,12 +10,29 @@ class configDialog:
         if icon:
             self.top.iconphoto(False, icon)
 
-        ttk.Label(self.top, text="Configs").pack(padx=20, pady=10)
-        ttk.Button(self.top, text="Close", command=self.close_dialog).pack(pady=5)
-        ttk.Button(self.top, text="Apply", command=self.apply).pack(pady=5)
+        config_frame = ttk.Frame(self.top)
+        
+        ttk.Label(config_frame, text='Number of pings to show').grid(row=0, column=0)
+        self.numPingsEntry = ttk.Entry(config_frame)
+        self.numPingsEntry.grid(row=0, column=1)
+        self.numPings = tk.IntVar()
+        self.numPings.set(cfg.numPings())
+        self.numPingsEntry['textvariable'] = self.numPings
+
+        btn_frame = ttk.Frame(self.top)
+        ttk.Button(btn_frame, text="Close", command=self.close_dialog).pack(side=tk.RIGHT)
+        ttk.Button(btn_frame, text="Apply", command=self.apply).pack(side=tk.RIGHT)
+        
+        config_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=tk.TRUE)
+        btn_frame.pack(side=tk.TOP, fill=tk.BOTH)
 
     def apply(self):
-        pass
+        cfg.numPings(int(self.numPings.get()))
+        
+        # need a way to update the GUI for realtime apply of config instead
+        # of having to restart the program
+        
+        cfg.save_config()
 
     def close_dialog(self):
         self.top.destroy()
