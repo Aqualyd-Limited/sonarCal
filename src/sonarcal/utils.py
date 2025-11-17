@@ -80,7 +80,7 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
     if eqn_type == 'type_2':
 
         # Pick out various variables for the given ping, i
-        sv = f[beamGroup + '/backscatter_r'][i]  # an array for each beam
+        bs = f[beamGroup + '/backscatter_r'][i]  # an array for each beam
         tau_e = f[beamGroup + '/transmit_duration_equivalent'][i]  # a scaler for the current ping
         Psi = f[beamGroup + '/equivalent_beam_angle'][i]  # a scalar for each beam
         SL = f[beamGroup + '/transmit_source_level'][i]  # a scalar for the current ping
@@ -110,19 +110,21 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
         samInt = f[beamGroup + '/sample_interval'][i]  # [s]
 
         # usually some zeros in the data of no real consequence
+        sv = []
         with np.errstate(divide='ignore', invalid='ignore'):
-            for j in range(0, sv.shape[0]):  # loop over each beam
+            for j in range(0, bs.shape[0]):  # loop over each beam
                 # [m] range vector for the current beam
-                r = samInt * c/2.0 * np.arange(0, sv[j].size) - r_offset
-                sv[j] = 20.0*np.log10(sv[j]/np.sqrt(2.0)) + 20.0*np.log10(r)\
-                    + 2*alpha[j]*r - a[j] + G_T
-        ts = sv
+                r = samInt * c/2.0 * np.arange(0, bs[j].size) - r_offset
+                sv.append(20.0*np.log10(bs[j]/np.sqrt(2.0)) + 20.0*np.log10(r)\
+                          + 2*alpha[j]*r - a[j] + G_T)
+        sv = np.array(sv)
+        ts = sv  # TODO - calculate TS here
 
     elif eqn_type == 'type_1':
         # Pick out various variables for the given ping, i
         p_r = f[beamGroup + '/backscatter_r'][i]  # an array for each beam
         p_i = f[beamGroup + '/backscatter_i'][i]  # an array for each beam
-        sv = np.absolute(p_r + 1j*p_i)
+        bs = np.absolute(p_r + 1j*p_i)
         tau_e = f[beamGroup + '/transmit_duration_equivalent'][i]  # a scaler for the current ping
         Psi = f[beamGroup + '/equivalent_beam_angle'][i]  # a scalar for each beam
         G = f[beamGroup + '/transducer_gain'][i]  # a scalar for each beam
@@ -147,21 +149,22 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
         r_offset = 0.0  # incase we need this in the future
 
         # usually some zeros in the data of no real consequence
+        sv = []
         with np.errstate(divide='ignore', invalid='ignore'):
-            for k in range(0, sv.shape[0]):  # loop over each beam
+            for k in range(0, bs.shape[0]):  # loop over each beam
                 # [m] range vector for the current beam
-                r = samInt * c/2.0 * np.arange(0, sv[k].size) - r_offset
-                sv[k] = 20.0*np.log10(sv[k]) + 20.0*np.log10(r) + 2*alpha*r\
+                r = samInt * c/2.0 * np.arange(0, bs[k].size) - r_offset
+                sv.append(20.0*np.log10(bs[k]) + 20.0*np.log10(r) + 2*alpha*r\
                     - 10.0*np.log10((P*wl*wl*c*Psi[k]*tau_e) / (32*np.pi*np.pi))\
-                    - G[k] - 40.0*np.log10(np.cos(tilt[k]))
-
+                    - G[k] - 40.0*np.log10(np.cos(tilt[k])))
+        sv = np.array(sv)    
+        ts = sv  # TODO - calculate TS here
     else:  # unsupported format - just take the log10 of the numbers. Usually usefull.
         sv = f[beamGroup + '/backscatter_r'][i]
         with np.errstate(divide='ignore'):
             for j in range(0, sv.shape[0]):
                 sv[j] = np.log10(sv[j])
-
-    ts = sv
+        ts = sv
 
     return sv, ts
 
