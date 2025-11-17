@@ -111,14 +111,17 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
 
         # usually some zeros in the data of no real consequence
         sv = []
+        ts = []
         with np.errstate(divide='ignore', invalid='ignore'):
             for j in range(0, bs.shape[0]):  # loop over each beam
                 # [m] range vector for the current beam
                 r = samInt * c/2.0 * np.arange(0, bs[j].size) - r_offset
                 sv.append(20.0*np.log10(bs[j]/np.sqrt(2.0)) + 20.0*np.log10(r)\
                           + 2*alpha[j]*r - a[j] + G_T)
+                ts.append(20.0*np.log10(bs[j]/np.sqrt(2.0)) + 20.0*np.log10(r)\
+                          + 2*alpha[j]*r - a[j] + G_T)  # TODO
         sv = np.array(sv)
-        ts = sv  # TODO - calculate TS here
+        ts = np.array(ts)
 
     elif eqn_type == 'type_1':
         # Pick out various variables for the given ping, i
@@ -150,6 +153,7 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
 
         # usually some zeros in the data of no real consequence
         sv = []
+        ts = []
         with np.errstate(divide='ignore', invalid='ignore'):
             for k in range(0, bs.shape[0]):  # loop over each beam
                 # [m] range vector for the current beam
@@ -157,8 +161,11 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
                 sv.append(20.0*np.log10(bs[k]) + 20.0*np.log10(r) + 2*alpha*r\
                     - 10.0*np.log10((P*wl*wl*c*Psi[k]*tau_e) / (32*np.pi*np.pi))\
                     - G[k] - 40.0*np.log10(np.cos(tilt[k])))
-        sv = np.array(sv)    
-        ts = sv  # TODO - calculate TS here
+                ts.append(20.0*np.log10(bs[k]) + 20.0*np.log10(r) + 2*alpha*r\
+                    - 10.0*np.log10((P*wl*wl*c*Psi[k]*tau_e) / (32*np.pi*np.pi))\
+                    - G[k] - 40.0*np.log10(np.cos(tilt[k])))  # TODO
+        sv = np.array(sv)
+        ts = np.array(ts)
     else:  # unsupported format - just take the log10 of the numbers. Usually usefull.
         sv = f[beamGroup + '/backscatter_r'][i]
         with np.errstate(divide='ignore'):
