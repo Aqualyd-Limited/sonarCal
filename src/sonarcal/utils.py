@@ -67,8 +67,8 @@ def beamAnglesFromNetCDF4(f, beamGroup, i):
     return theta, tilt, sort_i
 
 
-def SvFromSonarNetCDF4(f, beamGroup, i, tilt):
-    """Calculate Sv from the given beam group and ping."""
+def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
+    """Calculate Sv and TS from the given beam group and ping."""
     eqn_type = f[beamGroup].attrs['conversion_equation_type']
     # work around the current Simrad files using integers instead of the
     # type defined in the convetion (which shows up here as a string)
@@ -116,6 +116,7 @@ def SvFromSonarNetCDF4(f, beamGroup, i, tilt):
                 r = samInt * c/2.0 * np.arange(0, sv[j].size) - r_offset
                 sv[j] = 20.0*np.log10(sv[j]/np.sqrt(2.0)) + 20.0*np.log10(r)\
                     + 2*alpha[j]*r - a[j] + G_T
+        ts = sv
 
     elif eqn_type == 'type_1':
         # Pick out various variables for the given ping, i
@@ -160,7 +161,9 @@ def SvFromSonarNetCDF4(f, beamGroup, i, tilt):
             for j in range(0, sv.shape[0]):
                 sv[j] = np.log10(sv[j])
 
-    return sv
+    ts = sv
+
+    return sv, ts
 
 
 def acousticAbsorption(temperature, salinity, depth, frequency):

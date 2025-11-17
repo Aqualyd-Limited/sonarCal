@@ -3,7 +3,7 @@ from time import sleep
 from datetime import datetime, timedelta
 # import h5py
 import numpy as np
-from .utils import beamAnglesFromNetCDF4, SvFromSonarNetCDF4
+from .utils import beamAnglesFromNetCDF4, SvTSFromSonarNetCDF4
 import logging
 from pathlib import Path
 from .configuration import config
@@ -118,7 +118,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                         logger.info('Start reading ping from time %s', pingTime)
 
                         theta, tilt, sort_i = beamAnglesFromNetCDF4(f, beamGroup, pingIndex)
-                        sv = SvFromSonarNetCDF4(f, beamGroup, pingIndex, tilt)
+                        sv, ts = SvTSFromSonarNetCDF4(f, beamGroup, pingIndex, tilt)
 
                         samInt = f[beamGroup + '/sample_interval'][pingIndex]
                         c = f['Environment/sound_speed_indicative'][()]
@@ -136,7 +136,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                         labels = labels[sort_i] 
                         
                         # send the data off to be plotted
-                        msg_queue.put((t, samInt, c, sv, theta, labels))
+                        msg_queue.put((t, samInt, c, sv, ts, theta, labels))
                     else:
                         noNewDataCount += 1
                         if noNewDataCount > maxNoNewDataCount:
@@ -168,9 +168,8 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue, replayRate):
 
     # Send off each ping at a sedate rate...
     for i in range(0, t.shape[0]):
-        # print('ping')
         theta, tilt, sort_i = beamAnglesFromNetCDF4(f, beamGroup, i)
-        sv = SvFromSonarNetCDF4(f, beamGroup, i, tilt)
+        sv, ts = SvTSFromSonarNetCDF4(f, beamGroup, i, tilt)
 
         samInt = f[beamGroup + '/sample_interval'][i]
         c = f['Environment/sound_speed_indicative'][()]
@@ -186,7 +185,7 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue, replayRate):
         labels = labels[sort_i] 
 
         # send the data off to be plotted
-        msg_queue.put((t[i], samInt, c, sv, theta, labels))
+        msg_queue.put((t[i], samInt, c, sv, ts,theta, labels))
 
         # Ping at recorded ping rate if asked
         if replayRate == 'realtime' and i > 0:

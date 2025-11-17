@@ -59,14 +59,14 @@ class echogramPlotter:
 
         self.firstPing = True
 
-    def createGUI(self, samInt, c, backscatter, theta, labels):
+    def createGUI(self, samInt, c, sv, ts, theta, labels):
         """Create the GUI."""
         cmap = mpl.colormaps['jet']  # viridis looks nice too...
         cmap.set_under('w')  # and for values below self.minSv, if desired
 
         # number of samples to store per ping
         self.maxSamples = int(np.ceil(self.maxRange / (samInt*c/2.0)))
-        self.numBeams = backscatter.shape[0]
+        self.numBeams = sv.shape[0]
 
         # Storage for the things we plot
         # Polar plot
@@ -218,7 +218,7 @@ class echogramPlotter:
         self.stbdEchogramAx.yaxis.set_label_position('right')
 
         self.ampDiffPlotAx.set_xlabel('Pings')
-        self.ampPlotAx.set_ylabel('$S_v$ re 1 m$^{-1}$ [dB]')
+        self.ampPlotAx.set_ylabel('TS re 1 m$^{2}$ [dB]')
         self.ampDiffPlotAx.set_ylabel(r'$\Delta$ (dB)')
         self.ampPlotAx.set_title('Maximum amplitude at 0 m')
 
@@ -245,11 +245,11 @@ class echogramPlotter:
                 logger.info('No new data in received message.')
             else:
                 try:
-                    (t, samInt, c, backscatter, theta, labels) = message
+                    (t, samInt, c, sv, ts, theta, labels) = message
 
                     if self.firstPing:
                         self.firstPing = False
-                        self.createGUI(samInt, c, backscatter, theta, labels)
+                        self.createGUI(samInt, c, sv, ts, theta, labels)
 
                     # Update the plots with the data in the new ping
                     pingTime = datetime(1601, 1, 1, tzinfo=timezone.utc)\
@@ -282,19 +282,19 @@ class echogramPlotter:
                     else:
                         beamStbd = self.beamIdx+1
 
-                    # Find the max amplitude between the min and max ranges set by the UI
+                    # Find the max ts between the min and max ranges set by the UI
                     # and store for plotting
                     self.amp = np.roll(self.amp, -1, 1)
-                    self.amp[0, -1] = np.max(backscatter[beamPort][minSample:maxSample])
-                    max_i = np.argmax(backscatter[self.beamIdx][minSample:maxSample])
-                    self.amp[1, -1] = backscatter[self.beamIdx][minSample+max_i]
+                    self.amp[0, -1] = np.max(ts[beamPort][minSample:maxSample])
+                    max_i = np.argmax(ts[self.beamIdx][minSample:maxSample])
+                    self.amp[1, -1] = ts[self.beamIdx][minSample+max_i]
                     self.rangeMax = (minSample+max_i) * samInt * c / 2.0
-                    self.amp[2, -1] = np.max(backscatter[beamStbd][minSample:maxSample])
+                    self.amp[2, -1] = np.max(ts[beamStbd][minSample:maxSample])
 
                     # Store the amplitude for the 3 beams for the echograms
-                    self.port = self.updateEchogramData(self.port, backscatter[beamPort])
-                    self.main = self.updateEchogramData(self.main, backscatter[self.beamIdx])
-                    self.stbd = self.updateEchogramData(self.stbd, backscatter[beamStbd])
+                    self.port = self.updateEchogramData(self.port, sv[beamPort])
+                    self.main = self.updateEchogramData(self.main, sv[self.beamIdx])
+                    self.stbd = self.updateEchogramData(self.stbd, sv[beamStbd])
 
                     # Update the plots
                     # Sphere TS from 3 beams
@@ -344,7 +344,7 @@ class echogramPlotter:
                     self.stbdEchogramAx.set_title(f'Beam {labels[beamStbd]}', loc='left')
 
                     # Polar plot
-                    for i, b in enumerate(backscatter):
+                    for i, b in enumerate(sv):
                         if b.shape[0] > self.maxSamples:
                             self.polar[:, i] = b[0: self.maxSamples]
                         else:
