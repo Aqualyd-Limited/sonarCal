@@ -3,8 +3,6 @@
 Provides omni and echogram displays and sphere amplitude plots for use when
 calibrating omni-directional sonars.
 """
-# TODO:
-# Choose beam_group based on beam type rather than requiring it in the config file
 
 import tkinter as tk
 from functools import partial
@@ -52,8 +50,7 @@ def main():
     else:
         t = threading.Thread(target=file_replay, args=(config.watchDir(),
                                                        config.horizontalBeamGroup(),
-                                                       msg_queue,
-                                                       config.realtimeReplay()))
+                                                       msg_queue))
     t.daemon = True  # makes the thread close when main() ends
     t.start()
 
