@@ -52,13 +52,13 @@ def file_listen(watchDir, beamGroup, msg_queue):
             logger.error('Unsupported file type')
 
 
-def file_replay(watchDir, beamGroup, msg_queue, replayRate):
+def file_replay(watchDir, beamGroup, msg_queue, realtimeReplay):
     """Replay the most recent sonar file in the watched directory."""
 
     replay_file = most_recent_file(watchDir)
     f_type = file_type(replay_file)
 
-    params = (replay_file, beamGroup, msg_queue, replayRate)
+    params = (replay_file, beamGroup, msg_queue, realtimeReplay)
     
     match f_type:
         case 'sonar-netcdf4':
@@ -156,7 +156,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                     sleep(errorWaitInterval)
 
 
-def file_replay_netcdf(replay_file, beamGroup, msg_queue, replayRate):
+def file_replay_netcdf(replay_file, beamGroup, msg_queue, realtimeReplay):
     """Replay all data in the newest file. Used for testing."""
     logger.info('Reading from file: %s.', replay_file)
 
@@ -188,7 +188,7 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue, replayRate):
         msg_queue.put((t[i], samInt, c, sv, ts,theta, labels))
 
         # Ping at recorded ping rate if asked
-        if replayRate == 'realtime' and i > 0:
+        if realtimeReplay and i > 0:
             # t has units of nanoseconds
             sleep((t[i] - t[i-1])/1e9)
         else:
@@ -199,13 +199,13 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue, replayRate):
     logger.info('Finished replaying file: %s', replay_file)
 
 
-def file_replay_cs90_raw(replay_file, beamGroup, msg_queue, replayRate):
+def file_replay_cs90_raw(replay_file, beamGroup, msg_queue, realtimeReplay):
     """Replay all data in the newest file. Used for testing."""
 
     logger.error('CS90 raw files are not yet supported')
 
 
-def file_replay_sn90_raw(replay_file, beamGroup, msg_queue, replayRate):
+def file_replay_sn90_raw(replay_file, beamGroup, msg_queue, realtimeReplay):
     """Replay all data in the newest file. Used for testing."""
 
     logger.error('SN90 raw files are not yet supported')

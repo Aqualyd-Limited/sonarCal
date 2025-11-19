@@ -53,7 +53,7 @@ def main():
         t = threading.Thread(target=file_replay, args=(config.watchDir(),
                                                        config.horizontalBeamGroup(),
                                                        msg_queue,
-                                                       config.replayRate()))
+                                                       config.realtimeReplay()))
     t.daemon = True  # makes the thread close when main() ends
     t.start()
 

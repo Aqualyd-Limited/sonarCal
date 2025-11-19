@@ -73,7 +73,7 @@ class sonarcalConfig():
                     'maxRange': '50',
                     'maxSv': '-20',
                     'minSv': '-60',
-                    'replayRate': 'realtime',
+                    'realtimeReplay': 'yes',
                     'horizontalBeamGroupPath': 'Sonar/Beam_group1',
                     'watchDir': '.',
                     'liveData': 'no',
@@ -156,9 +156,9 @@ class sonarcalConfig():
     def minSv(self, value=None):
         return 'minSv'
 
-    @str_config
-    def replayRate(self, value=None):
-        return 'replayRate'
+    @bool_config
+    def realtimeReplay(self, value=None):
+        return 'realtimeReplay'
 
     @str_config
     def horizontalBeamGroup(self, value=None):

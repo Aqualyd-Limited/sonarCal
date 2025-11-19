@@ -28,6 +28,7 @@ class configDialog:
             Param('', '', 'horizline'),
             Param('Sonar data directory', 'watchDir', 'str', 'filechooser'),
             Param('Use live data (otherwise replay)', 'liveData', 'boolean'),
+            Param('Replay at original ping rate', 'realtimeReplay', 'boolean'),
             Param('Sonar-netCDF4 beam group path', 'horizontalBeamGroup', 'str'),
             Param('', '', 'horizline'),
             Param('Number of pings in plots', 'numPings', 'int'),
