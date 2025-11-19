@@ -211,10 +211,13 @@ class echogramPlotter:
         self.ampPlotAx.set_title('Maximum amplitude at 0 m')
 
         plt.tight_layout(pad=1.5, w_pad=0.0, h_pad=0.0)
+        
+        # the tight_layout call causes a resize of the polar plot, so update the
+        # inverse transform that beamline keeps
+        self.beamLine.resized(None)
 
         # range slider to adjust the echogram thresholds. Do this after the tight_layout
         # call as it otherwise complains
-
         slider_ax = plt.axes([0.006, 0.2, 0.015, 0.6])
         lowestSv = config.sliderLowestSv()
         highestSv = config.sliderHighestSv()
@@ -226,7 +229,6 @@ class echogramPlotter:
         # self.slider.valtext.set_rotation(90)
         self.slider.valtext.set_visible(False)
         self.slider.label.set_rotation(90)
-
         self.slider.on_changed(self.updateEchogramThresholds)
 
 
