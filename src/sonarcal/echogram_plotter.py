@@ -96,7 +96,7 @@ class echogramPlotter:
         self.ampPlotAx = plt.subplot2grid((3, 3), (0, 2), rowspan=2)
         self.ampDiffPlotAx = plt.subplot2grid((3, 3), (2, 2))
 
-        plt.tight_layout(pad=1.5, w_pad=0.0, h_pad=0.0)
+        # plt.tight_layout(pad=1.5, w_pad=0.0, h_pad=0.0)
 
         # Configure the echogram axes
         self.portEchogramAx.invert_yaxis()
@@ -222,6 +222,9 @@ class echogramPlotter:
         self.ampPlotAx.set_ylabel('TS re 1 m$^{2}$ [dB]')
         self.ampDiffPlotAx.set_ylabel(r'$\Delta$ (dB)')
         self.ampPlotAx.set_title('Maximum amplitude at 0 m')
+
+        plt.tight_layout(pad=1.5, w_pad=0.0, h_pad=0.0)
+
 
     def updateEchogramThresholds(self, val):
         """Update the image colormaps."""
