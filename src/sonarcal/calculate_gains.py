@@ -1,8 +1,29 @@
-# import pandas as pd
+# this file uses deferred imports
 
-def calculate_gain(sphere_ts):
+def calculate_gain(sphere_echoes: list[tuple], sphere_ts: float, beam_gain: float)\
+    -> tuple[float, float, float, int]:
     """Calculate the beam calibration gain and other stats."""
-    import pandas as pd  # deferred to save import time
-    df = pd.DataFrame(sphere_ts, columns=['timestamp', 'ts', 'range'])
-    return (df['ts'].mean(), df['ts'].std(), df['range'].mean(), len(df))
+
+    # deferred imports to reduce program startup time
+    import pandas as pd
+    import scipy.stats.mstats as ms
+    import numpy as np
+
+    df = pd.DataFrame(sphere_echoes, columns=['timestamp', 'ts', 'range'])
+
+    # find and ignore extreme sphere echoes
+    trimmed = ms.trim(df['ts'], limits=(0.05, 0.05), relative=True)
+    mask = np.logical_not(np.ma.getmaskarray(trimmed))
+    dfm = df[mask]
+
+    ts_mean = 10.0 * np.log10(np.mean(np.power(10, dfm['ts']/10.0)))
+    ts_rms = np.sqrt(np.mean(np.square(dfm['ts']-ts_mean)))
+
+    # This is quite specific to the actual sonar equations - is ok for Simrad and Furuno
+    # omnisonars as of 2025...
+    print(beam_gain)
+    # and the new gain correction is....
+    beam_gain_new = beam_gain + ts_mean - sphere_ts
+
+    return (beam_gain_new, ts_mean, ts_rms, np.mean(dfm['range']), len(dfm))
 

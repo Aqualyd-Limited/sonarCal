@@ -25,6 +25,9 @@ class configDialog:
             special: str = None
 
         self.params = [
+            Param('Calibration sphere TS (dB)', 'sphereTS', 'float'),
+            Param('', '', 'horizline'),
+            Param('Changes below here require a program restart', '', 'label'),
             Param('', '', 'horizline'),
             Param('Sonar data directory', 'watchDir', 'str', 'filechooser'),
             Param('Use live data (otherwise replay)', 'liveData', 'boolean'),
@@ -43,13 +46,14 @@ class configDialog:
             Param('Sphere stats over (pings)', 'sphereStatsOver', 'int'),
         ]
 
-        ttk.Label(self.top, text='Changes require restarting the program.')\
-                  .pack(side=tk.TOP, fill=tk.BOTH, expand=tk.TRUE, pady=10)
-
         self.vars = {}  # mapping for name to tkinter Var
         for p in self.params:
             if p.type == 'horizline':
                 ttk.Separator(self.top, orient=tk.HORIZONTAL).pack(fill=tk.X, padx=10, pady=5)
+                continue
+            if p.type == 'label':
+                ttk.Label(self.top, text=p.label).pack(side=tk.TOP,fill=tk.BOTH,
+                                                       expand=tk.TRUE, pady=10)
                 continue
 
             v = getattr(cfg, p.name)()  # get value of current config parameter

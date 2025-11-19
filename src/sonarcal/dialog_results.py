@@ -59,7 +59,7 @@ class resultsDialog:
         
         for col in headings:
             self.tree.heading(col, text=col, anchor='e')
-            self.tree.column(col, width=100, anchor='e')
+            self.tree.column(col, width=125, anchor='e')
 
         # Add rows (if any)
         self.update_with(data)            
@@ -75,6 +75,7 @@ class resultsDialog:
             values = [beam_label, 
                       row['Time'],
                       f"{row['Gain (dB)']:0.1f}",
+                      f"{row['Sphere TS (dB)']:0.1f}",
                       f"{row['RMS (dB)']:0.1f}",
                       f"{row['Range (m)']:0.1f}",
                       row['Echoes']]

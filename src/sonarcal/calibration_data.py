@@ -9,11 +9,13 @@ class calibrationData():
 
     def __init__(self):
         import pandas as pd  # deferred to save startup time
-        self.data = pd.DataFrame(columns=['Time', 'Gain (dB)', 'RMS (dB)', 'Range (m)', 'Echoes'])
+        self.data = pd.DataFrame(columns=['Time', 'Gain (dB)', 'Sphere TS (dB)', 
+                                          'RMS (dB)', 'Range (m)', 'Echoes'])
         self.data.index.name = 'Beam'
     
-    def update(self, beam_label: str, timestamp: str, gain: float, rms: float, r: float, num: int):
-        self.data.loc[beam_label] = (timestamp, gain, rms, r, num)
+    def update(self, beam_label: str, timestamp: str, gain: float, ts: float,
+               rms: float, r: float, num: int):
+        self.data.loc[beam_label] = (timestamp, gain, ts, rms, r, num)
         
     def remove(self, beam_labels: list[str]):
         """Remove data for given beam."""

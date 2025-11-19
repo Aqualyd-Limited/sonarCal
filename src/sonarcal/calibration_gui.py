@@ -26,8 +26,8 @@ class calibrationGUI:
 
         # Calibration gains are stored in here
         self.cal_data = calibrationData()
-        # sphere ts for the current beam calibration is stored in here
-        self.sphere_ts = []
+        # sphere echo data for the current beam calibration is stored in here
+        self.sphere_echoes = []
 
         # The GUI window
         self.echogram.root.title(cfg.title())
@@ -103,7 +103,7 @@ class calibrationGUI:
             self.auto_save()
             logger.info('Beam %s calibration complete', self.echogram.beamLabel)
             self.echogram.beamLine.freeze(False)
-            self.sphere_ts = []
+            self.sphere_echoes = []
             if self.results_dialog:
                 self.results_dialog.update_rows(None)  # unhighlights the previously active row
 
@@ -118,11 +118,13 @@ class calibrationGUI:
         e = self.echogram
         if e.beamLine.frozen():  # a beam is being calibrated
             # store the current ping's sphere echo info
-            self.sphere_ts.append((datetime.now().isoformat(), e.amp[1, -1], e.rangeMax))
+            self.sphere_echoes.append((datetime.now().isoformat(), e.amp[1, -1], e.rangeMax))
             # calculate the beam gain and other stats
-            (gain, rms, r, num) = calculate_gain(self.sphere_ts)
+            (gain, ts, rms, r, num) = calculate_gain(self.sphere_echoes, cfg.sphereTS(),
+                                                     e.gains[e.beamIdx])
             # store the latest beam gain values
-            self.cal_data.update(e.beamLabel, datetime.now().strftime('%H:%M:%S'), gain, rms, r, num)
+            self.cal_data.update(e.beamLabel, datetime.now().strftime('%H:%M:%S'),
+                                 gain, ts, rms, r, num)
             # update the results dialog if present
             if self.results_dialog:
                 self.results_dialog.update_with(self.cal_data, e.beamLabel)

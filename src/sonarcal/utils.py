@@ -110,6 +110,8 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
 
         samInt = f[beamGroup + '/sample_interval'][i]  # [s]
 
+        gain = deltaG  # the beam gain from the file
+
         # usually some zeros in the data of no real consequence
         sv = []
         ts = []
@@ -152,6 +154,8 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
 
         r_offset = 0.0  # incase we need this in the future
 
+        gain = G  # the beam gain from the file
+
         # usually some zeros in the data of no real consequence
         sv = []
         ts = []
@@ -174,7 +178,7 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
                 sv[j] = np.log10(sv[j])
         ts = sv
 
-    return sv, ts
+    return sv, ts, gain
 
 
 def acousticAbsorption(temperature, salinity, depth, frequency):

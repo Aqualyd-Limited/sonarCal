@@ -68,6 +68,9 @@ class echogramPlotter:
         # number of samples to store per ping
         self.maxSamples = int(np.ceil(self.maxRange / (samInt*c/2.0)))
         self.numBeams = sv.shape[0]
+        
+        # A copy of the beam gains from the file being read
+        self.gains = None
 
         # Storage for the things we plot
         # Polar plot
@@ -255,11 +258,14 @@ class echogramPlotter:
                 logger.info('No new data in received message.')
             else:
                 try:
-                    (t, samInt, c, sv, ts, theta, labels) = message
+                    (t, samInt, c, sv, ts, theta, gains, labels) = message
 
                     if self.firstPing:
                         self.firstPing = False
                         self.createGUI(samInt, c, sv, ts, theta, labels)
+
+                    # Update our copy of the beam gains
+                    self.gains = gains
 
                     # Update the plots with the data in the new ping
                     pingTime = datetime(1601, 1, 1, tzinfo=timezone.utc)\

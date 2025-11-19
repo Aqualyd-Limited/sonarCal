@@ -118,7 +118,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                         logger.info('Start reading ping from time %s', pingTime)
 
                         theta, tilt, sort_i = beamAnglesFromNetCDF4(f, beamGroup, pingIndex)
-                        sv, ts = SvTSFromSonarNetCDF4(f, beamGroup, pingIndex, tilt)
+                        sv, ts, gains = SvTSFromSonarNetCDF4(f, beamGroup, pingIndex, tilt)
 
                         samInt = f[beamGroup + '/sample_interval'][pingIndex]
                         c = f['Environment/sound_speed_indicative'][()]
@@ -136,7 +136,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                         labels = labels[sort_i] 
                         
                         # send the data off to be plotted
-                        msg_queue.put((t, samInt, c, sv, ts, theta, labels))
+                        msg_queue.put((t, samInt, c, sv, ts, theta, gains, labels))
                     else:
                         noNewDataCount += 1
                         if noNewDataCount > maxNoNewDataCount:
@@ -169,7 +169,7 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue, realtimeReplay):
     # Send off each ping at a sedate rate...
     for i in range(0, t.shape[0]):
         theta, tilt, sort_i = beamAnglesFromNetCDF4(f, beamGroup, i)
-        sv, ts = SvTSFromSonarNetCDF4(f, beamGroup, i, tilt)
+        sv, ts, gains = SvTSFromSonarNetCDF4(f, beamGroup, i, tilt)
 
         samInt = f[beamGroup + '/sample_interval'][i]
         c = f['Environment/sound_speed_indicative'][()]
@@ -185,7 +185,7 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue, realtimeReplay):
         labels = labels[sort_i] 
 
         # send the data off to be plotted
-        msg_queue.put((t[i], samInt, c, sv, ts,theta, labels))
+        msg_queue.put((t[i], samInt, c, sv, ts, theta, gains, labels))
 
         # Ping at recorded ping rate if asked
         if realtimeReplay and i > 0:

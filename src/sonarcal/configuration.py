@@ -69,6 +69,7 @@ class sonarcalConfig():
         # default values, used if an entry is not present in the config file or 
         # the config file doesn't exist.
         defaults = {'title': 'Sonar calibration',
+                    'spherets': '-35.0',
                     'numPingsToShow': '100',
                     'maxRange': '50',
                     'maxSv': '-20',
@@ -113,6 +114,10 @@ class sonarcalConfig():
 
     def appAuthor(self) -> str:
         return self.app_author
+
+    @float_config
+    def sphereTS(self, value=None):
+        return 'sphereTS'
 
     @staticmethod
     def title() -> str:
