@@ -64,9 +64,9 @@ class configDialog:
                     self.vars[p.name] = tk.StringVar(value=v)
 
             if p.special == 'filechooser':
-                self.create_chooser(p.label, self.vars[p.name])
+                self.create_dir_chooser_row(p.label, self.vars[p.name])
             else:
-                self.create_form_entry(p.label, self.vars[p.name])
+                self.create_config_row(p.label, self.vars[p.name])
 
         btn_frame = ttk.Frame(self.top)
         ttk.Button(btn_frame, text="Close", command=self.close_dialog).pack(side=tk.RIGHT)
@@ -75,29 +75,40 @@ class configDialog:
         config_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=tk.TRUE)
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH)
 
-    def create_chooser(self, label, variable):
+    def create_dir_chooser_row(self, label, variable):
+        """Create a directory chooser config row."""
+
         container = ttk.Frame(self.top)
         container.pack(fill=tk.X, expand=tk.YES, pady=5)
 
         lbl = ttk.Label(master=container, text=label, width=35)
         lbl.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=tk.NO)
 
-        ent = ttk.Entry(container, textvariable=variable, justify='right', width=15)
-        ent.xview_moveto(1)  # right justify text
+        def _text_edit(event):
+            """Keeps the config variable updated with text in the text widget."""
+            event.widget.edit_modified(False)
+            variable.set(event.widget.get('1.0', tk.END).rstrip())
+
+        ent = tk.Text(container, wrap=tk.CHAR, width=35, height=4)
+        ent.insert('1.0', variable.get())
         ent.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=tk.YES)
+        ent.bind('<<Modified>>', _text_edit)
+
+        def _dir_chooser(variable):
+            """Uses a filedialog to get a directory."""
+            d = filedialog.askdirectory(parent=container, title='Select data directory',
+                                        initialdir=variable.get())
+            if d:
+                ent.delete('1.0', tk.END)
+                ent.insert('1.0', d)
+                variable.set(d)
 
         btn = ttk.Button(container, text='...', width=3,
-                         command=lambda: self._dir_chooser(variable))
+                         command=lambda: _dir_chooser(variable))
         btn.pack(side=tk.LEFT)
 
-    def _dir_chooser(self, variable):
-        dd = filedialog.askdirectory(master=self.top, title='Select data directory',
-                                     initialdir=variable.get())
-        if dd:
-            variable.set(dd)
-
-    def create_form_entry(self, label, variable):
-        """Create a single form entry"""
+    def create_config_row(self, label, variable):
+        """Create a single row in the config dialog"""
         container = ttk.Frame(self.top)
         container.pack(fill=tk.X, expand=tk.YES, pady=5)
 
@@ -108,7 +119,7 @@ class configDialog:
             ent = ttk.Checkbutton(container, variable=variable)
         else:
             ent = ttk.Entry(master=container, textvariable=variable, justify='right', width=15)
-        ent.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=tk.YES)
+        ent.pack(side=tk.RIGHT, padx=5, fill=tk.X, expand=tk.YES)
 
     def apply(self):
         for p in self.params:
