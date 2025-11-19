@@ -66,19 +66,15 @@ class resultsDialog:
                     
     def update_with(self, data, active_beam_label: str = ''):
         """Update dialog's display with given calibration data."""
+        
+        def format(value):
+            """Format floats to 1 decimal place."""
+            if isinstance(value, float):
+                return f'{value:0.1f}'
+            return f'{value}'
 
         for beam_label, row in data.df().iterrows():
-
-            # TODO
-            # This is hacky and fragile - find a better way that doesn't need to name the
-            # columns
-            values = [beam_label, 
-                      row['Time'],
-                      f"{row['Gain (dB)']:0.1f}",
-                      f"{row['Echo TS (dB)']:0.1f}",
-                      f"{row['RMS (dB)']:0.1f}",
-                      f"{row['Range (m)']:0.1f}",
-                      row['Echoes']]
+            values = [beam_label] + [format(v) for v in row]
 
             if beam_label in self.item_ids:
                 # row for this beam already exists, so update it
