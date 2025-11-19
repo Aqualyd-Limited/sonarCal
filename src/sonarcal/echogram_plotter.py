@@ -186,19 +186,6 @@ class echogramPlotter:
                           extend='both', fraction=0.05, location='bottom')
         cb.set_label('$S_v$ re 1 m$^{-1}$ [dB]')
 
-        # range slider to adjust the echogram thresholds
-
-        slider_ax = plt.axes([0.028, 0.20, 0.015, 0.65])
-        lowestSv = config.sliderLowestSv()
-        highestSv = config.sliderHighestSv()
-
-        self.slider = RangeSlider(slider_ax, label="Thresholds", valmin=lowestSv, valmax=highestSv,
-                                  valinit=((self.minSv, self.maxSv)),
-                                  valstep=np.arange(lowestSv, highestSv+1, 1),
-                                  orientation='vertical', facecolor='blue')
-
-        self.slider.on_changed(self.updateEchogramThresholds)
-
         # Range rings on the omni echogram
         self.rangeRing1 = draggable_ring(self.polarPlotAx, self.minTargetRange)
         self.rangeRing2 = draggable_ring(self.polarPlotAx, self.maxTargetRange)
@@ -224,6 +211,23 @@ class echogramPlotter:
         self.ampPlotAx.set_title('Maximum amplitude at 0 m')
 
         plt.tight_layout(pad=1.5, w_pad=0.0, h_pad=0.0)
+
+        # range slider to adjust the echogram thresholds. Do this after the tight_layout
+        # call as it otherwise complains
+
+        slider_ax = plt.axes([0.006, 0.2, 0.015, 0.6])
+        lowestSv = config.sliderLowestSv()
+        highestSv = config.sliderHighestSv()
+
+        self.slider = RangeSlider(slider_ax, label="Thresholds", valmin=lowestSv, valmax=highestSv,
+                                  valinit=((self.minSv, self.maxSv)),
+                                  valstep=np.arange(lowestSv, highestSv+1, 1),
+                                  orientation='vertical', facecolor='blue')
+        # self.slider.valtext.set_rotation(90)
+        self.slider.valtext.set_visible(False)
+        self.slider.label.set_rotation(90)
+
+        self.slider.on_changed(self.updateEchogramThresholds)
 
 
     def updateEchogramThresholds(self, val):
