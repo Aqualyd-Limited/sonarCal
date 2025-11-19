@@ -9,7 +9,7 @@ class calibrationData():
 
     def __init__(self):
         import pandas as pd  # deferred to save startup time
-        self.data = pd.DataFrame(columns=['Time', 'Gain (dB)', 'Sphere TS (dB)', 
+        self.data = pd.DataFrame(columns=['Time', 'Gain (dB)', 'Echo TS (dB)', 
                                           'RMS (dB)', 'Range (m)', 'Echoes'])
         self.data.index.name = 'Beam'
     

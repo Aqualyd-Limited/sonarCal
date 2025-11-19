@@ -21,7 +21,7 @@ def calculate_gain(sphere_echoes: list[tuple], sphere_ts: float, beam_gain: floa
 
     # This is quite specific to the actual sonar equations - is ok for Simrad and Furuno
     # omnisonars as of 2025...
-    print(beam_gain)
+
     # and the new gain correction is....
     beam_gain_new = beam_gain + ts_mean - sphere_ts
 

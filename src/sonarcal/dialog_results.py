@@ -75,7 +75,7 @@ class resultsDialog:
             values = [beam_label, 
                       row['Time'],
                       f"{row['Gain (dB)']:0.1f}",
-                      f"{row['Sphere TS (dB)']:0.1f}",
+                      f"{row['Echo TS (dB)']:0.1f}",
                       f"{row['RMS (dB)']:0.1f}",
                       f"{row['Range (m)']:0.1f}",
                       row['Echoes']]

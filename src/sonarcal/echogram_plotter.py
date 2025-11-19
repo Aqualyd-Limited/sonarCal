@@ -275,7 +275,7 @@ class echogramPlotter:
                     label.config(text=f'Ping at {pingTime:%Y-%m-%d %H:%M:%S}.' +
                                  f'{milliseconds:03.0f} '
                                  f'({humanize.precisedelta(timeBehind)} ago)')
-                    logger.info('Displaying ping that occurred at %s.', pingTime)
+                    logger.info('Displaying ping from %s.', pingTime)
 
                     self.minTargetRange = min(self.rangeRing1.range, self.rangeRing2.range)
                     self.maxTargetRange = max(self.rangeRing1.range, self.rangeRing2.range)
