@@ -104,7 +104,8 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
             # quick and dirty...
             alpha = acousticAbsorption(10.0, 35.0, 10.0, ping_freq)
 
-        a = 10.0 * np.log10(c * tau_e * Psi / 2.0) + SL + K + deltaG  # a scalar for each beam
+        a_sv = 10.0 * np.log10(c * tau_e * Psi / 2.0) + SL + K + deltaG  # a scalar for each beam
+        a_ts = SL + K + deltaG  # a scalar for each beam
         r_offset = 0.25 * c * tau_e
 
         samInt = f[beamGroup + '/sample_interval'][i]  # [s]
@@ -117,9 +118,9 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
                 # [m] range vector for the current beam
                 r = samInt * c/2.0 * np.arange(0, bs[j].size) - r_offset
                 sv.append(20.0*np.log10(bs[j]/np.sqrt(2.0)) + 20.0*np.log10(r)\
-                          + 2*alpha[j]*r - a[j] + G_T)
-                ts.append(20.0*np.log10(bs[j]/np.sqrt(2.0)) + 20.0*np.log10(r)\
-                          + 2*alpha[j]*r - a[j] + G_T)  # TODO
+                          + 2*alpha[j]*r - a_sv[j] + G_T)
+                ts.append(20.0*np.log10(bs[j]/np.sqrt(2.0)) + 40.0*np.log10(r)\
+                          + 2*alpha[j]*r - a_ts[j] + G_T)
         sv = np.array(sv)
         ts = np.array(ts)
 
@@ -161,9 +162,9 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
                 sv.append(20.0*np.log10(bs[k]) + 20.0*np.log10(r) + 2*alpha*r\
                     - 10.0*np.log10((P*wl*wl*c*Psi[k]*tau_e) / (32*np.pi*np.pi))\
                     - G[k] - 40.0*np.log10(np.cos(tilt[k])))
-                ts.append(20.0*np.log10(bs[k]) + 20.0*np.log10(r) + 2*alpha*r\
-                    - 10.0*np.log10((P*wl*wl*c*Psi[k]*tau_e) / (32*np.pi*np.pi))\
-                    - G[k] - 40.0*np.log10(np.cos(tilt[k])))  # TODO
+                ts.append(20.0*np.log10(bs[k]) + 40.0*np.log10(r) + 2*alpha*r\
+                    - 10.0*np.log10((P*wl*wl) / (16*np.pi*np.pi))\
+                    - G[k] - 40.0*np.log10(np.cos(tilt[k])))
         sv = np.array(sv)
         ts = np.array(ts)
     else:  # unsupported format - just take the log10 of the numbers. Usually usefull.
