@@ -1,46 +1,84 @@
 # User Manual
 
-???+ note
-
-    This manual is under development.
-
 !!! info
 
-    If you opened this documentation from the sonarcal program you will be reading the offline version. The online version is available [here](https://aqualyd-limited.github.io/sonarCal/).
+    If you opened this documentation from the Sonarcal program you will be reading the offline version. The online version is available [here](https://aqualyd-limited.github.io/sonarCal/).
 
 ## Introduction
 
-This is the user documentation for the sonarcal program.
+This is the user documentation for `Sonarcal`, a program to assist with calibrating fisheries sonars using the target sphere method. Sonarcal currently supports these sonars and file formats:
 
-It supports viewing and deriving beam gain calibrations from omni-directional sonars:
-
-|Manufacturer|Model|Supported file formats|
+|Brand|Model|Supported file format|
 |---|---|---|
-|Furuno|XXX|sonar-netCDF4|
-|Kongsberg Discovery|SU90|sonar-netCDF4|
-|Kongsberg Discovery|CS90|raw, sonar-netCDF4|
-|Kongsberg Discovery|SN90|raw, sonar-netCDF4|
+|Furuno|FSV25|sonar-netCDF4|
+|Simrad|SU90 & SX90|sonar-netCDF4|
+|Simrad|CS90|raw & sonar-netCDF4|
+|Simrad|SN90|raw & sonar-netCDF4|
 
-Other sonars that output sonar-netCDF4 files may also work, but there can often be small adjustments needed for full support.
+Other sonars that output sonar-netCDF4 files may also work, but there can often be small adjustments needed for full support. Contact the developer via Sonarcal's [GitHub](https://github.com/Aqualyd-Limited/sonarCal) page for further information.
 
-The development of the current form of this program was supported by [AZTI](https://www.azti.es/en/). Earlier versions were developed while the author was employed at the Norwegian [Institute of Marine Research](https://www.hi.no).
+The current form of this program was funded by [AZTI](https://www.azti.es/en/). Earlier versions were developed while the author was employed at the Norwegian [Institute of Marine Research](https://www.hi.no).
+
+## Installation
+
+You will need Python installed on your computer before installing Sonarcal. Python versions 3.11 to 3.14 are currently supported. Sonarcal is installed from the command line via:
+
+```
+pip install sonarcal
+```
+
+and upgraded via:
+
+```
+pip install sonarcal --upgrade
+```
+
+The latest version of sonarcal will always be listed [here](https://github.com/Aqualyd-Limited/sonarCal/releases). Sonarcal has been developed on Windows and is tested on Linux and MacOS. It may work on other operating systems.
 
 ## How to use
+
+Sonarcal is started from a command line using the `sonarcal` command:
+
+```
+sonarcal
+```
+
+It make take a few seconds to start, after which the `sonarcal` window will appear:
 
 ![Main screen](assets/screenshot.png){ align=right }
 /// caption
 The main operation screen.
 ///
 
-![Beam ping amplitudes](assets/Beam_example.png){ align=right }
-/// caption
-The seconday display of ping amplitudes.
-///
+If there are suitable sonar files in the configured data directory, the program will, depending on configuration, either start to replay the most recent file in the directory or display the most recent ping in the most recent file and then wait for the next ping to be written to that file.
 
-## Configuration
+Each new ping is displayed in the polar plot to the left. The three centre plots show an echogram of the data from the three sonar beams at and adjacent to the beam line (the black radial line in the polar plot).
 
-some text
+The target strength of the maximum amplitude echo on the three beams between the minimum and maximum ranges is shown in the plots to the right. The upper plot uses black lines for the selected beam, red for the beam to port, and green for starboard. The lower plot shows the difference in amplitude between the echo in the centre beam and the two adjacent beams.
 
-## Export of data
+The upper right plot also includes smoothed lines to aid in seeing trends in the sphere amplitude - these use a thicker line style than the raw echo amplitudes.
 
-some text
+The beam being calibrated is selected by using the mouse to click on and drag the black radial line on the polar plot. The range over which the sphere is detected is chosen by clicking on and dragging the two range rings in the polar plot.
+
+The echogram colour bounds can be adjusted by clicking and dragging on the slider to the left of the polar plot.
+
+## Calibrating
+
+When using sonarcal to calibrate, follow these steps:
+
+- Start `sonarcal`
+- In the Config dialog:
+    - Set the calibration sphere TS
+    - Set the sonar data directory to where the sonar will be recording data files
+    - Turn on the use of live data
+    - Close and restart `sonarcal` for these changes to take effect
+- Repeat for multiple beams:
+    - Move the beam line and range rings to select the beam and ranges
+    - Locate the sphere on-axis of a beam using the sphere amplitude plots to assist
+    - Tick the `on-axis` box when the sphere on-axis
+    - Monitor the results in the Results dialog box
+    - Untick the `on-axis` box when sufficient data have been collected for the beam
+
+Every time that the `on-axis` box is unticked all calibration results are saved to a backup file. The results can also be exported at any time using the `Save` button on the results dialog box - you will be prompted for a directory and filename for saving.
+
+The beam being calibrated is highlighted in orange in the results dialog box and the beam line on the polar plot can not be moved while calibrating.
