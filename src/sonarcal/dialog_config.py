@@ -9,9 +9,11 @@ logger = logging.getLogger(cfg.appName())
 
 class configDialog:
     """A dialog box to set and change application parameters."""
-    def __init__(self, parent, icon=None):
+    def __init__(self, parent, icon=None, updated_cb=None):
         self.top = tk.Toplevel(parent)
         self.top.title("Config")
+        self.updated_cb = updated_cb
+
         if icon:
             self.top.iconphoto(False, icon)
 
@@ -25,26 +27,25 @@ class configDialog:
             special: str = None
 
         self.params = [
+            Param('Settings marked with * take effect with a program restart', '', 'label'),
+            Param('', '', 'horizline'),
             Param('Calibration sphere TS (dB)', 'sphereTS', 'float'),
+            Param('* Sonar data directory', 'watchDir', 'str', 'filechooser'),
+            Param('* Use live data (otherwise replay)', 'liveData', 'boolean'),
             Param('Replay at original ping rate', 'realtimeReplay', 'boolean'),
             Param('Replay ping interval (s)', 'replayPingInterval', 'float'),
+            Param('* Sonar-netCDF4 beam group path', 'horizontalBeamGroup', 'str'),
             Param('', '', 'horizline'),
-            Param('Changes below here require a program restart', '', 'label'),
+            Param('* Number of pings in plots', 'numPings', 'int'),
+            Param('* Echogram range [m]', 'maxRange', 'float'),
             Param('', '', 'horizline'),
-            Param('Sonar data directory', 'watchDir', 'str', 'filechooser'),
-            Param('Use live data (otherwise replay)', 'liveData', 'boolean'),
-            Param('Sonar-netCDF4 beam group path', 'horizontalBeamGroup', 'str'),
+            Param('* Default minimum echogram Sv [dB]', 'minSv', 'float'),
+            Param('* Default maximum echogram Sv [dB]', 'maxSv', 'float'),
+            Param('Minimum allowed Sv colour [dB]', 'sliderLowestSv', 'float'),
+            Param('Maximum allowed Sv colour [dB]', 'sliderHighestSv', 'float'),
             Param('', '', 'horizline'),
-            Param('Number of pings in plots', 'numPings', 'int'),
-            Param('Echogram range [m]', 'maxRange', 'float'),
-            Param('', '', 'horizline'),
-            Param('Default minimum echogram Sv (dB)', 'minSv', 'float'),
-            Param('Default maximum echogram Sv (dB)', 'maxSv', 'float'),
-            Param('Minimum allowed Sv colour (dB)', 'sliderLowestSv', 'float'),
-            Param('Maximum allowed Sv colour (dB)', 'sliderHighestSv', 'float'),
-            Param('', '', 'horizline'),
-            Param('TS smoothing over (pings)', 'movingAveragePoints', 'int'),
-            Param('Sphere stats over (pings)', 'sphereStatsOver', 'int'),
+            Param('* TS smoothing over [pings]', 'movingAveragePoints', 'int'),
+            Param('* Sphere stats over [pings]', 'sphereStatsOver', 'int'),
         ]
 
         self.vars = {}  # mapping for name to tkinter Var
@@ -130,6 +131,9 @@ class configDialog:
         for p in self.params:
             if p.name:
                 getattr(cfg, p.name)(self.vars[p.name].get())
+
+        if self.updated_cb:
+            self.updated_cb()  # tell others that we've updated
         cfg.save_config()
         logger.info('Saved configuration')
 

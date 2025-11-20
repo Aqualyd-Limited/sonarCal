@@ -227,13 +227,12 @@ class echogramPlotter:
 
         self.slider = RangeSlider(slider_ax, label="Thresholds", valmin=lowestSv, valmax=highestSv,
                                   valinit=((self.minSv, self.maxSv)),
-                                  valstep=np.arange(lowestSv, highestSv+1, 1),
+                                  valstep=1.0,
                                   orientation='vertical', facecolor='blue')
         # self.slider.valtext.set_rotation(90)
         self.slider.valtext.set_visible(False)
         self.slider.label.set_rotation(90)
         self.slider.on_changed(self.updateEchogramThresholds)
-
 
     def updateEchogramThresholds(self, val):
         """Update the image colormaps."""
@@ -243,6 +242,22 @@ class echogramPlotter:
         self.stbdEchogram.set_clim(val)
 
         # Redraw the figure to ensure it updates
+        self.fig.canvas.draw_idle()
+
+    def updateRangeSliderSettings(self):
+        """Update the echogram range slider min and max values from the config."""
+        vmin, vmax = self.slider.val
+        if vmin < config.sliderLowestSv():
+            self.slider.set_min(config.sliderLowestSv())
+            config.minSv(config.sliderLowestSv())  # TODO - doesn't update the config dialog...
+        if vmax > config.sliderHighestSv():
+            self.slider.set_max(config.sliderHighestSv())
+            config.maxSv(config.sliderHighestSv())  # TODO - doesn't update the config dialog...
+
+        self.slider.valmin = config.sliderLowestSv()
+        self.slider.valmax = config.sliderHighestSv()
+        self.slider.ax.set_ylim(self.slider.valmin, self.slider.valmax)
+
         self.fig.canvas.draw_idle()
 
     def set_ping_callback(self, cb):

@@ -160,7 +160,11 @@ class calibrationGUI:
     def config(self):
         """Open the Config dialog box."""
         from .dialog_config import configDialog  # deferred importing
-        configDialog(self.echogram.root, self.icon)
+        configDialog(self.echogram.root, self.icon, self.config_updated)
+
+    def config_updated(self):
+        """Things to do when the configuration is updated."""
+        self.echogram.updateRangeSliderSettings()
 
     def status_label(self):
         return self.label
