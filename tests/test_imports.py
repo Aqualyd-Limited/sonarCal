@@ -13,7 +13,7 @@ def test_import_sonarcal():
     from sonarcal import gui_utils  # noqa: F401
     from sonarcal import utils  # noqa: F401
 
-def test_calibration_data():
+def test_calibration_data(tmp_path):
     """Accumulate, delete, and save calibration results."""
 
     import os
@@ -22,16 +22,16 @@ def test_calibration_data():
     
     c = calibration_data.calibrationData()
     
-    c.update('34', datetime.now().isoformat(), 45.1, 0.2, 25.4, 16)
-    c.update('64', datetime.now().isoformat(), 44.1, 0.3, 23.4, 26)
-    c.update('S123', datetime.now().isoformat(), 40.1, 0.25, 20.4, 56)
-    c.update('4', datetime.now().isoformat(), 30.1, 0.55, 29.4, 12)
+    c.update('34', datetime.now().isoformat(), 45.1, -42.4, 0.2, 25.4, 16)
+    c.update('64', datetime.now().isoformat(), 44.1, -42.4, 0.3, 23.4, 26)
+    c.update('S123', datetime.now().isoformat(), 40.1, -42.4, 0.25, 20.4, 56)
+    c.update('4', datetime.now().isoformat(), 30.1, -42.4, 0.55, 29.4, 12)
     assert len(c.df()) == 4
     
     c.remove('4')
     assert len(c.df() == 3)
 
-    save_file = 'test_save_results.csv'    
+    save_file = tmp_path/'test_save_results.csv'    
     if os.path.exists(save_file):
         os.remove(save_file)
 
@@ -48,12 +48,13 @@ def test_calculate_gain():
           ('2025-11-14T15:20:57.74092', -44.1, 21.6),
           ('2025-11-14T15:20:57.74092', -40.4, 20.2)]
     
-    r = calculate_gains.calculate_gain(ts)
-    
-    assert r[0] == pytest.approx(-42.525, abs=1e-3)
-    assert r[1] == pytest.approx(1.5777, abs=1e-4)
-    assert r[2] == pytest.approx(21.4, abs=1e-1)
-    assert r[3] == 4
+    r = calculate_gains.calculate_gain(ts, -42.4, 2.2)
+    print(r)
+    assert r[0] == pytest.approx(2.2995, abs=1e-3)
+    assert r[1] == pytest.approx(-42.3004, abs=1e-4)
+    assert r[2] == pytest.approx(1.38466, abs=1e-1)
+    assert r[3] == pytest.approx(21.4000, abs=1e-3)
+    assert r[4] == 4
 
 def test_absorption():
     """Test calculation of acoustic absorption."""
