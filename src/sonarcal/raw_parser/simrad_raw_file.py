@@ -504,7 +504,7 @@ class RawSimradFile(BufferedReader):
 
         #  define the regex pattern used to search for datagrams
         #  (don't search for non-repeating datagrams)
-        re_pattern = b'RAW|NME|TAG|BOT|DEP|XML|MRU'
+        re_pattern = b'RAW|EOP|PIN'
 
         #  Set the search buffer size in bytes
         search_buf_bytes = 1024 * 1024 * 10
