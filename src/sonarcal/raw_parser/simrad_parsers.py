@@ -39,7 +39,7 @@ from date_conversion import nt_to_unix
 
 __all__ = ['SimradSINParser', 'SimradVERParser', 'SimradPHYParser',
             'SimradPCOParser', 'SimradPINParser', 'SimradEOPParser',
-            'SimradSENParser']
+            'SimradSENParser', 'SimradRAWParser', 'SimradSECParser']
 
 
 class _SimradDatagramParser(object):
