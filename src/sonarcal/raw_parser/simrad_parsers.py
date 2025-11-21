@@ -312,6 +312,22 @@ class SimradPINParser(_SimradDatagramParser):
                        ('high_date', 'L'),
                        ('low_ping_time', 'L'),
                        ('high_ping_time', 'L'),
+                       ('ping_number', 'i'),
+                       ('latitude', 'd'),
+                       ('longitude', 'd'),
+                       ('speed', 'd'),
+                       ('heading', 'd'),
+                       ('heave', 'd'),
+                       ('roll', 'd'),
+                       ('pitch', 'd'),
+                       ('vessel_depth', 'd'),
+                       ('vessel_distance', 'd'),
+                       ('transducer_offset_x', 'd'),
+                       ('transducer_offset_y', 'd'),
+                       ('transducer_offset_z', 'd'),
+                       ('relative_transducer_heading', 'd'),
+                       ('sound_velocity', 'd'),                       
+
                        ]
                    }
 
@@ -454,7 +470,7 @@ class SimradPCOParser(_SimradDatagramParser):
         return data
 
 class SimradSECParser(_SimradDatagramParser):
-    """Parses SN90 SEC datagrams"""
+    """Parses SN90 sensor configuration datagrams"""
     
     def __init__(self):
         headers = {0: [('type', '4s'),
@@ -481,6 +497,8 @@ class SimradSECParser(_SimradDatagramParser):
         data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
         data['bytes_read'] = bytes_read
         data['parsing_completed'] = False
+
+        data['xml'] = raw_string[self.header_size(version):].decode('utf-8')
 
         return data
 
