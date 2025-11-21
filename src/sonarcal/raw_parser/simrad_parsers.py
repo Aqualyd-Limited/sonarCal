@@ -204,9 +204,10 @@ class SimradSINParser(_SimradDatagramParser):
                 except:
                     data[field] = data[field].decode("latin_1")
 
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date']))
-        data['timestamp'] = data['timestamp'].replace(tzinfo=None)
+        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
         data['bytes_read'] = bytes_read
+
+        data['parsing_completed'] = False
 
         return data
         
@@ -245,8 +246,7 @@ class SimradVERParser(_SimradDatagramParser):
             if field in ['file_version', 'software_version', 'version_info', 'product_name']:
                 data[field] = data[field].strip('\x00')
 
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date']))
-        data['timestamp'] = data['timestamp'].replace(tzinfo=None)
+        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
         data['bytes_read'] = bytes_read
 
         return data
@@ -276,9 +276,10 @@ class SimradPHYParser(_SimradDatagramParser):
                 except UnicodeDecodeError:
                     data[field] = data[field].decode("latin_1")
 
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date']))
-        data['timestamp'] = data['timestamp'].replace(tzinfo=None)
+        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
         data['bytes_read'] = bytes_read
+
+        data['parsing_completed'] = False
 
         return data
 
@@ -305,6 +306,12 @@ class SimradPINParser(_SimradDatagramParser):
                        ('transducer_offset_z', 'd'),
                        ('relative_transducer_heading', 'd'),
                        ('sound_velocity', 'd'),                       
+                       ],
+                   1: [('type', '4s'),
+                       ('low_date', 'L'),
+                       ('high_date', 'L'),
+                       ('low_ping_time', 'L'),
+                       ('high_ping_time', 'L'),
                        ]
                    }
 
@@ -323,10 +330,14 @@ class SimradPINParser(_SimradDatagramParser):
                 except UnicodeDecodeError:
                     data[field] = data[field].decode("latin_1")
 
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date']))
-        data['timestamp'] = data['timestamp'].replace(tzinfo=None)
+        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
         data['ping_time'] = nt_to_unix((data['low_ping_time'], data['high_ping_time'])).replace(tzinfo=None)
         data['bytes_read'] = bytes_read
+
+        if version == 0:
+            pass
+        elif version == 1:
+            data['parsing_completed'] = False
 
         return data
 
@@ -355,9 +366,121 @@ class SimradEOPParser(_SimradDatagramParser):
                 except UnicodeDecodeError:
                     data[field] = data[field].decode("latin_1")
 
+        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
+        data['bytes_read'] = bytes_read
+
+        return data
+
+
+class SimradSENParser(_SimradDatagramParser):
+    """Parses SN90 sensor datagrams"""
+    
+    def __init__(self):
+        headers = {0: [('type', '4s'),
+                       ('low_date', 'L'),
+                       ('high_date', 'L'),
+                       ('low_received_time', 'L'),
+                       ('high_received_time', 'L'),
+                       ('protocol', '32s'),
+                       ('port_name', '32s'),
+                       ('message_length', 'i'),
+                       ]
+                   }
+
+        _SimradDatagramParser.__init__(self, "SEN", headers)
+        
+    def _unpack_contents(self, raw_string, bytes_read, version):
+        header_values = struct.unpack(self.header_fmt(version), raw_string[:self.header_size(version)])
+        data = {}
+
+        for indx, field in enumerate(self.header_fields(version)):
+            data[field] = header_values[indx]
+            if isinstance(data[field], bytes):
+                #  first try to decode as utf-8 but fall back to latin_1 if that fails
+                try:
+                    data[field] = data[field].decode("utf-8")
+                except UnicodeDecodeError:
+                    data[field] = data[field].decode("latin_1")
+
+            if field in ['protocol', 'port_name']:
+                data[field] = data[field].strip('\x00')
+
         data['timestamp'] = nt_to_unix((data['low_date'], data['high_date']))
         data['timestamp'] = data['timestamp'].replace(tzinfo=None)
+        data['received_time'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
         data['bytes_read'] = bytes_read
+        data['parsing_completed'] = False
+
+        return data
+
+class SimradPCOParser(_SimradDatagramParser):
+    """Parses SN90 ping configuration datagrams"""
+    
+    def __init__(self):
+        headers = {0: [('type', '4s'),
+                       ('low_date', 'L'),
+                       ('high_date', 'L'),
+                       ],
+                   1: [('type', '4s'),
+                       ('low_date', 'L'),
+                       ('high_date', 'L'),
+                       ]
+                   }
+
+        _SimradDatagramParser.__init__(self, "PCO", headers)
+        
+    def _unpack_contents(self, raw_string, bytes_read, version):
+        header_values = struct.unpack(self.header_fmt(version), raw_string[:self.header_size(version)])
+        data = {}
+
+        for indx, field in enumerate(self.header_fields(version)):
+            data[field] = header_values[indx]
+            if isinstance(data[field], bytes):
+                #  first try to decode as utf-8 but fall back to latin_1 if that fails
+                try:
+                    data[field] = data[field].decode("utf-8")
+                except UnicodeDecodeError:
+                    data[field] = data[field].decode("latin_1")
+
+        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
+        data['bytes_read'] = bytes_read
+        data['parsing_completed'] = False
+
+        if version == 0:
+            pass
+        elif version == 1:
+            pass
+
+        return data
+
+class SimradSECParser(_SimradDatagramParser):
+    """Parses SN90 SEC datagrams"""
+    
+    def __init__(self):
+        headers = {0: [('type', '4s'),
+                       ('low_date', 'L'),
+                       ('high_date', 'L'),
+                       ],
+                   }
+
+        _SimradDatagramParser.__init__(self, "SEC", headers)
+        
+    def _unpack_contents(self, raw_string, bytes_read, version):
+        header_values = struct.unpack(self.header_fmt(version), raw_string[:self.header_size(version)])
+        data = {}
+
+        for indx, field in enumerate(self.header_fields(version)):
+            data[field] = header_values[indx]
+            if isinstance(data[field], bytes):
+                #  first try to decode as utf-8 but fall back to latin_1 if that fails
+                try:
+                    data[field] = data[field].decode("utf-8")
+                except UnicodeDecodeError:
+                    data[field] = data[field].decode("latin_1")
+
+        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
+        data['bytes_read'] = bytes_read
+        data['parsing_completed'] = False
 
         return data
 
@@ -601,7 +724,7 @@ class SimradRawParser(_SimradDatagramParser):
                 data['power'] = np.empty((0,), dtype='int16')
                 data['angle'] = np.empty((0,), dtype='int8')
         elif version == 2:
-            pass
+            data['parsing_completed'] = False
         elif version == 3 or version == 4:
 
             #  clean up the channel ID

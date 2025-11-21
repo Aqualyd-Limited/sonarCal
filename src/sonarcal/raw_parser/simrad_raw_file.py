@@ -126,10 +126,11 @@ class RawSimradFile(BufferedReader):
                       'SIN': simrad_parsers.SimradSINParser(),
                       'VER': simrad_parsers.SimradVERParser(),
                       'PHY': simrad_parsers.SimradPHYParser(),
-                      # 'PCO': simrad_parsers.SimradPCOParser(),
+                      'PCO': simrad_parsers.SimradPCOParser(),
                       'PIN': simrad_parsers.SimradPINParser(),
                       'EOP': simrad_parsers.SimradEOPParser(),
-                      # 'SEN': simrad_parsers.SimradSENParser(),                      
+                      'SEN': simrad_parsers.SimradSENParser(),
+                      'SEC': simrad_parsers.SimradSECParser(),
                       }
 
     def __init__(self, name, mode='rb', closefd=True, return_raw=False, buffer_size=1024*1024):
