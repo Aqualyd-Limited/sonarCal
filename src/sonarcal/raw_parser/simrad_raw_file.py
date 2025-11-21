@@ -306,9 +306,9 @@ class RawSimradFile(BufferedReader):
             old_file_pos = self._tell_bytes() - 16
 
         #  basic sanity check on size
-        if header['size'] < 16:
+        if header['size'] < 12:
             #  size can't be smaller than the header size
-            log.warning('Invalid datagram header: size: %d, type: %s, nt_date: %s.  dgram_size < 16',
+            log.warning('Invalid datagram header: size: %d, type: %s, nt_date: %s.  dgram_size < 12',
                 header['size'], header['type'], str((header['low_date'], header['high_date'])))
 
             #  see if we can find the next datagram
