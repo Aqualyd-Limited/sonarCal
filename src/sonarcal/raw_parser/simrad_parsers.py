@@ -146,7 +146,7 @@ class SimradUnknownParser(_SimradDatagramParser):
                 #  first try to decode as utf-8 but fall back to latin_1 if that fails
                 try:
                     data[field] = data[field].decode("utf-8")
-                except:
+                except UnicodeDecodeError:
                     data[field] = data[field].decode("latin_1")
 
         data['timestamp'] = nt_to_unix((data['low_date'], data['high_date']))
@@ -201,7 +201,7 @@ class SimradSINParser(_SimradDatagramParser):
                 #  first try to decode as utf-8 but fall back to latin_1 if that fails
                 try:
                     data[field] = data[field].decode("utf-8")
-                except:
+                except UnicodeDecodeError:
                     data[field] = data[field].decode("latin_1")
 
         data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
@@ -536,7 +536,7 @@ class SimradNMEAParser(_SimradDatagramParser):
                 #  first try to decode as utf-8 but fall back to latin_1 if that fails
                 try:
                     data[field] = data[field].decode("utf-8")
-                except:
+                except UnicodeDecodeError:
                     data[field] = data[field].decode("latin_1")
 
         data['timestamp'] = nt_to_unix((data['low_date'], data['high_date']))
@@ -695,7 +695,7 @@ class SimradRawParser(_SimradDatagramParser):
                 #  first try to decode as utf-8 but fall back to latin_1 if that fails
                 try:
                     data[field] = data[field].decode("utf-8")
-                except:
+                except UnicodeDecodeError:
                     data[field] = data[field].decode("latin_1")
 
         data['timestamp'] = nt_to_unix((data['low_date'], data['high_date']))
