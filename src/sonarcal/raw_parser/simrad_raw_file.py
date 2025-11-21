@@ -49,12 +49,18 @@ Simrad .raw datagram format
 
 '''
 
+
 from io import BufferedReader, FileIO, SEEK_SET, SEEK_CUR, SEEK_END
 import datetime
 import struct
 import logging
 import re
-from . import simrad_parsers
+import simrad_parsers
+
+"""Code to read Simrad SN90 and SC90 sonar raw files.
+
+This code is a modified version of similarily named files in the pyecholab code.
+"""
 
 __all__ = ['RawSimradFile']
 
@@ -117,15 +123,13 @@ class RawSimradFile(BufferedReader):
     '''
     #: Dict object with datagram header/python class key/value pairs
     DGRAM_TYPE_KEY = {'RAW': simrad_parsers.SimradRawParser(),
-                      'CON': simrad_parsers.SimradConfigParser(),
-                      'TAG': simrad_parsers.SimradAnnotationParser(),
-                      'NME': simrad_parsers.SimradNMEAParser(),
-                      'BOT': simrad_parsers.SimradBottomParser(),
-                      'DEP': simrad_parsers.SimradDepthParser(),
-                      'XML': simrad_parsers.SimradXMLParser(),
-                      'FIL': simrad_parsers.SimradFILParser(),
-                      'MRU': simrad_parsers.SimradMRUParser(),
-                      'IDX': simrad_parsers.SimradIDXParser(),
+                      'SIN': simrad_parsers.SimradSINParser(),
+                      'VER': simrad_parsers.SimradVERParser(),
+                      'PHY': simrad_parsers.SimradPHYParser(),
+                      # 'PCO': simrad_parsers.SimradPCOParser(),
+                      'PIN': simrad_parsers.SimradPINParser(),
+                      'EOP': simrad_parsers.SimradEOPParser(),
+                      # 'SEN': simrad_parsers.SimradSENParser(),                      
                       }
 
     def __init__(self, name, mode='rb', closefd=True, return_raw=False, buffer_size=1024*1024):
