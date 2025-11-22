@@ -35,11 +35,24 @@ import struct
 import re
 import numpy as np
 from date_conversion import nt_to_unix
-
+from construct import Struct, this, Container, PaddedString, Timestamp, If
+from construct import Int32ul, Int32sl, Int16ul, Array, Float32l, Float64l, Int64ul
 
 __all__ = ['SimradSINParser', 'SimradVERParser', 'SimradPHYParser',
             'SimradPCOParser', 'SimradPINParser', 'SimradEOPParser',
             'SimradSENParser', 'SimradRAWParser', 'SimradSECParser']
+
+def construct_to_dict(obj):
+    """Recursively convert a construct data stucture into a dict."""
+    if isinstance(obj, Container):
+        result_dict = {}
+        for key, value in obj.items():
+            result_dict[key] = construct_to_dict(value)
+        return result_dict
+    elif isinstance(obj, list):
+        return [construct_to_dict(item) for item in obj]
+    else:
+        return obj
 
 
 class _SimradDatagramParser(object):
@@ -176,215 +189,165 @@ class SimradSINParser(_SimradDatagramParser):
     """Parses SN90 system information datagrams"""
     
     def __init__(self):
-        headers = {0: [('type', '4s'),
-                       ('low_date', 'L'),
-                       ('high_date', 'L'),
-                       ('transceiver_count', 'I')]
-                   }
+        _SimradDatagramParser.__init__(self, "SIN", {0: []})
 
-        _SimradDatagramParser.__init__(self, "SIN", headers)
-        
-        self.transceiver_info = {'SN90': [('ip', 'I'),
-                                          ('port', 'H'),
-                                          ('name', '32s')
-            
-        ]}
+        self.dg_def = {0: Struct(
+            'type' / PaddedString(4, 'ascii'),
+            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+            'transceiver_count' / Int32ul,
+            'transceivers' / Array(this.transceiver_count, 
+                                   Struct(
+                                       'ip' / Int32ul,
+                                       'port' / Int16ul,
+                                       'name' / PaddedString(32, 'ascii')
+                                   )
+                                )
+                            )
+                       }
 
     def _unpack_contents(self, raw_string, bytes_read, version):
-        
-        header_values = struct.unpack(self.header_fmt(version), raw_string[:self.header_size(version)])
-        data = {}
-
-        for indx, field in enumerate(self.header_fields(version)):
-            data[field] = header_values[indx]
-            if isinstance(data[field], bytes):
-                #  first try to decode as utf-8 but fall back to latin_1 if that fails
-                try:
-                    data[field] = data[field].decode("utf-8")
-                except UnicodeDecodeError:
-                    data[field] = data[field].decode("latin_1")
-
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
-        data['bytes_read'] = bytes_read
-
-        data['parsing_completed'] = False
-
+        data = self.dg_def[version].parse(raw_string)
+        data = construct_to_dict(data)
         return data
-        
     
     def _pack_contents(self, data, version):
         pass
 
 class SimradVERParser(_SimradDatagramParser):
-    """Parses SN90 version information datagrams"""
+    """Parses SN90 version information datagram."""
     
     def __init__(self):
-        headers = {0: [('type', '4s'),
-                       ('low_date', 'L'),
-                       ('high_date', 'L'),
-                       ('file_version', '32s'),
-                       ('software_version', '32s'),
-                       ('version_info', '64s'),
-                       ('product_name', '64s')]
-                   }
-
-        _SimradDatagramParser.__init__(self, "VER", headers)
+        _SimradDatagramParser.__init__(self, "VER", {0: [], 1: []})
         
+        self.dg_def = {0: Struct(
+            'type' / PaddedString(4, 'ascii'),
+            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+            'file_version' / PaddedString(32, 'ascii'),
+            'software_version' / PaddedString(32, 'ascii'),
+            'version_info' / PaddedString(64, 'ascii'),
+            'product_name' / PaddedString(64, 'ascii')
+        )}
+
     def _unpack_contents(self, raw_string, bytes_read, version):
-        header_values = struct.unpack(self.header_fmt(version), raw_string[:self.header_size(version)])
-        data = {}
 
-        for indx, field in enumerate(self.header_fields(version)):
-            data[field] = header_values[indx]
-            if isinstance(data[field], bytes):
-                #  first try to decode as utf-8 but fall back to latin_1 if that fails
-                try:
-                    data[field] = data[field].decode("utf-8")
-                except UnicodeDecodeError:
-                    data[field] = data[field].decode("latin_1")
-
-            if field in ['file_version', 'software_version', 'version_info', 'product_name']:
-                data[field] = data[field].strip('\x00')
-
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
-        data['bytes_read'] = bytes_read
-
+        data = self.dg_def[version].parse(raw_string)
+        data = construct_to_dict(data)
         return data
+
 
 class SimradPHYParser(_SimradDatagramParser):
     """Parses SN90 physical configuration datagrams"""
     
     def __init__(self):
-        headers = {0: [('type', '4s'),
-                       ('low_date', 'L'),
-                       ('high_date', 'L'),
-                       ('platform_count', 'i'),]
-                   }
+        self.dg_def = {0: Struct(
+            'type' / PaddedString(4, 'ascii'),
+            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+            'platform_count' / Int32sl,
+            'platforms' / Array(this.platform_count,
+                Struct(
+                    'struct_size' / Int32sl,
+                    'platform_type' / Int32sl,
+                    'dimension' / If(this.platform_type == 0,
+                       Struct(
+                        'length' / Float32l,
+                        'width' / Float32l,
+                        'height' / Float32l
+                       )
+                    ),
+                    'offset_from_centre' / If(this.platform_type == 0,
+                        Struct(
+                            'origin_offset_from_centre_x' / Float32l,
+                            'origin_offset_from_centre_y' / Float32l,
+                            'origin_offset_from_centre_z' / Float32l
+                       )
+                    ),
+                    'name' / If(this.platform_type == 1, PaddedString(32, 'ascii')),
+                    'parent_platform' / If(this.platform_type == 1, PaddedString(32, 'ascii')),
+                    'rotation_x' / If(this.platform_type == 1, Float32l),
+                    'rotation_y' / If(this.platform_type == 1, Float32l),
+                    'rotation_z' / If(this.platform_type == 1, Float32l)
+                )
+            )
+        )}
 
-        _SimradDatagramParser.__init__(self, "PHY", headers)
+        _SimradDatagramParser.__init__(self, "PHY", {0: []})
         
+
     def _unpack_contents(self, raw_string, bytes_read, version):
-        header_values = struct.unpack(self.header_fmt(version), raw_string[:self.header_size(version)])
-        data = {}
-
-        for indx, field in enumerate(self.header_fields(version)):
-            data[field] = header_values[indx]
-            if isinstance(data[field], bytes):
-                #  first try to decode as utf-8 but fall back to latin_1 if that fails
-                try:
-                    data[field] = data[field].decode("utf-8")
-                except UnicodeDecodeError:
-                    data[field] = data[field].decode("latin_1")
-
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
-        data['bytes_read'] = bytes_read
-
-        data['parsing_completed'] = False
-
+        data = self.dg_def[version].parse(raw_string)
+        data = construct_to_dict(data)
         return data
+
 
 class SimradPINParser(_SimradDatagramParser):
     """Parses SN90 ping information datagrams"""
     
     def __init__(self):
-        headers = {0: [('type', '4s'),
-                       ('low_date', 'L'),
-                       ('high_date', 'L'),
-                       ('low_ping_time', 'L'),
-                       ('high_ping_time', 'L'),
-                       ('ping_number', 'i'),
-                       ('latitude', 'd'),
-                       ('longitude', 'd'),
-                       ('speed', 'd'),
-                       ('heading', 'd'),
-                       ('heave', 'd'),
-                       ('roll', 'd'),
-                       ('pitch', 'd'),
-                       ('vessel_depth', 'd'),
-                       ('transducer_offset_x', 'd'),
-                       ('transducer_offset_y', 'd'),
-                       ('transducer_offset_z', 'd'),
-                       ('relative_transducer_heading', 'd'),
-                       ('sound_velocity', 'd'),                       
-                       ],
-                   1: [('type', '4s'),
-                       ('low_date', 'L'),
-                       ('high_date', 'L'),
-                       ('low_ping_time', 'L'),
-                       ('high_ping_time', 'L'),
-                       ('ping_number', 'i'),
-                       ('latitude', 'd'),
-                       ('longitude', 'd'),
-                       ('speed', 'd'),
-                       ('heading', 'd'),
-                       ('heave', 'd'),
-                       ('roll', 'd'),
-                       ('pitch', 'd'),
-                       ('vessel_depth', 'd'),
-                       ('vessel_distance', 'd'),
-                       ('transducer_offset_x', 'd'),
-                       ('transducer_offset_y', 'd'),
-                       ('transducer_offset_z', 'd'),
-                       ('relative_transducer_heading', 'd'),
-                       ('sound_velocity', 'd'),                       
-
-                       ]
-                   }
-
-        _SimradDatagramParser.__init__(self, "PIN", headers)
+        _SimradDatagramParser.__init__(self, "PIN", {0: [], 1: []})
         
+        self.dg_def = {
+            0: Struct(
+                'type' / PaddedString(4, 'ascii'),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+                'ping_time' / Timestamp(Int64ul, 1e-7, 1600),
+                'ping_number' / Int32sl,
+                'latitude' / Float64l,
+                'longitude' / Float64l,
+                'speed'  / Float64l,
+                'heading'  / Float64l,
+                'heave' / Float64l,
+                'roll' / Float64l,
+                'pitch' / Float64l,
+                'vessel_depth' / Float64l,
+                'transducer_offset_x' / Float64l,
+                'transducer_offset_y' / Float64l,
+                'transducer_offset_z' / Float64l,
+                'relative_transducer_heading' / Float64l,
+                'sound_velocity' / Float64l
+            ),
+            1: Struct(
+                'type' / PaddedString(4, 'ascii'),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+                'ping_time' / Timestamp(Int64ul, 1e-7, 1600),
+                'ping_number' / Int32sl,
+                'latitude' / Float64l,
+                'longitude' / Float64l,
+                'speed'  / Float64l,
+                'heading'  / Float64l,
+                'heave' / Float64l,
+                'roll' / Float64l,
+                'pitch' / Float64l,
+                'vessel_depth' / Float64l,
+                'vessel_distance' / Float64l,  # the only difference to PIN0
+                'transducer_offset_x' / Float64l,
+                'transducer_offset_y' / Float64l,
+                'transducer_offset_z' / Float64l,
+                'relative_transducer_heading' / Float64l,
+                'sound_velocity' / Float64l
+            )
+        }
+
     def _unpack_contents(self, raw_string, bytes_read, version):
-        header_values = struct.unpack(self.header_fmt(version), raw_string[:self.header_size(version)])
-        data = {}
 
-        for indx, field in enumerate(self.header_fields(version)):
-            data[field] = header_values[indx]
-            if isinstance(data[field], bytes):
-                #  first try to decode as utf-8 but fall back to latin_1 if that fails
-                try:
-                    data[field] = data[field].decode("utf-8")
-                except UnicodeDecodeError:
-                    data[field] = data[field].decode("latin_1")
-
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
-        data['ping_time'] = nt_to_unix((data['low_ping_time'], data['high_ping_time'])).replace(tzinfo=None)
-        data['bytes_read'] = bytes_read
-
-        if version == 0:
-            pass
-        elif version == 1:
-            data['parsing_completed'] = False
-
+        data = self.dg_def[version].parse(raw_string)
+        data = construct_to_dict(data)
         return data
 
 class SimradEOPParser(_SimradDatagramParser):
-    """Parses SN90 end of ping datagrams"""
+    """Parses SN90 end of ping datagram."""
     
     def __init__(self):
-        headers = {0: [('type', '4s'),
-                       ('low_date', 'L'),
-                       ('high_date', 'L'),
-                       ]
-                   }
 
-        _SimradDatagramParser.__init__(self, "EOP", headers)
-        
+        _SimradDatagramParser.__init__(self, "EOP", {0: [], 1: []})
+
+        self.dg_def = {0: Struct(
+            'type' / PaddedString(4, 'ascii'),
+            'timestamp' / Timestamp(Int64ul, 1e-7, 1600)
+        )}
+
     def _unpack_contents(self, raw_string, bytes_read, version):
-        header_values = struct.unpack(self.header_fmt(version), raw_string[:self.header_size(version)])
-        data = {}
-
-        for indx, field in enumerate(self.header_fields(version)):
-            data[field] = header_values[indx]
-            if isinstance(data[field], bytes):
-                #  first try to decode as utf-8 but fall back to latin_1 if that fails
-                try:
-                    data[field] = data[field].decode("utf-8")
-                except UnicodeDecodeError:
-                    data[field] = data[field].decode("latin_1")
-
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
-        data['bytes_read'] = bytes_read
-
+        data = self.dg_def[version].parse(raw_string)
+        data = construct_to_dict(data)
         return data
 
 
@@ -432,41 +395,145 @@ class SimradSENParser(_SimradDatagramParser):
 class SimradPCOParser(_SimradDatagramParser):
     """Parses SN90 ping configuration datagrams"""
     
+    
     def __init__(self):
-        headers = {0: [('type', '4s'),
-                       ('low_date', 'L'),
-                       ('high_date', 'L'),
-                       ],
-                   1: [('type', '4s'),
-                       ('low_date', 'L'),
-                       ('high_date', 'L'),
-                       ]
-                   }
-
-        _SimradDatagramParser.__init__(self, "PCO", headers)
+        _SimradDatagramParser.__init__(self, "PCO", {0: [], 1: []})
+        print('xx')
+        self.dg_def = Struct(
+            'type' / PaddedString(4, 'ascii'),
+            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+            'ping_configuration' / Struct(
+                'no_of_transceivers' / Int32sl,
+                'transceiver_config' / Array(this.no_of_transceivers,
+                    Struct(
+                        'transceiver_config_size' / Int32sl,
+                        'id' / Int32sl,
+                        'transceiver_name_len' / Int16ul,
+                        'transceiver_name' / PaddedString(this.transceiver_name_len*2, 'utf_16_le'),
+                        'split_beam_percentage' /Int32sl,
+                        'txconfig' / Struct(
+                            'tx_configuration_size' / Int32sl,
+                            'no_of_pings' / Int32sl,
+                            'tx_ping_config' / Array(this.no_of_pings,
+                                Struct(
+                                    'tx_ping_config_size' / Int32sl,
+                                    'id' / Int32sl,
+                                    'ping_name_len' / Int16ul,
+                                    'ping_name' / PaddedString(this.ping_name_len*2, 'utf_16_le'),
+                                    'frequency' / Float32l,
+                                    'pulse_duration' /Float32l,
+                                    'pulse_form' / Int32sl,
+                                    'pulse_sweep' / Float32l,
+                                    'pulse_slope' / Float32l,
+                                    'focus_x' / Int32sl,
+                                    'focus_y' / Int32sl,
+                                    'beam_width_x' / Float32l,
+                                    'beam_width_y' / Float32l,
+                                    'steering_x' / Float32l,
+                                    'steering_y' / Float32l,
+                                    'beam_delay' / Float32l,
+                                    'tx_amplitude' / Float32l,
+                                    'tx_voltage' / Float32l,
+                                    'actual_beam_bandwidth_rx' / Float64l,
+                                    'decimation' / Int32sl,
+                                    'range' / Float64l,
+                                    'steering_vector_hcs_x' / Float32l,
+                                    'steering_vector_hcs_y' / Float32l,
+                                    'steering_vector_hcs_z' / Float32l,
+                                    'rotation_axis_vector_x' / Float32l,
+                                    'rotation_axis_vector_y' / Float32l,
+                                    'rotation_axis_vector_z' / Float32l,
+                                    'tx_ping_weight_x_len' / Int32sl,
+                                    'tx_ping_weight_x' / Array(this.tx_ping_weight_x_len, Float32l),
+                                    'tx_ping_weight_y_len' / Int32sl,
+                                    'tx_ping_weight_y' / Array(this.tx_ping_weight_y_len, Float32l),
+                                    'performance_info' / Struct(
+                                        'tx_ping_performance_info_size' / Int32sl,
+                                        'tx_power' / Float32l,
+                                        'source_level' / Float32l
+                                    )
+                                )
+                            )
+                        ),
+                        'rx_config' / Struct(
+                            'rx_configuration_size' / Int32sl,
+                            'audio_beam_index' / Int32sl,
+                            'no_of_fans' / Int32sl,
+                            'fans' / Array(this.no_of_fans,
+                                Struct(
+                                    'fan_config_size' / Int32sl,
+                                    'id' / Int32sl,
+                                    'fan_name_len' / Int16ul,
+                                    'fan_name' / PaddedString(this.fan_name_len*2, 'utf_16_le'),
+                                    'sample_interval' / Float64l,
+                                    'tx_ping_id' / Int32sl,
+                                    'main_beam_rx_weight_x_len' / Int32sl,
+                                    'main_beam_rx_weight_x' / Array(this.main_beam_rx_weight_x_len, Float32l),
+                                    'main_beam_rx_weight_y_len' / Int32sl,
+                                    'main_beam_rx_weight_y' / Array(this.main_beam_rx_weight_y_len, Float32l),
+                                    'split_beam_rx_weight_x_len' / Int32sl,
+                                    'split_beam_rx_weight_x' / Array(this.split_beam_rx_weight_x_len, Float32l),
+                                    'split_beam_rx_weight_y_len' / Int32sl,
+                                    'split_beam_rx_weight_y' / Array(this.split_beam_rx_weight_y_len, Float32l),
+                                    'noise_filter' / Int32sl,
+                                    'processing' / Struct(
+                                        'fan_processing_size' / Int32sl,
+                                        'tvg_a' / Float64l,
+                                        'tvg_b' / Float64l,
+                                        'tvg_c' / Float64l,
+                                        'rcg' / Int32sl,
+                                        'agc' / Int32sl,
+                                        'amp_gain' / Int32sl
+                                    ),
+                                    'no_of_rx_beams' / Int32sl,
+                                    'rx_beams' / Array(this.no_of_rx_beams, 
+                                        Struct(
+                                            'rx_beam_config_size' / Int32sl,
+                                            'id' / Int32sl,
+                                            'beam_name_len' / Int16ul,
+                                            'beam_name' / PaddedString(this.beam_name_len*2, 'utf_16_le'),
+                                            'beam_width_x' / Float32l,
+                                            'beam_width_y' / Float32l,
+                                            'steering_x' / Float32l,
+                                            'steering_y' / Float32l,
+                                            'beam_type' / Int32sl,
+                                            'steering_vector_hcs_x' / Float32l,
+                                            'steering_vector_hcs_y' / Float32l,
+                                            'steering_vector_hcs_z' / Float32l,
+                                            'processing_type' / Int32sl,
+                                            'performance_info' / Struct(
+                                                'rx_beam_performance_info_size' / Int32sl,
+                                                'directivity_index' / Float32l,
+                                                'gain' / Float32l,
+                                                'gain_adjust' / Float32l,
+                                                'sa_correction' / Float32l,
+                                                'sa_correction_adjust' / Float32l,
+                                                'equivalent_beam_angle' / Float32l,
+                                                'absorption_coefficient' / Float32l,
+                                                'angle_sensitivity_alongship' / Float32l,
+                                                'angle_sensitivity_athwartship' / Float32l
+                                            ),
+                                            'rx_delay' / If (this._._._._._.type == 'PCO1', Int32sl)
+                                        )
+                                    ),
+                                    'rx_delay' / If (this._._._._.type == 'PCO1', Int32sl) 
+                                )
+                            )
+                        ),
+                        'transmission_mode' / Int32sl
+                    )
+                ),
+                'hint_since_last_len' / Int16ul,
+                'hint_since_last' / PaddedString(this.hint_since_last_len*2, 'utf_16_le'),
+                'hint_since_last_ping_len' / Int16ul,
+                'hint_since_last_ping' / PaddedString(this.hint_since_last_ping_len*2, 'utf_16_le')
+            )
+        )
         
     def _unpack_contents(self, raw_string, bytes_read, version):
-        header_values = struct.unpack(self.header_fmt(version), raw_string[:self.header_size(version)])
-        data = {}
 
-        for indx, field in enumerate(self.header_fields(version)):
-            data[field] = header_values[indx]
-            if isinstance(data[field], bytes):
-                #  first try to decode as utf-8 but fall back to latin_1 if that fails
-                try:
-                    data[field] = data[field].decode("utf-8")
-                except UnicodeDecodeError:
-                    data[field] = data[field].decode("latin_1")
-
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
-        data['bytes_read'] = bytes_read
-        data['parsing_completed'] = False
-
-        if version == 0:
-            pass
-        elif version == 1:
-            pass
-
+        data = self.dg_def.parse(raw_string)
+        data = construct_to_dict(data)
         return data
 
 class SimradSECParser(_SimradDatagramParser):
