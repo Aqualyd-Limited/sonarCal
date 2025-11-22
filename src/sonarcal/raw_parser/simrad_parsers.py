@@ -35,8 +35,9 @@ import struct
 import re
 import numpy as np
 from date_conversion import nt_to_unix
-from construct import Struct, this, Container, PaddedString, Timestamp, If
-from construct import Int32ul, Int32sl, Int16ul, Array, Float32l, Float64l, Int64ul
+from construct import Struct, Array, this, Container, PaddedString, GreedyString
+from construct import If, IfThenElse, Timestamp
+from construct import Int32ul, Int32sl, Int16ul, Float32l, Float64l, Int64ul, Bytes
 
 __all__ = ['SimradSINParser', 'SimradVERParser', 'SimradPHYParser',
             'SimradPCOParser', 'SimradPINParser', 'SimradEOPParser',
@@ -355,42 +356,27 @@ class SimradSENParser(_SimradDatagramParser):
     """Parses SN90 sensor datagrams"""
     
     def __init__(self):
-        headers = {0: [('type', '4s'),
-                       ('low_date', 'L'),
-                       ('high_date', 'L'),
-                       ('low_received_time', 'L'),
-                       ('high_received_time', 'L'),
-                       ('protocol', '32s'),
-                       ('port_name', '32s'),
-                       ('message_length', 'i'),
-                       ]
-                   }
 
-        _SimradDatagramParser.__init__(self, "SEN", headers)
-        
+        _SimradDatagramParser.__init__(self, "SEN", {0: []})
+
+        self.dg_def = {0: Struct(
+            'type' / PaddedString(4, 'ascii'),
+            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+            'received_time' / Timestamp(Int64ul, 1e-7, 1600),
+            'protocol' / PaddedString(32, 'ascii'),
+            'port_name' / PaddedString(32, 'ascii'),
+            'message_length' / Int32sl,
+            'message' / IfThenElse(this.protocol == 'Nmea', 
+                                   PaddedString(this.message_length, 'ascii'),
+                                   Bytes(this.message_length))
+            )
+        }
+
     def _unpack_contents(self, raw_string, bytes_read, version):
-        header_values = struct.unpack(self.header_fmt(version), raw_string[:self.header_size(version)])
-        data = {}
-
-        for indx, field in enumerate(self.header_fields(version)):
-            data[field] = header_values[indx]
-            if isinstance(data[field], bytes):
-                #  first try to decode as utf-8 but fall back to latin_1 if that fails
-                try:
-                    data[field] = data[field].decode("utf-8")
-                except UnicodeDecodeError:
-                    data[field] = data[field].decode("latin_1")
-
-            if field in ['protocol', 'port_name']:
-                data[field] = data[field].strip('\x00')
-
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date']))
-        data['timestamp'] = data['timestamp'].replace(tzinfo=None)
-        data['received_time'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
-        data['bytes_read'] = bytes_read
-        data['parsing_completed'] = False
-
+        data = self.dg_def[version].parse(raw_string)
+        data = construct_to_dict(data)
         return data
+
 
 class SimradPCOParser(_SimradDatagramParser):
     """Parses SN90 ping configuration datagrams"""
@@ -398,7 +384,7 @@ class SimradPCOParser(_SimradDatagramParser):
     
     def __init__(self):
         _SimradDatagramParser.__init__(self, "PCO", {0: [], 1: []})
-        print('xx')
+
         self.dg_def = Struct(
             'type' / PaddedString(4, 'ascii'),
             'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
@@ -540,33 +526,17 @@ class SimradSECParser(_SimradDatagramParser):
     """Parses SN90 sensor configuration datagrams"""
     
     def __init__(self):
-        headers = {0: [('type', '4s'),
-                       ('low_date', 'L'),
-                       ('high_date', 'L'),
-                       ],
-                   }
+        _SimradDatagramParser.__init__(self, "SEC", {0: []})
 
-        _SimradDatagramParser.__init__(self, "SEC", headers)
-        
+        self.dg_def = Struct(
+            'type' / PaddedString(4, 'ascii'),
+            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+            'xml' / GreedyString('utf_8')
+        )
+
     def _unpack_contents(self, raw_string, bytes_read, version):
-        header_values = struct.unpack(self.header_fmt(version), raw_string[:self.header_size(version)])
-        data = {}
-
-        for indx, field in enumerate(self.header_fields(version)):
-            data[field] = header_values[indx]
-            if isinstance(data[field], bytes):
-                #  first try to decode as utf-8 but fall back to latin_1 if that fails
-                try:
-                    data[field] = data[field].decode("utf-8")
-                except UnicodeDecodeError:
-                    data[field] = data[field].decode("latin_1")
-
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date'])).replace(tzinfo=None)
-        data['bytes_read'] = bytes_read
-        data['parsing_completed'] = False
-
-        data['xml'] = raw_string[self.header_size(version):].decode('utf-8')
-
+        data = self.dg_def.parse(raw_string)
+        data = construct_to_dict(data)
         return data
 
 
