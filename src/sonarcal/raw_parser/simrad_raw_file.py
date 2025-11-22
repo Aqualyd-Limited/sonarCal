@@ -66,7 +66,7 @@ __all__ = ['RawSimradFile']
 
 log = logging.getLogger(__name__)
 
-UTC_NT_EPOCH = datetime.datetime(1601, 1, 1, 0, 0, 0)#, tzinfo=pytz_utc)
+UTC_NT_EPOCH = datetime.datetime(1601, 1, 1, 0, 0, 0)
 
 class SimradEOF(Exception):
 

@@ -32,11 +32,9 @@
 """
 
 import struct
-import re
 import numpy as np
-from date_conversion import nt_to_unix
 from construct import Struct, Array, this, Container, PaddedString, GreedyString
-from construct import If, IfThenElse, Timestamp
+from construct import If, IfThenElse, Timestamp, GreedyBytes
 from construct import Int32ul, Int32sl, Int16ul, Float32l, Float64l, Int64ul, Bytes
 
 __all__ = ['SimradSINParser', 'SimradVERParser', 'SimradPHYParser',
@@ -125,66 +123,25 @@ class _SimradDatagramParser(object):
 
 
 class SimradUnknownParser(_SimradDatagramParser):
-    '''
-    Parser for unknown datagram types. This parser only extracts the type
-    and timestampand returns the remainder of the data unparsed.
-
-        type:         string == 'DEP0'
-        low_date:     long uint representing LSBytes of 64bit NT date
-        high_date:    long uint representing MSBytes of 64bit NT date
-        timestamp:    datetime.datetime object of NT date, assumed to be UTC
-        data:         bytearray containing the unknown datagram contents
-
-    '''
+    """Parser for unknown datagram types.
+    
+    This parser only extracts the type and timestamp and
+    returns the remainder of the data unparsed.
+    """
 
     def __init__(self, dg_type):
-        headers = {0: [('type', '4s'),
-                       ('low_date', 'L'),
-                       ('high_date', 'L')
-                      ]
-                  }
-        _SimradDatagramParser.__init__(self, dg_type, headers)
+        _SimradDatagramParser.__init__(self, dg_type, {0: []})
 
+        self.dg_def = {0: Struct(
+            'type' / PaddedString(4, 'ascii'),
+            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+            'data' / GreedyBytes())}
 
     def _unpack_contents(self, raw_string, bytes_read, version):
-        '''
-
-        '''
-
-        header_values = struct.unpack(self.header_fmt(version), raw_string[:self.header_size(version)])
-        data = {}
-
-        for indx, field in enumerate(self.header_fields(version)):
-            data[field] = header_values[indx]
-            if isinstance(data[field], bytes):
-                #  first try to decode as utf-8 but fall back to latin_1 if that fails
-                try:
-                    data[field] = data[field].decode("utf-8")
-                except UnicodeDecodeError:
-                    data[field] = data[field].decode("latin_1")
-
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date']))
-        data['timestamp'] = data['timestamp'].replace(tzinfo=None)
-        data['bytes_read'] = bytes_read
-        data['data'] = raw_string[self.header_size(version):]
-
+        data = self.dg_def[version].parse(raw_string)
+        data = construct_to_dict(data)
         return data
 
-
-    def _pack_contents(self, data, version):
-
-        datagram_fmt      = self.header_fmt(version)
-        datagram_contents = []
-
-        for field in self.header_fields(version):
-            if isinstance(data[field], str):
-                data[field] = data[field].encode('latin_1')
-            datagram_contents.append(data[field])
-
-        datagram_fmt += '%ds' % (len(data['data']))
-        datagram_contents.append(data['data'])
-
-        return struct.pack(datagram_fmt, *datagram_contents)
 
 class SimradSINParser(_SimradDatagramParser):
     """Parses SN90 system information datagrams"""
@@ -211,8 +168,6 @@ class SimradSINParser(_SimradDatagramParser):
         data = construct_to_dict(data)
         return data
     
-    def _pack_contents(self, data, version):
-        pass
 
 class SimradVERParser(_SimradDatagramParser):
     """Parses SN90 version information datagram."""
@@ -230,7 +185,6 @@ class SimradVERParser(_SimradDatagramParser):
         )}
 
     def _unpack_contents(self, raw_string, bytes_read, version):
-
         data = self.dg_def[version].parse(raw_string)
         data = construct_to_dict(data)
         return data
@@ -240,6 +194,8 @@ class SimradPHYParser(_SimradDatagramParser):
     """Parses SN90 physical configuration datagrams"""
     
     def __init__(self):
+        _SimradDatagramParser.__init__(self, "PHY", {0: []})
+
         self.dg_def = {0: Struct(
             'type' / PaddedString(4, 'ascii'),
             'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
@@ -270,10 +226,7 @@ class SimradPHYParser(_SimradDatagramParser):
                 )
             )
         )}
-
-        _SimradDatagramParser.__init__(self, "PHY", {0: []})
         
-
     def _unpack_contents(self, raw_string, bytes_read, version):
         data = self.dg_def[version].parse(raw_string)
         data = construct_to_dict(data)
@@ -333,6 +286,7 @@ class SimradPINParser(_SimradDatagramParser):
         data = self.dg_def[version].parse(raw_string)
         data = construct_to_dict(data)
         return data
+
 
 class SimradEOPParser(_SimradDatagramParser):
     """Parses SN90 end of ping datagram."""
@@ -522,6 +476,7 @@ class SimradPCOParser(_SimradDatagramParser):
         data = construct_to_dict(data)
         return data
 
+
 class SimradSECParser(_SimradDatagramParser):
     """Parses SN90 sensor configuration datagrams"""
     
@@ -538,112 +493,6 @@ class SimradSECParser(_SimradDatagramParser):
         data = self.dg_def.parse(raw_string)
         data = construct_to_dict(data)
         return data
-
-
-class SimradNMEAParser(_SimradDatagramParser):
-    '''
-    ER60 NMEA datagram contains the following keys:
-
-
-        type:         string == 'NME0'
-        low_date:     long uint representing LSBytes of 64bit NT date
-        high_date:    long uint representing MSBytes of 64bit NT date
-        timestamp:     datetime.datetime object of NT date, assumed to be UTC
-
-        nmea_string:  full (original) NMEA string
-
-    The following methods are defined:
-
-        from_string(str):    parse a raw ER60 NMEA datagram
-                            (with leading/trailing datagram size stripped)
-
-        to_string():         Returns the datagram as a raw string (including leading/trailing size fields)
-                            ready for writing to disk
-    '''
-
-    nmea_head_re = re.compile(r'\$[A-Za-z]{5},')
-
-    def __init__(self):
-        headers = {0: [('type', '4s'),
-                       ('low_date', 'L'),
-                       ('high_date', 'L')
-                      ]}
-
-        _SimradDatagramParser.__init__(self, "NME", headers)
-
-
-    def _unpack_contents(self, raw_string, bytes_read, version):
-        '''
-        Parses the NMEA string provided in raw_string
-
-        :param raw_string:  Raw NMEA strin (i.e. '$GPZDA,160012.71,11,03,2004,-1,00*7D')
-        :type raw_string: str
-
-        :returns: None
-        '''
-
-        header_values = struct.unpack(self.header_fmt(version), raw_string[:self.header_size(version)])
-        data = {}
-
-        for indx, field in enumerate(self.header_fields(version)):
-            data[field] = header_values[indx]
-            if isinstance(data[field], bytes):
-                #  first try to decode as utf-8 but fall back to latin_1 if that fails
-                try:
-                    data[field] = data[field].decode("utf-8")
-                except UnicodeDecodeError:
-                    data[field] = data[field].decode("latin_1")
-
-        data['timestamp'] = nt_to_unix((data['low_date'], data['high_date']))
-        data['timestamp'] = data['timestamp'].replace(tzinfo=None)
-        data['bytes_read'] = bytes_read
-
-        if version == 0:
-
-            data['nmea_string'] = str(raw_string[self.header_size(version):].strip(b'\x00'), 'ascii', errors='replace')
-
-            if self.nmea_head_re.match(data['nmea_string'][:7]) is not None:
-                data['nmea_talker'] = data['nmea_string'][1:3]
-                data['nmea_type']   = data['nmea_string'][3:6]
-            else:
-                data['nmea_talker'] = ''
-                data['nmea_type']   = 'UNKNOWN'
-
-        return data
-
-    def _pack_contents(self, data, version):
-
-        datagram_fmt      = self.header_fmt(version)
-        datagram_contents = []
-
-        if version == 0:
-
-            for field in self.header_fields(version):
-                if isinstance(data[field], str):
-                    data[field] = data[field].encode('latin_1')
-                datagram_contents.append(data[field])
-
-            if data['nmea_string'][-1] != '\x00':
-                tmp_string = data['nmea_string'] + '\x00'
-            else:
-                tmp_string = data['nmea_string']
-
-            #Pad with more nulls to 4-byte word boundry if necessary
-            if len(tmp_string) % 4:
-                tmp_string += '\x00' * (4 - (len(tmp_string) % 4))
-
-            datagram_fmt += '%ds' % (len(tmp_string))
-
-            #Convert to python string if needed
-            if isinstance(tmp_string, str):
-                tmp_string = tmp_string.encode('ascii', errors='replace')
-
-            datagram_contents.append(tmp_string)
-
-
-        return struct.pack(datagram_fmt, *datagram_contents)
-
-
 
 
 class SimradRawParser(_SimradDatagramParser):
@@ -690,5 +539,3 @@ class SimradRawParser(_SimradDatagramParser):
                                          data['message']['no_of_samples'])
 
         return data
-
-

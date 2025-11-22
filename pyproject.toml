@@ -30,6 +30,7 @@ dependencies = [
   "h5py",
   "Pillow",
   "platformdirs",
+  "construct",
   'pywin32; platform_system == "Windows"'
 ]
 classifiers = [
