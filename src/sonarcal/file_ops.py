@@ -264,11 +264,9 @@ def live_reading_proof_of_concept():
             print(f'Reading datagrams from {last_file.name}')
             dg_count = 0
             while True:
-                # read up to the first raw datagram
-
-                # then read all raw datagrams for the one ping
                 # live_read() will block waiting for a new datagram to be appended to the file.
-                # if nothing gets appended after a few seconds, then the file is finished
+                # If nothing gets appended after a few seconds it raises a
+                # SimradFileFinished exception
                 try:
                     dg = fid.live_read()
                     dg_count += 1
