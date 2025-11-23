@@ -6,7 +6,7 @@
 
 ## Introduction
 
-This is the user documentation for `Sonarcal`, a program to assist with calibrating fisheries sonars using the target sphere method. Sonarcal currently supports these sonars and file formats:
+This is the user documentation for Sonarcal, a program to assist with calibrating fisheries sonars using the target sphere method. Sonarcal currently supports these sonars and file formats:
 
 |Brand|Model|Supported file format|
 |---|---|---|
@@ -21,7 +21,9 @@ The current form of this program was funded by [AZTI](https://www.azti.es/en/). 
 
 ## Installation
 
-You will need Python installed on your computer before installing Sonarcal. Python versions 3.11 to 3.14 are currently supported. Sonarcal is installed from the command line via:
+Sonarcal requires Python version 3.11. If you are unfamiliar with installing and running Python programs we recommend using `uv` (see [below](#using-uv)).
+
+Sonarcal is installed from the command line via:
 
 ```
 pip install sonarcal
@@ -33,17 +35,42 @@ and upgraded via:
 pip install sonarcal --upgrade
 ```
 
-The latest version of sonarcal will always be listed [here](https://github.com/Aqualyd-Limited/sonarCal/releases). Sonarcal has been developed on Windows and is tested on Linux and MacOS. It may work on other operating systems.
+The latest version of Sonarcal will always be listed [here](https://github.com/Aqualyd-Limited/sonarCal/releases). Sonarcal has been developed on Windows and is tested on Linux and MacOS. It may work on other operating systems.
+
+###  Using `uv`
+
+[uv](https://docs.astral.sh/uv/) can be used to install Python and Sonarcal and then to run Sonarcal. uv creates a Python installation just for Sonarcal (it is independent of all other Python installations on your computer).
+
+Install uv using the instructions [here](https://github.com/astral-sh/uv?tab=readme-ov-file#installation), then install Sonarcal with this command:
+
+````
+uv tool install sonarcal
+````
+
+and run Sonarcal with this command:
+
+````
+uv tool run sonarcal
+````
+
+uv's installation of Sonarcal can be upgraded with this command:
+
+````
+uv tool upgrade sonarcal
+````
+
 
 ## How to use
 
-Sonarcal is started from a command line using the `sonarcal` command:
+Sonarcal is started from a command line with:
 
 ```
 sonarcal
 ```
 
-It make take a few seconds to start, after which the `sonarcal` window will appear:
+(or if using uv, the command is `uv tool run sonarcal`).
+
+It make take a few seconds to start, after which the Sonarcal window will appear:
 
 ![Main screen](assets/screenshot.png){ align=right }
 /// caption
@@ -64,14 +91,14 @@ The echogram colour bounds can be adjusted by clicking and dragging on the slide
 
 ## Calibrating
 
-When using sonarcal to calibrate, follow these steps:
+When using Sonarcal to calibrate, follow these steps:
 
-- Start `sonarcal`
+- Start Sonarcal
 - In the Config dialog:
     - Set the calibration sphere TS
     - Set the sonar data directory to where the sonar will be recording data files
     - Turn on the use of live data
-    - Close and restart `sonarcal` for these changes to take effect
+    - Close and restart Sonarcal for these changes to take effect
 - Repeat for multiple beams:
     - Move the beam line and range rings to select the beam and ranges
     - Locate the sphere on-axis of a beam using the sphere amplitude plots to assist
