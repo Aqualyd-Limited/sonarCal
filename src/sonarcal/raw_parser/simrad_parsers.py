@@ -31,36 +31,20 @@ def construct_to_dict(obj):
 
 
 class _SimradDatagramParser():
-    '''
-    '''
+    """Base class for a Simrad datagram parser class."""
 
-    def __init__(self, header_type, header_formats):
-        self._id      = header_type
-        self._headers = header_formats
-        self._versions    = list(header_formats.keys())
-
-    def header_fmt(self, version=0):
-        return '=' + ''.join([x[1] for x in self._headers[version]])
-
-    def header_size(self, version=0):
-        return struct.calcsize(self.header_fmt(version))
-
-    def header_fields(self, version=0):
-        return [x[0] for x in self._headers[version]]
-
-    def header(self, version=0):
-        return self._headers[version][:]
+    def __init__(self, header_type, versions = []):
+        self._id = header_type
+        self._versions = versions
 
     def validate_data_header(self, data):
 
         if isinstance(data, dict):
             type_ = data['type'][:3]
             version   = int(data['type'][3])
-
         elif isinstance(data, str):
             type_ = data[:3]
             version   = int(data[3])
-
         else:
             raise TypeError('Expected a dict or str')
 
@@ -73,6 +57,7 @@ class _SimradDatagramParser():
         return type_, version
 
     def from_string(self, raw_string, bytes_read):
+        """Parse the dataframe from the raw_string."""
 
         header = raw_string[:4]
         header = header.decode()
@@ -106,15 +91,17 @@ class SimradUnknownParser(_SimradDatagramParser):
     """
 
     def __init__(self, dg_type):
-        _SimradDatagramParser.__init__(self, dg_type, {0: []})
+        _SimradDatagramParser.__init__(self, dg_type, [0])
 
-        self.dg_def = {0: Struct(
-            'type' / PaddedString(4, 'ascii'),
-            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
-            'data' / GreedyBytes())}
+        self.dg_def =\
+            Struct(
+                'type' / PaddedString(4, 'ascii'),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+                'data' / GreedyBytes()
+            )
 
     def _unpack_contents(self, raw_string, bytes_read, version):
-        data = self.dg_def[version].parse(raw_string)
+        data = self.dg_def.parse(raw_string)
         data = construct_to_dict(data)
         return data
 
@@ -123,24 +110,25 @@ class SimradSINParser(_SimradDatagramParser):
     """Parses SN90 system information datagrams"""
     
     def __init__(self):
-        _SimradDatagramParser.__init__(self, "SIN", {0: []})
+        _SimradDatagramParser.__init__(self, "SIN", [0])
 
-        self.dg_def = {0: Struct(
-            'type' / PaddedString(4, 'ascii'),
-            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
-            'transceiver_count' / Int32ul,
-            'transceivers' / Array(this.transceiver_count, 
-                                   Struct(
-                                       'ip' / Int32ul,
-                                       'port' / Int16ul,
-                                       'name' / PaddedString(32, 'ascii')
-                                   )
+        self.dg_def =\
+            Struct(
+                'type' / PaddedString(4, 'ascii'),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+                'transceiver_count' / Int32ul,
+                'transceivers' / Array(this.transceiver_count, 
+                                    Struct(
+                                        'ip' / Int32ul,
+                                        'port' / Int16ul,
+                                        'name' / PaddedString(32, 'ascii')
+                                    )
                                 )
-                            )
-                       }
+            )
+
 
     def _unpack_contents(self, raw_string, bytes_read, version):
-        data = self.dg_def[version].parse(raw_string)
+        data = self.dg_def.parse(raw_string)
         data = construct_to_dict(data)
         return data
     
@@ -149,19 +137,20 @@ class SimradVERParser(_SimradDatagramParser):
     """Parses SN90 version information datagram."""
     
     def __init__(self):
-        _SimradDatagramParser.__init__(self, "VER", {0: [], 1: []})
+        _SimradDatagramParser.__init__(self, "VER", [0, 1])
         
-        self.dg_def = {0: Struct(
-            'type' / PaddedString(4, 'ascii'),
-            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
-            'file_version' / PaddedString(32, 'ascii'),
-            'software_version' / PaddedString(32, 'ascii'),
-            'version_info' / PaddedString(64, 'ascii'),
-            'product_name' / PaddedString(64, 'ascii')
-        )}
+        self.dg_def =\
+            Struct(
+                'type' / PaddedString(4, 'ascii'),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+                'file_version' / PaddedString(32, 'ascii'),
+                'software_version' / PaddedString(32, 'ascii'),
+                'version_info' / PaddedString(64, 'ascii'),
+                'product_name' / PaddedString(64, 'ascii')
+            )
 
     def _unpack_contents(self, raw_string, bytes_read, version):
-        data = self.dg_def[version].parse(raw_string)
+        data = self.dg_def.parse(raw_string)
         data = construct_to_dict(data)
         return data
 
@@ -170,41 +159,42 @@ class SimradPHYParser(_SimradDatagramParser):
     """Parses SN90 physical configuration datagrams"""
     
     def __init__(self):
-        _SimradDatagramParser.__init__(self, "PHY", {0: []})
+        _SimradDatagramParser.__init__(self, "PHY", [0])
 
-        self.dg_def = {0: Struct(
-            'type' / PaddedString(4, 'ascii'),
-            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
-            'platform_count' / Int32sl,
-            'platforms' / Array(this.platform_count,
-                Struct(
-                    'struct_size' / Int32sl,
-                    'platform_type' / Int32sl,
-                    'dimension' / If(this.platform_type == 0,
-                       Struct(
-                        'length' / Float32l,
-                        'width' / Float32l,
-                        'height' / Float32l
-                       )
-                    ),
-                    'offset_from_centre' / If(this.platform_type == 0,
+        self.dg_def =\
+            Struct(
+                'type' / PaddedString(4, 'ascii'),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+                'platform_count' / Int32sl,
+                'platforms' / Array(this.platform_count,
+                    Struct(
+                        'struct_size' / Int32sl,
+                        'platform_type' / Int32sl,
+                        'dimension' / If(this.platform_type == 0,
                         Struct(
-                            'origin_offset_from_centre_x' / Float32l,
-                            'origin_offset_from_centre_y' / Float32l,
-                            'origin_offset_from_centre_z' / Float32l
-                       )
-                    ),
-                    'name' / If(this.platform_type == 1, PaddedString(32, 'ascii')),
-                    'parent_platform' / If(this.platform_type == 1, PaddedString(32, 'ascii')),
-                    'rotation_x' / If(this.platform_type == 1, Float32l),
-                    'rotation_y' / If(this.platform_type == 1, Float32l),
-                    'rotation_z' / If(this.platform_type == 1, Float32l)
+                            'length' / Float32l,
+                            'width' / Float32l,
+                            'height' / Float32l
+                        )
+                        ),
+                        'offset_from_centre' / If(this.platform_type == 0,
+                            Struct(
+                                'origin_offset_from_centre_x' / Float32l,
+                                'origin_offset_from_centre_y' / Float32l,
+                                'origin_offset_from_centre_z' / Float32l
+                        )
+                        ),
+                        'name' / If(this.platform_type == 1, PaddedString(32, 'ascii')),
+                        'parent_platform' / If(this.platform_type == 1, PaddedString(32, 'ascii')),
+                        'rotation_x' / If(this.platform_type == 1, Float32l),
+                        'rotation_y' / If(this.platform_type == 1, Float32l),
+                        'rotation_z' / If(this.platform_type == 1, Float32l)
+                    )
                 )
             )
-        )}
         
     def _unpack_contents(self, raw_string, bytes_read, version):
-        data = self.dg_def[version].parse(raw_string)
+        data = self.dg_def.parse(raw_string)
         data = construct_to_dict(data)
         return data
 
@@ -213,10 +203,10 @@ class SimradPINParser(_SimradDatagramParser):
     """Parses SN90 ping information datagrams"""
     
     def __init__(self):
-        _SimradDatagramParser.__init__(self, "PIN", {0: [], 1: []})
+        _SimradDatagramParser.__init__(self, "PIN", [0, 1])
         
-        self.dg_def = {
-            0: Struct(
+        self.dg_def =\
+            Struct(
                 'type' / PaddedString(4, 'ascii'),
                 'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
                 'ping_time' / Timestamp(Int64ul, 1e-7, 1600),
@@ -229,37 +219,17 @@ class SimradPINParser(_SimradDatagramParser):
                 'roll' / Float64l,
                 'pitch' / Float64l,
                 'vessel_depth' / Float64l,
-                'transducer_offset_x' / Float64l,
-                'transducer_offset_y' / Float64l,
-                'transducer_offset_z' / Float64l,
-                'relative_transducer_heading' / Float64l,
-                'sound_velocity' / Float64l
-            ),
-            1: Struct(
-                'type' / PaddedString(4, 'ascii'),
-                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
-                'ping_time' / Timestamp(Int64ul, 1e-7, 1600),
-                'ping_number' / Int32sl,
-                'latitude' / Float64l,
-                'longitude' / Float64l,
-                'speed'  / Float64l,
-                'heading'  / Float64l,
-                'heave' / Float64l,
-                'roll' / Float64l,
-                'pitch' / Float64l,
-                'vessel_depth' / Float64l,
-                'vessel_distance' / Float64l,  # the only difference to PIN0
+                'vessel_distance' / If(this.type == 'PIN1', Float64l),
                 'transducer_offset_x' / Float64l,
                 'transducer_offset_y' / Float64l,
                 'transducer_offset_z' / Float64l,
                 'relative_transducer_heading' / Float64l,
                 'sound_velocity' / Float64l
             )
-        }
 
     def _unpack_contents(self, raw_string, bytes_read, version):
 
-        data = self.dg_def[version].parse(raw_string)
+        data = self.dg_def.parse(raw_string)
         data = construct_to_dict(data)
         return data
 
@@ -269,15 +239,16 @@ class SimradEOPParser(_SimradDatagramParser):
     
     def __init__(self):
 
-        _SimradDatagramParser.__init__(self, "EOP", {0: [], 1: []})
+        _SimradDatagramParser.__init__(self, "EOP", [0])
 
-        self.dg_def = {0: Struct(
-            'type' / PaddedString(4, 'ascii'),
-            'timestamp' / Timestamp(Int64ul, 1e-7, 1600)
-        )}
+        self.dg_def =\
+            Struct(
+                'type' / PaddedString(4, 'ascii'),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1600)
+            )
 
     def _unpack_contents(self, raw_string, bytes_read, version):
-        data = self.dg_def[version].parse(raw_string)
+        data = self.dg_def.parse(raw_string)
         data = construct_to_dict(data)
         return data
 
@@ -287,23 +258,23 @@ class SimradSENParser(_SimradDatagramParser):
     
     def __init__(self):
 
-        _SimradDatagramParser.__init__(self, "SEN", {0: []})
+        _SimradDatagramParser.__init__(self, "SEN", [0])
 
-        self.dg_def = {0: Struct(
-            'type' / PaddedString(4, 'ascii'),
-            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
-            'received_time' / Timestamp(Int64ul, 1e-7, 1600),
-            'protocol' / PaddedString(32, 'ascii'),
-            'port_name' / PaddedString(32, 'ascii'),
-            'message_length' / Int32sl,
-            'message' / IfThenElse(this.protocol == 'Nmea', 
-                                   PaddedString(this.message_length, 'ascii'),
-                                   Bytes(this.message_length))
+        self.dg_def =\
+            Struct(
+                'type' / PaddedString(4, 'ascii'),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+                'received_time' / Timestamp(Int64ul, 1e-7, 1600),
+                'protocol' / PaddedString(32, 'ascii'),
+                'port_name' / PaddedString(32, 'ascii'),
+                'message_length' / Int32sl,
+                'message' / IfThenElse(this.protocol == 'Nmea', 
+                                        PaddedString(this.message_length, 'ascii'),
+                                        Bytes(this.message_length))
             )
-        }
 
     def _unpack_contents(self, raw_string, bytes_read, version):
-        data = self.dg_def[version].parse(raw_string)
+        data = self.dg_def.parse(raw_string)
         data = construct_to_dict(data)
         return data
 
@@ -313,7 +284,7 @@ class SimradPCOParser(_SimradDatagramParser):
     
     
     def __init__(self):
-        _SimradDatagramParser.__init__(self, "PCO", {0: [], 1: []})
+        _SimradDatagramParser.__init__(self, "PCO", [0, 1])
 
         self.dg_def = Struct(
             'type' / PaddedString(4, 'ascii'),
@@ -457,7 +428,7 @@ class SimradSECParser(_SimradDatagramParser):
     """Parses SN90 sensor configuration datagrams"""
     
     def __init__(self):
-        _SimradDatagramParser.__init__(self, "SEC", {0: []})
+        _SimradDatagramParser.__init__(self, "SEC", [0])
 
         self.dg_def = Struct(
             'type' / PaddedString(4, 'ascii'),
@@ -475,7 +446,7 @@ class SimradRAWParser(_SimradDatagramParser):
     """Parse Simrad RAW datagrams."""
 
     def __init__(self):
-        _SimradDatagramParser.__init__(self, "RAW", {2: []})
+        _SimradDatagramParser.__init__(self, "RAW", [2])
 
         self.dg_def = Struct(
             'type' / PaddedString(4, 'ascii'),
