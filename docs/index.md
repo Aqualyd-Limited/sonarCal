@@ -21,7 +21,7 @@ The current form of this program was funded by [AZTI](https://www.azti.es/en/). 
 
 ## Installation
 
-Sonarcal requires Python version 3.11. If you are unfamiliar with installing and running Python programs we recommend using `uv` (see [below](#using-uv)).
+Sonarcal requires Python version 3.11 or higher. If you are unfamiliar with installing and running Python programs we recommend using `uv` (see [below](#using-uv)).
 
 Sonarcal is installed from the command line via:
 
