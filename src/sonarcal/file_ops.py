@@ -9,6 +9,7 @@ from pathlib import Path
 from .configuration import config
 from .raw_parser import simrad_raw_file as raw
 
+
 logger = logging.getLogger(config.appName())
 
 def most_recent_file(watch_dir: Path, wait_interval: float=1.0):
@@ -220,3 +221,60 @@ def file_listen_cs90_raw(watchDir, beamGroup, msg_queue):
 def file_listen_sn90_raw(watchDir, beamGroup, msg_queue):
     """XXX"""
     logger.error('SN90 raw files are not yet supported')
+
+def live_reading_proof_of_concept():
+    # Tested way to read from last file in a directory, keep reading as datagrams are 
+    # added and then change to the next new file when no new datagrams are added
+
+    pathname = '.'  # directory to look for .raw files
+    previous_file = None
+
+    # Check this often for files to appear in the directory if there are none
+    file_wait = 2.0  # [s]
+    
+    # Check this often for new files to appear in the directory once we've finished
+    # reading an existing file
+    new_file_wait = 2.0  # [s]
+
+    while True:
+        # find the most recent file and open it.
+        files = list(Path(pathname).glob('*.raw'))
+
+        if not files:
+            print('No .raw files in the given directory. Waiting...')
+            sleep(file_wait)
+            continue
+
+        sorted_files = sorted(files, key=lambda p: p.stem)
+        last_file = sorted_files[-1]
+
+        if last_file == previous_file:
+            # there is no new file, we've already read through the
+            # most recent file, so perhaps the sonar has finished
+            # recording. We'll wait for more...
+            print('No new .raw files to read. Waiting for more...')
+            sleep(new_file_wait)
+            continue
+
+        previous_file = last_file
+
+        # there is a new raw file to read
+        with raw.RawSimradFile(last_file) as fid:
+            # read and process datagrams in last_file as they get written to the file
+            print(f'Reading datagrams from {last_file.name}')
+            dg_count = 0
+            while True:
+                # read up to the first raw datagram
+
+                # then read all raw datagrams for the one ping
+                # live_read() will block waiting for a new datagram to be appended to the file.
+                # if nothing gets appended after a few seconds, then the file is finished
+                try:
+                    dg = fid.live_read()
+                    dg_count += 1
+                    # convert ping data into Sv and TS then put into the queue
+                    # to get displayed
+
+                except raw.SimradFileFinished:
+                    print(f'Read {dg_count} datagrams from {last_file.name}')
+                    break  # go back to the outer 'while True' loop to look for a new file.
