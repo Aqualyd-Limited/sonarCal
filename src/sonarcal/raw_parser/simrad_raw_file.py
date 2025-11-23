@@ -14,7 +14,7 @@ import datetime
 import struct
 import logging
 import re
-import simrad_parsers
+from . import simrad_parsers
 from time import sleep
 
 __all__ = ['RawSimradFile']

@@ -7,6 +7,7 @@ from .utils import beamAnglesFromNetCDF4, SvTSFromSonarNetCDF4
 import logging
 from pathlib import Path
 from .configuration import config
+from .raw_parser import simrad_raw_file as raw
 
 logger = logging.getLogger(config.appName())
 
