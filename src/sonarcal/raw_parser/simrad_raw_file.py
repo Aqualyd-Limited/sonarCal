@@ -15,7 +15,7 @@ import struct
 import logging
 import re
 import simrad_parsers
-
+from time import sleep
 
 __all__ = ['RawSimradFile']
 
@@ -32,6 +32,14 @@ class SimradEOF(Exception):
     def __str__(self):
         return self.message
 
+class SimradFileFinished(Exception):
+    
+    def __init__(self, message='File not longer being written to'):
+        self.message = message
+        
+    def __str__(self):
+        return self.message
+    
 
 class DatagramSizeError(Exception):
 
@@ -396,6 +404,41 @@ class RawSimradFile(BufferedReader):
             self._seek_bytes(offset, SEEK_END)
             return False
 
+
+    def live_read(self, eof_wait: float=1.0, eof_retries: int=5) -> dict:
+        """Read datagrams from a live file.
+        
+        Aside from reading datagrams from start to end of a file, will also wait for and
+        return datagrams that get added to the file.
+        
+        Parameters
+        ----------
+        eof_wait :
+            Time in seconds to wait before trying to read from the file again after reaching
+            the end of the file.
+        eof_retries :
+            Number of times to wait for new datagrams before raising SimradFileFinished
+            
+        Returns
+        -------
+        A dict containing the datagram
+        
+        Raises
+        ------
+        SimradFileFinished if no new datagrams are added to the file
+        after eof_wait * eof_retries seconds
+        """
+        retries = 0
+        while retries < eof_retries:
+            try:
+                dg = self.read(1)
+            except SimradEOF:
+                sleep(eof_wait)
+                retries += 1
+                continue
+            return dg
+
+        raise SimradFileFinished  # or could return None
 
     def read(self, k, header=None):
         '''
