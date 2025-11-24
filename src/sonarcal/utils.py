@@ -46,6 +46,26 @@ def window_closed(root, job):
     root.quit()
 
 
+def SvTSFromRawDatagrams(dg: dict, type: str):
+    # accumulates datagrams until a full ping's worth are available, then 
+    # returns Sv and TS. Otherwise returns None.
+
+    # accumulate some things that only appear once per raw file
+    
+    # start of a new ping, so accumulate ping datagrams
+
+    if dg['type'] == 'XXX0':
+        # first datagram of a new ping, so start accumulating datagrams
+        dgs = [dg]
+    elif dg['type'] == 'EOP0':
+        # process to Sv and TS
+        pass
+        return (1, 1)
+    else:
+        dgs.append(dg)
+        return (None, None)
+
+
 def beamAnglesFromNetCDF4(f, beamGroup, i):
     """Calculate the beam angles as per the convention for the given beamGroup and ping index."""
     x = f[beamGroup + '/beam_direction_x'][i]

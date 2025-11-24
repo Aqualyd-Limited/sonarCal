@@ -12,7 +12,7 @@ import sys
 
 from .echogram_plotter import echogramPlotter
 from .utils import setupLogging, on_exit, window_closed
-from .file_ops import file_listen, file_replay
+from .file_ops import sonar_file_read
 from .calibration_gui import calibrationGUI
 from .configuration import config
 
@@ -25,32 +25,17 @@ setupLogging()
 def main():
     """Omnisonar calibration graphical user interface."""    
 
-    ##########################################
-    # Start things...
-
     # queue to communicate between two threads
     msg_queue = queue.Queue()
     
-    # Tk GUI
+    # The GUI
     root = tk.Tk()
-
-    # handle to the function that does the echogram drawing
-    # job = None  
-
     echogram = echogramPlotter(msg_queue, root)
     gui = calibrationGUI(echogram)
-    # Check periodically for new echogram data
-    # job = root.after(echogram.checkQueueInterval, echogram.newPing, gui.status_label())
 
-    # Start receive in a separate thread
-    if config.liveData():
-        t = threading.Thread(target=file_listen, args=(config.watchDir(),
-                                                       config.horizontalBeamGroup(),
-                                                       msg_queue))
-    else:
-        t = threading.Thread(target=file_replay, args=(config.watchDir(),
-                                                       config.horizontalBeamGroup(),
-                                                       msg_queue))
+    # Start reading of sonar files in a separate thread
+    t = threading.Thread(target=sonar_file_read, args=(msg_queue,))
+
     t.daemon = True  # makes the thread close when main() ends
     t.start()
 

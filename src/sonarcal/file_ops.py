@@ -3,7 +3,7 @@ from time import sleep
 from datetime import datetime, timedelta
 # import h5py
 import numpy as np
-from .utils import beamAnglesFromNetCDF4, SvTSFromSonarNetCDF4
+from .utils import beamAnglesFromNetCDF4, SvTSFromSonarNetCDF4, SvTSFromRawDatagrams
 import logging
 from pathlib import Path
 from .configuration import config
@@ -17,58 +17,54 @@ def most_recent_file(watch_dir: Path, wait_interval: float=1.0):
 
     while True:
         files = sorted(list(watch_dir.glob('*.nc')) + list(watch_dir.glob('*.raw')))
+
         if files:
             return files[-1]
 
         logger.info("No .nc or .raw file found in '%s'", watch_dir)
         sleep(wait_interval)
 
+
 def file_type(filename: Path):
     """Works out what sonar the data file is from and what format it is."""
     
-    # Options will be 'sonar-netcdf4', 'CS90-raw', 'SN90-raw'
-
     match filename.suffix:
         case '.nc':
             return 'sonar-netcdf4'
         case '.raw':
-            # could be several, so read some datagrams from the file...
-            return ''
+            return 'raw'
+    return ''
 
-def file_listen(watchDir, beamGroup, msg_queue):
-    """ """
+
+def sonar_file_read(msg_queue):
+    """Run code to listen to or read from the last file in the watched directory."""
     
-    last_file = most_recent_file(watchDir)
+    watch_dir = config.watchDir()
+    beam_group = config.horizontalBeamGroup()
+    live_data = config.liveData()
+
+    last_file = most_recent_file(watch_dir)
     f_type = file_type(last_file)
-    
-    params = (watchDir, beamGroup, msg_queue)
-    
-    match f_type:
-        case 'sonar-netcdf4':
-            file_listen_netcdf(*params)
-        case 'CS90-raw':
-            file_listen_cs90_raw(*params)
-        case 'SN90-raw':
-            file_listen_sn90_raw(*params)
-        case _:
-            logger.error('Unsupported file type')
 
-
-def file_replay(watchDir, beamGroup, msg_queue):
-    """Replay the most recent sonar file in the watched directory."""
-
-    replay_file = most_recent_file(watchDir)
-    f_type = file_type(replay_file)
-
-    params = (replay_file, beamGroup, msg_queue)
+    # TODO - fix this...
+    # file_replay_*() currently uses the last file in the directory, while
+    # file_listen_*() works out itself which file(s) to work on.
+    #
+    # beamGroup is currently only correct for netcdf files, not raw files.
+    params_file = (last_file, beam_group, msg_queue)
+    params_dir = (watch_dir, beam_group, msg_queue)
     
     match f_type:
         case 'sonar-netcdf4':
-            file_replay_netcdf(*params)
-        case 'CS90-raw':
-            file_replay_cs90_raw(*params)
-        case 'SN90-raw':
-            file_replay_sn90_raw(*params)
+            if live_data:
+                file_listen_netcdf(*params_dir)
+            else:
+                file_replay_netcdf(*params_file)
+        case 'raw':
+            if live_data:
+                file_listen_raw(*params_dir)
+            else:
+                file_replay_raw(*params_file)
         case _:
             logger.error('Unsupported file type')
 
@@ -201,32 +197,14 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue):
     logger.info('Finished replaying file: %s', replay_file)
 
 
-def file_replay_cs90_raw(replay_file, beamGroup, msg_queue):
-    """Replay all data in the newest file. Used for testing."""
-
-    logger.error('CS90 raw files are not yet supported')
+def file_replay_raw(replay_file, beamGroup, msg_queue):
+    pass
 
 
-def file_replay_sn90_raw(replay_file, beamGroup, msg_queue):
-    """Replay all data in the newest file. Used for testing."""
-
-    logger.error('SN90 raw files are not yet supported')
-
-
-def file_listen_cs90_raw(watchDir, beamGroup, msg_queue):
-    """XXX"""
-    logger.error('CS90 raw files are not yet supported')
-    
-
-def file_listen_sn90_raw(watchDir, beamGroup, msg_queue):
-    """XXX"""
-    logger.error('SN90 raw files are not yet supported')
-
-def live_reading_proof_of_concept():
+def file_listen_raw(watchDir: str|Path, beam_type: str, msg_queue):
     # Tested way to read from last file in a directory, keep reading as datagrams are 
     # added and then change to the next new file when no new datagrams are added
 
-    pathname = '.'  # directory to look for .raw files
     previous_file = None
 
     # Check this often for files to appear in the directory if there are none
@@ -238,7 +216,7 @@ def live_reading_proof_of_concept():
 
     while True:
         # find the most recent file and open it.
-        files = list(Path(pathname).glob('*.raw'))
+        files = list(Path(watchDir).glob('*.raw'))
 
         if not files:
             print('No .raw files in the given directory. Waiting...')
@@ -272,7 +250,17 @@ def live_reading_proof_of_concept():
                     dg_count += 1
                     # convert ping data into Sv and TS then put into the queue
                     # to get displayed
-
+                    sv, ts = SvTSFromRawDatagrams(dg)
+                    if sv:
+                        # t is ping time
+                        # samInt is sample interval
+                        # c is sound speed
+                        # theta is beam horizontal angles
+                        # gains is beam gains
+                        # labels is beam labels
+                        # beam values shouls be sorted so that theta is monotonic
+                        t = samInt = c = theta = gains = labels = None
+                        msg_queue.put(t, samInt, c, sv, ts, theta, gains, labels)
                 except raw.SimradFileFinished:
                     print(f'Read {dg_count} datagrams from {last_file.name}')
                     break  # go back to the outer 'while True' loop to look for a new file.
