@@ -3,7 +3,8 @@ from time import sleep
 from datetime import datetime, timedelta
 # import h5py
 import numpy as np
-from .utils import beamAnglesFromNetCDF4, SvTSFromSonarNetCDF4, SvTSFromRawDatagrams
+from .utils import beamAnglesFromNetCDF4, SvTSFromSonarNetCDF4
+from .datagram_processor import rawDatagramProcessor
 import logging
 from pathlib import Path
 from .configuration import config
@@ -32,7 +33,7 @@ def file_type(filename: Path):
         case '.nc':
             return 'sonar-netcdf4'
         case '.raw':
-            return 'raw'
+            return 'simrad-raw'
     return ''
 
 
@@ -44,29 +45,23 @@ def sonar_file_read(msg_queue):
     live_data = config.liveData()
 
     last_file = most_recent_file(watch_dir)
-    f_type = file_type(last_file)
 
     # TODO - fix this...
     # file_replay_*() currently uses the last file in the directory, while
     # file_listen_*() works out itself which file(s) to work on.
     #
     # beamGroup is currently only correct for netcdf files, not raw files.
-    params_file = (last_file, beam_group, msg_queue)
-    params_dir = (watch_dir, beam_group, msg_queue)
     
-    match f_type:
+    match file_type(last_file):
         case 'sonar-netcdf4':
             if live_data:
-                file_listen_netcdf(*params_dir)
+                file_listen_netcdf(watch_dir, beam_group, msg_queue)
             else:
-                file_replay_netcdf(*params_file)
-        case 'raw':
-            if live_data:
-                file_listen_raw(*params_dir)
-            else:
-                file_replay_raw(*params_file)
+                file_replay_netcdf(last_file, beam_group, msg_queue)
+        case 'simrad-raw':
+            play_raw_file(live_data, watch_dir, beam_group, msg_queue)
         case _:
-            logger.error('Unsupported file type')
+            logger.error('Unsupported sonar file type')
 
 
 def file_listen_netcdf(watchDir, beamGroup, msg_queue):
@@ -197,13 +192,8 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue):
     logger.info('Finished replaying file: %s', replay_file)
 
 
-def file_replay_raw(replay_file, beamGroup, msg_queue):
-    pass
-
-
-def file_listen_raw(watchDir: str|Path, beam_type: str, msg_queue):
-    # Tested way to read from last file in a directory, keep reading as datagrams are 
-    # added and then change to the next new file when no new datagrams are added
+def play_raw_file(self, live: bool, watchDir: str|Path, beam_type: str, msg_queue):
+    """Reads and processes raw files."""
 
     previous_file = None
 
@@ -215,11 +205,10 @@ def file_listen_raw(watchDir: str|Path, beam_type: str, msg_queue):
     new_file_wait = 2.0  # [s]
 
     while True:
-        # find the most recent file and open it.
         files = list(Path(watchDir).glob('*.raw'))
 
         if not files:
-            print('No .raw files in the given directory. Waiting...')
+            logger.info('No .raw files in the given directory. Waiting...')
             sleep(file_wait)
             continue
 
@@ -230,7 +219,7 @@ def file_listen_raw(watchDir: str|Path, beam_type: str, msg_queue):
             # there is no new file, we've already read through the
             # most recent file, so perhaps the sonar has finished
             # recording. We'll wait for more...
-            print('No new .raw files to read. Waiting for more...')
+            logger.info('No new .raw files to read. Waiting for more...')
             sleep(new_file_wait)
             continue
 
@@ -238,29 +227,29 @@ def file_listen_raw(watchDir: str|Path, beam_type: str, msg_queue):
 
         # there is a new raw file to read
         with raw.RawSimradFile(last_file) as fid:
+            proc = rawDatagramProcessor()
             # read and process datagrams in last_file as they get written to the file
-            print(f'Reading datagrams from {last_file.name}')
-            dg_count = 0
+            logger.info('Reading datagrams from %s', last_file.name)
+
             while True:
                 # live_read() will block waiting for a new datagram to be appended to the file.
                 # If nothing gets appended after a few seconds it raises a
                 # SimradFileFinished exception
                 try:
                     dg = fid.live_read()
-                    dg_count += 1
-                    # convert ping data into Sv and TS then put into the queue
-                    # to get displayed
-                    sv, ts = SvTSFromRawDatagrams(dg)
-                    if sv:
-                        # t is ping time
-                        # samInt is sample interval
-                        # c is sound speed
-                        # theta is beam horizontal angles
-                        # gains is beam gains
-                        # labels is beam labels
-                        # beam values shouls be sorted so that theta is monotonic
-                        t = samInt = c = theta = gains = labels = None
-                        msg_queue.put(t, samInt, c, sv, ts, theta, gains, labels)
+                    
+                    if proc.add_datagram(dg):  # returns True when a processed ping is available
+                        msg_queue.put(proc.ping_time, proc.sample_interval, proc.sound_speed,
+                                      proc.sv, proc.ts, proc.theta, proc.gains, proc.labels)
+
+                        # Ping at recorded ping rate if asked
+                        if config.realtimeReplay():
+                            sleep(proc.ping_interval)
+                        else:
+                            sleep(config.replayPingInterval())
                 except raw.SimradFileFinished:
-                    print(f'Read {dg_count} datagrams from {last_file.name}')
-                    break  # go back to the outer 'while True' loop to look for a new file.
+                    if live:
+                        break  # go back to the outer 'while True' loop to look for a new file.
+                    else:
+                        logger.info('Finished playing files.')
+                        return  # stop playing files
