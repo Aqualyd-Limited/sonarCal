@@ -298,7 +298,7 @@ class SimradPCOParser(_SimradDatagramParser):
                         'transceiver_name_len' / Int16ul,
                         'transceiver_name' / PaddedString(this.transceiver_name_len*2, 'utf_16_le'),
                         'split_beam_percentage' /Int32sl,
-                        'txconfig' / Struct(
+                        'tx_config' / Struct(
                             'tx_configuration_size' / Int32sl,
                             'no_of_pings' / Int32sl,
                             'tx_ping_config' / Array(this.no_of_pings,
