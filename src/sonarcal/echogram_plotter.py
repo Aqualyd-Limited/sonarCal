@@ -21,6 +21,7 @@ class echogramPlotter:
 
     def __init__(self, msg_queue, root):
 
+        # This flag changes to True once self.createGUI() has run
         self.gui_created = False
 
         self.queue = msg_queue
@@ -247,6 +248,11 @@ class echogramPlotter:
 
         # Redraw the figure to ensure it updates
         self.fig.canvas.draw_idle()
+
+    def updateDiffPlotYLim(self):
+        """Update the lower limit of the difference plot y-axis."""
+        if self.gui_created:
+            self.ampDiffPlotAx.set_ylim((config.diffPlotYMin(), 0))
 
     def updateRangeSliderSettings(self):
         """Update the echogram range slider min and max values from the config."""

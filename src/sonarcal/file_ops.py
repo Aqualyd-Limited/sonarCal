@@ -13,7 +13,7 @@ from .raw_parser import simrad_raw_file as raw
 
 logger = logging.getLogger(config.appName())
 
-def most_recent_file(watch_dir: Path, wait_interval: float=1.0):
+def most_recent_file(watch_dir: Path, wait_interval: float=5.0):
     """Get the most recent .nc or .raw file in the directory."""
 
     while True:
@@ -22,7 +22,7 @@ def most_recent_file(watch_dir: Path, wait_interval: float=1.0):
         if files:
             return files[-1]
 
-        logger.info("No .nc or .raw file found in '%s'", watch_dir)
+        logger.info("No .nc or .raw files found in '%s'", watch_dir)
         sleep(wait_interval)
 
 

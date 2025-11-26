@@ -168,7 +168,7 @@ class calibrationGUI:
     def config_updated(self):
         """Things to do when the configuration is updated."""
         self.echogram.updateRangeSliderSettings()
-        self.echogram.ampDiffPlotAx.set_ylim((cfg.diffPlotYMin(), 0))
+        self.echogram.updateDiffPlotYLim()
 
     def status_label(self):
         return self.label
