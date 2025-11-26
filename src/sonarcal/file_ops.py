@@ -107,8 +107,6 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                     t = f[beamGroup + '/ping_time'][pingIndex]
 
                     if t > t_previous:  # there is a new ping in the file
-                        pingTime = datetime(1601, 1, 1) + timedelta(microseconds=t/1000.0)
-                        # logger.info('Start reading ping from time %s', pingTime)
 
                         theta, tilt = beamAnglesFromNetCDF4(f, beamGroup, pingIndex)
                         sv, ts, gains = SvTSFromSonarNetCDF4(f, beamGroup, pingIndex, tilt)
@@ -122,16 +120,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
 
                         t_previous = t
                         noNewDataCount = 0  # reset the count
-
-                        # logger.info('Finished reading ping from time %s', pingTime)
-                        
-                        # Sort everything so that the theta angles are monotonic
-                        # sv = sv[sort_i]
-                        # ts = ts[sort_i]
-                        # theta = theta[sort_i]
-                        # tilt = tilt[sort_i]
-                        # labels = labels[sort_i] 
-                        
+                       
                         # send the data off to be plotted
                         msg_queue.put((t, samInt, c, sv, ts, theta, gains, labels))
                     else:
@@ -174,13 +163,6 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue):
 
         # convert HDF5 text to list of str
         labels = np.array([s.decode('utf-8') for s in labels])
-
-        # Sort everything so that the theta angles are monotonic
-        # sv = sv[sort_i]
-        # ts = ts[sort_i]
-        # theta = theta[sort_i]
-        # tilt = tilt[sort_i]
-        # labels = labels[sort_i] 
 
         # send the data off to be plotted
         msg_queue.put((t[i], samInt, c, sv, ts, theta, gains, labels))
