@@ -24,28 +24,29 @@ class configDialog:
             label: str
             name: str
             type: str
+            unit: str = ''
             special: str = None
 
         self.params = [
             Param('Settings marked with * take effect with a program restart', '', 'label'),
             Param('', '', 'horizline'),
-            Param('Calibration sphere TS (dB)', 'sphereTS', 'float'),
-            Param('* Sonar data directory', 'watchDir', 'str', 'filechooser'),
+            Param('Calibration sphere TS', 'sphereTS', 'float', 'dB re 1 m²'),
+            Param('* Sonar data directory', 'watchDir', 'str', '', 'filechooser'),
             Param('* Use live data (otherwise replay)', 'liveData', 'boolean'),
-            Param('Replay ping interval (s)', 'replayPingInterval', 'float'),
+            Param('Replay ping interval', 'replayPingInterval', 'float', 's'),
             Param('* Sonar-netCDF4 beam group path', 'horizontalBeamGroup', 'str'),
             Param('', '', 'horizline'),
-            Param('* Number of pings in plots', 'numPings', 'int'),
-            Param('* Echogram range [m]', 'maxRange', 'float'),
+            Param('* Plot x-axis size', 'numPings', 'int', 'pings'),
+            Param('* Echogram range', 'maxRange', 'float', 'm'),
             Param('', '', 'horizline'),
-            Param('Difference plot y-axis minimum [dB]', 'diffPlotYMin', 'float'),
-            Param('* Default minimum echogram Sv [dB]', 'minSv', 'float'),
-            Param('* Default maximum echogram Sv [dB]', 'maxSv', 'float'),
-            Param('Minimum allowed Sv colour [dB]', 'sliderLowestSv', 'float'),
-            Param('Maximum allowed Sv colour [dB]', 'sliderHighestSv', 'float'),
+            Param('Difference plot y-axis minimum', 'diffPlotYMin', 'float', 'dB'),
+            Param('* Default minimum echogram Sv', 'minSv', 'float', 'dB re 1 m⁻¹'),
+            Param('* Default maximum echogram Sv', 'maxSv', 'float', 'dB re 1 m⁻¹'),
+            Param('Minimum allowed Sv colour', 'sliderLowestSv', 'float', 'dB re 1 m⁻¹'),
+            Param('Maximum allowed Sv colour', 'sliderHighestSv', 'float', 'dB re 1 m⁻¹'),
             Param('', '', 'horizline'),
-            Param('* TS smoothing over [pings]', 'movingAveragePoints', 'int'),
-            Param('* Sphere stats over [pings]', 'sphereStatsOver', 'int'),
+            Param('* TS smoothing over', 'movingAveragePoints', 'int', 'pings'),
+            Param('* Sphere stats over', 'sphereStatsOver', 'int', 'pings'),
         ]
 
         self.vars = {}  # mapping for name to tkinter Var
@@ -72,7 +73,7 @@ class configDialog:
             if p.special == 'filechooser':
                 self.create_dir_chooser_row(p.label, self.vars[p.name])
             else:
-                self.create_config_row(p.label, self.vars[p.name])
+                self.create_config_row(p.label, self.vars[p.name], p.unit)
 
         btn_frame = ttk.Frame(self.top)
         ttk.Button(btn_frame, text="Close", command=self.close_dialog).pack(side=tk.RIGHT)
@@ -113,7 +114,7 @@ class configDialog:
                          command=lambda: _dir_chooser(variable))
         btn.pack(side=tk.LEFT)
 
-    def create_config_row(self, label, variable):
+    def create_config_row(self, label, variable, unit):
         """Create a single row in the config dialog"""
         container = ttk.Frame(self.top)
         container.pack(fill=tk.X, expand=tk.YES, pady=5)
@@ -126,6 +127,8 @@ class configDialog:
         else:
             ent = ttk.Entry(master=container, textvariable=variable,
                             justify='right', width=15, font=('Arial 12'))
+            unit = ttk.Label(master=container, text=unit, width=10)
+            unit.pack(side=tk.RIGHT, padx=5)
         ent.pack(side=tk.RIGHT, padx=5, fill=tk.X, expand=tk.YES)
 
     def apply(self):
