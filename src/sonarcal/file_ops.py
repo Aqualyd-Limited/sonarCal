@@ -172,7 +172,7 @@ def file_replay_netcdf(watchDir, beamGroup, msg_queue):
 
             # send the data off to be plotted
             ping_time = nt_time_to_datetime(t[i]/100)
-            msg_queue.put((ping_time, samInt, c, sv, ts, theta, gains, tilts, labels))
+            msg_queue.put((ping_time, samInt, c, sv, ts, theta, tilts, gains, labels))
 
             sleep(config.replayPingInterval())
 

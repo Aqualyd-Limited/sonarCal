@@ -256,8 +256,12 @@ class echogramPlotter:
         self.fig.canvas.draw_idle()
 
     def updateTiltValue(self, tilt: float):
+        """Update the display of beam tilt on GUI.
+        
+        Units of tilt are radians
+        """
         if self.gui_created:
-            self.beamTiltText.set_text(f'Tilt: {tilt:0.1f}°')
+            self.beamTiltText.set_text(f'Tilt: {tilt*180/np.pi:0.1f}°')
 
     def updateDiffPlotYLim(self):
         """Update the lower limit of the difference plot y-axis."""
@@ -425,6 +429,7 @@ class echogramPlotter:
                                                axis=0)
 
                     self.polarPlot.set_array(self.polar.ravel())
+
                     self.updateTiltValue(tilts[self.beamIdx])
 
                     if self.new_ping_cb:

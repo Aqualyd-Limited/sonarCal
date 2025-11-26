@@ -212,8 +212,9 @@ class rawDatagramProcessor():
 
         # TODO - check that the direction of these angles is as required by the polar plot
         # - first glance suggests it is not!
+        
         self.theta = np.array(th)
-        self.tilts = np.array(tl)
+        self.tilts = np.pi/2 - np.array(tl)
         self.labels = np.array(lbls)
         self.gain_rx = np.array(g)
         self.gain_adjust = np.array(g_a)
