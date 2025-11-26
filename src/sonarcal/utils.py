@@ -202,3 +202,28 @@ def acousticAbsorption(temperature, salinity, depth, frequency):
     alpha = alpha * 1e-3  # [dB/m]
 
     return alpha
+
+def cartesian_to_spherical(x: float, y: float, z: float) -> tuple:
+    """Convert Cartesian coordinates (x, y, z) to spherical coordinates (r, theta, phi).
+
+    Parameters
+    ----------
+    x, y, z : float or array-like
+        Cartesian coordinates.
+
+    Returns
+    -------
+    r, theta, phi : float or array-like
+        Spherical coordinates:
+        r - radial distance
+        theta - polar angle (inclination from positive z-axis) in radians
+        phi - azimuthal angle (from positive x-axis in xy-plane) in radians
+    """
+    r = np.sqrt(x**2 + y**2 + z**2)
+
+    # Handle the case where r is zero to avoid division by zero
+    theta = np.arccos(z / r) if r != 0.0 else 0.0
+
+    phi = np.arctan2(y, x)
+
+    return r, theta, phi
