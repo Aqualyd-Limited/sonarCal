@@ -12,7 +12,6 @@ class rawDatagramProcessor():
 
     def __init__(self):
         self._raw_dgs = []
-        self._prev_ping_time = None
         self._power = []
 
         # There are multiple fans. 
@@ -43,7 +42,6 @@ class rawDatagramProcessor():
         self.sa_correction = None  # [dB]
         self.sa_correction_adjust = None  # [dB]
         self.absorption_coefficient = None  # [dB/m]
-        self.ping_interval = 1.0  # [s] until we get two pings of data
         
     def add_datagram(self, dg: dict) -> bool:
         """Accumulates datagrams for a ping.
@@ -62,11 +60,6 @@ class rawDatagramProcessor():
         if dg['type'] == 'EOP0':
             # have now received all data for a ping
             self._calculate_sv_ts()
-
-            # update the estimated ping interval
-            if self._prev_ping_time:
-                self.ping_interval = (self.ping_time - self._prev_ping_time).total_seconds()
-            self._prev_ping_time = self.ping_time
 
             # in prep for new data
             self._power.clear()

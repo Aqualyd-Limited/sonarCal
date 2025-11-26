@@ -168,11 +168,7 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue):
         ping_time = nt_time_to_datetime(t[i]/100)
         msg_queue.put((ping_time, samInt, c, sv, ts, theta, gains, labels))
 
-        # Ping at recorded ping rate if asked
-        if config.realtimeReplay() and i > 0:
-            sleep((ping_time - nt_time_to_datetime(t[i-1]/100)).total_seconds())
-        else:
-            sleep(config.replayPingInterval())
+        sleep(config.replayPingInterval())
 
     f.close()
 
@@ -227,16 +223,10 @@ def play_raw_file(live: bool, watchDir: Path, msg_queue):
                     
                     if proc.add_datagram(dg):  # returns True when a processed ping is available
                         
-                        # print(proc.ping_time, proc.ping_interval, proc.sound_speed,)
-                        
                         msg_queue.put((proc.ping_time, proc.sample_interval, proc.sound_speed,
                                       proc.sv, proc.ts, proc.theta, proc.gain_rx, proc.labels))
 
-                        # Ping at recorded ping rate if asked
-                        if config.realtimeReplay():
-                            sleep(proc.ping_interval)
-                        else:
-                            sleep(config.replayPingInterval())
+                        sleep(config.replayPingInterval())
                 except raw.SimradFileFinished:
                     if live:
                         break  # go back to the outer 'while True' loop to look for a new file.

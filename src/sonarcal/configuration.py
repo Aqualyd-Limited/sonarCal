@@ -167,10 +167,6 @@ class sonarcalConfig():
     def diffPlotYMin(self, value=None):
         return 'diffPlotYMin'
 
-    @bool_config
-    def realtimeReplay(self, value=None):
-        return 'realtimeReplay'
-
     @float_config
     def replayPingInterval(self, value=None):
         return 'replayPingInterval'

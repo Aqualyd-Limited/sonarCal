@@ -32,7 +32,6 @@ class configDialog:
             Param('Calibration sphere TS (dB)', 'sphereTS', 'float'),
             Param('* Sonar data directory', 'watchDir', 'str', 'filechooser'),
             Param('* Use live data (otherwise replay)', 'liveData', 'boolean'),
-            Param('Replay at original ping rate', 'realtimeReplay', 'boolean'),
             Param('Replay ping interval (s)', 'replayPingInterval', 'float'),
             Param('* Sonar-netCDF4 beam group path', 'horizontalBeamGroup', 'str'),
             Param('', '', 'horizline'),
