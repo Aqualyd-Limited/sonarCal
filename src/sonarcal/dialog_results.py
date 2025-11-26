@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog as fd
+import natsort as nt
 from datetime import datetime
 from .configuration import config
 
@@ -93,7 +94,7 @@ class resultsDialog:
     def update_rows(self, active_beam_label: str):
         """Sorts calibration results rows by beam and sets background colours to look nice."""
 
-        for beam_label, index in zip(sorted(self.item_ids.keys(), key=int), range(len(self.item_ids))):
+        for beam_label, index in zip(nt.natsorted(self.item_ids.keys()), range(len(self.item_ids))):
             self.tree.move(self.item_ids[beam_label], '', index)
 
             # Decide on the row colour

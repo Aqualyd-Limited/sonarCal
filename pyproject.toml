@@ -32,6 +32,7 @@ dependencies = [
   "platformdirs",
   "construct",
   "arrow",
+  "natsorted",
   'pywin32; platform_system == "Windows"'
 ]
 classifiers = [
