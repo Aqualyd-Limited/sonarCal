@@ -59,7 +59,7 @@ def sonar_file_read(msg_queue):
             else:
                 file_replay_netcdf(last_file, beam_group, msg_queue)
         case 'simrad-raw':
-            play_raw_file(live_data, watch_dir, beam_group, msg_queue)
+            play_raw_file(live_data, watch_dir, msg_queue)
         case _:
             logger.error('Unsupported sonar file type')
 
@@ -108,25 +108,29 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
 
                     if t > t_previous:  # there is a new ping in the file
                         pingTime = datetime(1601, 1, 1) + timedelta(microseconds=t/1000.0)
-                        logger.info('Start reading ping from time %s', pingTime)
+                        # logger.info('Start reading ping from time %s', pingTime)
 
-                        theta, tilt, sort_i = beamAnglesFromNetCDF4(f, beamGroup, pingIndex)
+                        theta, tilt = beamAnglesFromNetCDF4(f, beamGroup, pingIndex)
                         sv, ts, gains = SvTSFromSonarNetCDF4(f, beamGroup, pingIndex, tilt)
 
                         samInt = f[beamGroup + '/sample_interval'][pingIndex]
                         c = f['Environment/sound_speed_indicative'][()]
                         labels = f[beamGroup + '/beam']
 
+                        # convert HDF5 text to list of str
+                        labels = np.array([s.decode('utf-8') for s in labels])
+
                         t_previous = t
                         noNewDataCount = 0  # reset the count
 
-                        logger.info('Finished reading ping from time %s', pingTime)
+                        # logger.info('Finished reading ping from time %s', pingTime)
                         
                         # Sort everything so that the theta angles are monotonic
-                        sv = sv[sort_i]
-                        theta = theta[sort_i]
-                        tilt = tilt[sort_i]
-                        labels = labels[sort_i] 
+                        # sv = sv[sort_i]
+                        # ts = ts[sort_i]
+                        # theta = theta[sort_i]
+                        # tilt = tilt[sort_i]
+                        # labels = labels[sort_i] 
                         
                         # send the data off to be plotted
                         msg_queue.put((t, samInt, c, sv, ts, theta, gains, labels))
@@ -161,7 +165,7 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue):
 
     # Send off each ping at a sedate rate...
     for i in range(0, t.shape[0]):
-        theta, tilt, sort_i = beamAnglesFromNetCDF4(f, beamGroup, i)
+        theta, tilt = beamAnglesFromNetCDF4(f, beamGroup, i)
         sv, ts, gains = SvTSFromSonarNetCDF4(f, beamGroup, i, tilt)
 
         samInt = f[beamGroup + '/sample_interval'][i]
@@ -172,10 +176,11 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue):
         labels = np.array([s.decode('utf-8') for s in labels])
 
         # Sort everything so that the theta angles are monotonic
-        sv = sv[sort_i]
-        theta = theta[sort_i]
-        tilt = tilt[sort_i]
-        labels = labels[sort_i] 
+        # sv = sv[sort_i]
+        # ts = ts[sort_i]
+        # theta = theta[sort_i]
+        # tilt = tilt[sort_i]
+        # labels = labels[sort_i] 
 
         # send the data off to be plotted
         msg_queue.put((t[i], samInt, c, sv, ts, theta, gains, labels))
@@ -192,7 +197,7 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue):
     logger.info('Finished replaying file: %s', replay_file)
 
 
-def play_raw_file(self, live: bool, watchDir: str|Path, beam_type: str, msg_queue):
+def play_raw_file(live: bool, watchDir: Path, msg_queue):
     """Reads and processes raw files."""
 
     previous_file = None
@@ -205,7 +210,7 @@ def play_raw_file(self, live: bool, watchDir: str|Path, beam_type: str, msg_queu
     new_file_wait = 2.0  # [s]
 
     while True:
-        files = list(Path(watchDir).glob('*.raw'))
+        files = list(watchDir.glob('*.raw'))
 
         if not files:
             logger.info('No .raw files in the given directory. Waiting...')
@@ -239,8 +244,11 @@ def play_raw_file(self, live: bool, watchDir: str|Path, beam_type: str, msg_queu
                     dg = fid.live_read()
                     
                     if proc.add_datagram(dg):  # returns True when a processed ping is available
-                        msg_queue.put(proc.ping_time, proc.sample_interval, proc.sound_speed,
-                                      proc.sv, proc.ts, proc.theta, proc.gains, proc.labels)
+                        
+                        print(proc.ping_time, proc.ping_interval, proc.sound_speed,)
+                        
+                        # msg_queue.put(proc.ping_time, proc.sample_interval, proc.sound_speed,
+                        #               proc.sv, proc.ts, proc.theta, proc.gains, proc.labels)
 
                         # Ping at recorded ping rate if asked
                         if config.realtimeReplay():
@@ -250,6 +258,6 @@ def play_raw_file(self, live: bool, watchDir: str|Path, beam_type: str, msg_queu
                 except raw.SimradFileFinished:
                     if live:
                         break  # go back to the outer 'while True' loop to look for a new file.
-                    else:
-                        logger.info('Finished playing files.')
-                        return  # stop playing files
+
+                    logger.info('Finished playing files.')
+                    return  # stop playing files

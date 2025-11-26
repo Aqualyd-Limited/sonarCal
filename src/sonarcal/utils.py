@@ -60,11 +60,8 @@ def beamAnglesFromNetCDF4(f, beamGroup, i):
     # Due to the -y below, the arctan2 angles are 0 to forward, decreasing to -pi to port and 
     # increasing to +pi to starboard
     theta = np.arctan2(-y, x)
-    # sometimes the angles can be non-monotonic and will cause problems when plotting the
-    # omni echogram, so sort and also return the sorting order for other functions to use
-    sort_i = np.argsort(theta)
 
-    return theta, tilt, sort_i
+    return theta, tilt
 
 
 def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):

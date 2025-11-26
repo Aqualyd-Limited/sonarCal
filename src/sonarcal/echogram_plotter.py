@@ -21,6 +21,8 @@ class echogramPlotter:
 
     def __init__(self, msg_queue, root):
 
+        self.gui_created = False
+
         self.queue = msg_queue
         self.root = root
         self.job = None
@@ -233,6 +235,8 @@ class echogramPlotter:
         self.slider.valtext.set_visible(False)
         self.slider.label.set_rotation(90)
         self.slider.on_changed(self.updateEchogramThresholds)
+        
+        self.gui_created = True
 
     def updateEchogramThresholds(self, val):
         """Update the image colormaps."""
@@ -246,23 +250,31 @@ class echogramPlotter:
 
     def updateRangeSliderSettings(self):
         """Update the echogram range slider min and max values from the config."""
-        vmin, vmax = self.slider.val
-        if vmin < config.sliderLowestSv():
-            self.slider.set_min(config.sliderLowestSv())
-            config.minSv(config.sliderLowestSv())  # TODO - doesn't update the config dialog...
-        if vmax > config.sliderHighestSv():
-            self.slider.set_max(config.sliderHighestSv())
-            config.maxSv(config.sliderHighestSv())  # TODO - doesn't update the config dialog...
+        if self.gui_created:
+            vmin, vmax = self.slider.val
+            if vmin < config.sliderLowestSv():
+                self.slider.set_min(config.sliderLowestSv())
+                config.minSv(config.sliderLowestSv())  # TODO - doesn't update the config dialog...
+            if vmax > config.sliderHighestSv():
+                self.slider.set_max(config.sliderHighestSv())
+                config.maxSv(config.sliderHighestSv())  # TODO - doesn't update the config dialog...
 
-        self.slider.valmin = config.sliderLowestSv()
-        self.slider.valmax = config.sliderHighestSv()
-        self.slider.ax.set_ylim(self.slider.valmin, self.slider.valmax)
+            self.slider.valmin = config.sliderLowestSv()
+            self.slider.valmax = config.sliderHighestSv()
+            self.slider.ax.set_ylim(self.slider.valmin, self.slider.valmax)
 
         self.fig.canvas.draw_idle()
 
     def set_ping_callback(self, cb):
         """Set the callback that is called after each new ping is displayed."""
         self.new_ping_cb = cb
+
+    @staticmethod
+    def sort_beams(sv, ts, theta, gains, labels):
+        """Sorts everything by the values in theta."""
+        sort_i = np.argsort(theta)
+        
+        return sv[sort_i], ts[sort_i], theta[sort_i], gains[sort_i], labels[sort_i]
 
     def newPing(self, label):
         """Receive messages from the queue, decodes them and updates the echogram."""
@@ -274,6 +286,9 @@ class echogramPlotter:
             else:
                 try:
                     (t, samInt, c, sv, ts, theta, gains, labels) = message
+
+                    # sort on theta - needed to avoid a warning from the polar plot
+                    (sv, ts, theta, gains, labels) = self.sort_beams(sv, ts, theta, gains, labels)
 
                     if self.firstPing:
                         self.firstPing = False
