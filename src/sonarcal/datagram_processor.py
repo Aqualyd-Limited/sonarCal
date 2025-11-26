@@ -1,4 +1,4 @@
-"""Code to process raw datagrams into Sv and TS."""
+"""Code to process Simrad raw sonar datagrams into Sv and TS."""
 import logging
 import numpy as np
 from .utils import cartesian_to_spherical
@@ -8,7 +8,7 @@ logger = logging.getLogger(config.appName())
 
 
 class rawDatagramProcessor():
-    """XXX."""
+    """Calculates Sv and TS from Simrad raw datagrams from sonars."""
 
     def __init__(self):
         self._raw_dgs = []
@@ -26,23 +26,23 @@ class rawDatagramProcessor():
         self.selected_ping_name = 'Horizontal'
 
         self.product_name = ''
-        self.sv = None
-        self.ts = None
-        self.sound_speed = None
-        self.ping_time = None
-        self.sample_interval = None
-        self.pulse_duration = None
-        self.frequency = None
-        self.transmit_power = None
-        self.equivalent_beam_angle = None
+        self.sv = None  # [dB]
+        self.ts = None  # [dB]
+        self.sound_speed = None  # [m/s]
+        self.ping_time = None  # [datetime]
+        self.sample_interval = None  # [m]
+        self.pulse_duration = None  # [s]
+        self.frequency = None  # [Hz]
+        self.transmit_power = None  # [W]
+        self.equivalent_beam_angle = None  # [dB]
         self.labels = None
-        self.theta = None
-        self.tilt = None
-        self.gain_rx = None
-        self.gain_adjust = None
-        self.sa_correction = None
-        self.sa_correction_adjust = None
-        self.absorption_coefficient = None
+        self.theta = None  # [rad]
+        self.tilt = None  # [rad]
+        self.gain_rx = None  # [dB]
+        self.gain_adjust = None  # [dB]
+        self.sa_correction = None  # [dB]
+        self.sa_correction_adjust = None  # [dB]
+        self.absorption_coefficient = None  # [dB/m]
         self.ping_interval = 1.0  # [s] until we get two pings of data
         
     def add_datagram(self, dg: dict) -> bool:
@@ -97,7 +97,7 @@ class rawDatagramProcessor():
         gain_tx = 0  # unknown value so default to zero
 
         wavenumber = self.sound_speed / self.frequency
-        tilt_corr = 30.0 *np.log10(np.cos(self.tilt * np.pi/180.0))
+        tilt_corr = 30.0 *np.log10(np.cos(self.tilt))
         range_corr = 3.0  # [m] empirical range correction
         sample_range = self.sound_speed * self.sample_interval / 2.0
         r = np.arange(num_samples) * sample_range - range_corr
@@ -200,8 +200,8 @@ class rawDatagramProcessor():
             _, inc, azi = cartesian_to_spherical(b['steering_vector_hcs_x'],
                                                  b['steering_vector_hcs_y'],
                                                  b['steering_vector_hcs_z'])
-            th.append(azi * 180/np.pi)
-            tl.append(inc * 180/np.pi)
+            th.append(azi)
+            tl.append(inc)
 
             g.append(b['performance_info']['gain'])
             g_a.append(b['performance_info']['gain_adjust'])
@@ -216,10 +216,11 @@ class rawDatagramProcessor():
                 # TODO - estimate from beam widths otherwise
                 logger.warning('Equivalent beam angle of 0.0 - using default value')
 
-        self.labels = np.array(lbls)
+        # TODO - check that the direction of these angles is as required by the polar plot
+        # - first glance suggests it is not!
         self.theta = np.array(th)
         self.tilt = np.array(tl)
-        print(self.labels)
+        self.labels = np.array(lbls)
         self.gain_rx = np.array(g)
         self.gain_adjust = np.array(g_a)
         self.sa_correction = np.array(sa)
