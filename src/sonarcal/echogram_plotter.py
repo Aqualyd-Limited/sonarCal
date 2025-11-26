@@ -273,7 +273,7 @@ class echogramPlotter:
     def sort_beams(sv, ts, theta, gains, labels):
         """Sorts everything by the values in theta."""
         sort_i = np.argsort(theta)
-        
+
         return sv[sort_i], ts[sort_i], theta[sort_i], gains[sort_i], labels[sort_i]
 
     def newPing(self, label):
@@ -285,7 +285,12 @@ class echogramPlotter:
                 logger.info('No new data in received message.')
             else:
                 try:
-                    (t, samInt, c, sv, ts, theta, gains, labels) = message
+                    (pingTime, samInt, c, sv, ts, theta, gains, labels) = message
+                    # pingTime is a datetime
+                    # samInt is a float
+                    # c is a float
+                    # sv and ts are 2d numpy
+                    # theta, gains, and labels are 1d numpy
 
                     # sort on theta - needed to avoid a warning from the polar plot
                     (sv, ts, theta, gains, labels) = self.sort_beams(sv, ts, theta, gains, labels)
@@ -298,8 +303,6 @@ class echogramPlotter:
                     self.gains = gains
 
                     # Update the plots with the data in the new ping
-                    pingTime = datetime(1601, 1, 1, tzinfo=timezone.utc)\
-                        + timedelta(microseconds=t/1000.0)
                     timeBehind = datetime.now(timezone.utc) - pingTime
                     milliseconds = pingTime.microsecond / 1000
                     label.config(text=f'Ping at {pingTime:%Y-%m-%d %H:%M:%S}.' +

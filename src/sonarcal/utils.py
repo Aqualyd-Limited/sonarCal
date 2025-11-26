@@ -227,3 +227,31 @@ def cartesian_to_spherical(x: float, y: float, z: float) -> tuple:
     phi = np.arctan2(y, x)
 
     return r, theta, phi
+
+def nt_time_to_datetime(nt_time: int):
+    """Convert a Windows time number to a Python datetime object.
+
+    Paramters
+    --------
+    nt_time :
+        The Windows NT time value (number of 100-nanosecond
+        intervals since January 1, 1601 UTC)
+        
+    Returns
+    -------
+        datetime.datetime: The corresponding datetime object in UTC.
+    """
+    # FILETIME epoch is January 1, 1601 UTC
+    # Unix epoch is January 1, 1970 UTC
+    # Calculate the difference in 100-nanosecond intervals
+    # 100-nanoseconds per interval, 10,000,000 intervals per second
+    # 11644473600 seconds between 1601-01-01 and 1970-01-01
+    unix_epoch_diff = 116444736000000000  # in 100-nanosecond intervals
+
+    # Convert NT time to Unix timestamp (seconds since 1970-01-01 UTC)
+    # Subtract the difference to get intervals since Unix epoch
+    # Divide by 10,000,000 to convert to seconds
+    timestamp = (nt_time - unix_epoch_diff) / 10000000
+
+    # Create a datetime object from the Unix timestamp
+    return datetime.fromtimestamp(timestamp, timezone.utc)

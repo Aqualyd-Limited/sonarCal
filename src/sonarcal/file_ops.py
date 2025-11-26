@@ -2,7 +2,8 @@ import sys
 from time import sleep
 # import h5py
 import numpy as np
-from .utils import beamAnglesFromNetCDF4, SvTSFromSonarNetCDF4
+from datetime import datetime
+from .utils import beamAnglesFromNetCDF4, SvTSFromSonarNetCDF4, nt_time_to_datetime
 from .datagram_processor import rawDatagramProcessor
 import logging
 from pathlib import Path
@@ -82,7 +83,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
 
     pingIndex = -1  # which ping to read. -1 means the last ping, -2 the second to last ping
 
-    t_previous = 0  # timestamp of previous ping
+    t_previous = datetime(1970, 1, 1)  # timestamp of previous ping
     f_previous = ''  # previously used file
 
     while True:  # could add a timeout on this loop...
@@ -103,7 +104,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                     # f = h5py.File(mostRecentFile, 'r') # without HDF5 swmr option
                     f_previous = mostRecentFile
 
-                    t = f[beamGroup + '/ping_time'][pingIndex]
+                    t = nt_time_to_datetime(f[beamGroup + '/ping_time'][pingIndex]/100)
 
                     if t > t_previous:  # there is a new ping in the file
 
@@ -164,12 +165,12 @@ def file_replay_netcdf(replay_file, beamGroup, msg_queue):
         labels = np.array([s.decode('utf-8') for s in labels])
 
         # send the data off to be plotted
-        msg_queue.put((t[i], samInt, c, sv, ts, theta, gains, labels))
+        ping_time = nt_time_to_datetime(t[i]/100)
+        msg_queue.put((ping_time, samInt, c, sv, ts, theta, gains, labels))
 
         # Ping at recorded ping rate if asked
         if config.realtimeReplay() and i > 0:
-            # t has units of nanoseconds
-            sleep((t[i] - t[i-1])/1e9)
+            sleep((ping_time - nt_time_to_datetime(t[i-1]/100)).total_seconds())
         else:
             sleep(config.replayPingInterval())
 
@@ -226,10 +227,10 @@ def play_raw_file(live: bool, watchDir: Path, msg_queue):
                     
                     if proc.add_datagram(dg):  # returns True when a processed ping is available
                         
-                        print(proc.ping_time, proc.ping_interval, proc.sound_speed,)
+                        # print(proc.ping_time, proc.ping_interval, proc.sound_speed,)
                         
-                        # msg_queue.put(proc.ping_time, proc.sample_interval, proc.sound_speed,
-                        #               proc.sv, proc.ts, proc.theta, proc.gains, proc.labels)
+                        msg_queue.put((proc.ping_time, proc.sample_interval, proc.sound_speed,
+                                      proc.sv, proc.ts, proc.theta, proc.gains, proc.labels))
 
                         # Ping at recorded ping rate if asked
                         if config.realtimeReplay():
