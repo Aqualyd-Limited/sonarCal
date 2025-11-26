@@ -46,10 +46,6 @@ def sonar_file_read(msg_queue):
 
     last_file = most_recent_file(watch_dir)
 
-    # TODO - fix this...
-    # file_replay_*() currently uses the last file in the directory, while
-    # file_listen_*() works out itself which file(s) to work on.
-    #
     # beamGroup is currently only correct for netcdf files, not raw files.
     
     match file_type(last_file):
@@ -57,9 +53,12 @@ def sonar_file_read(msg_queue):
             if live_data:
                 file_listen_netcdf(watch_dir, beam_group, msg_queue)
             else:
-                file_replay_netcdf(last_file, beam_group, msg_queue)
+                file_replay_netcdf(watch_dir, beam_group, msg_queue)
         case 'simrad-raw':
-            play_raw_file(live_data, watch_dir, msg_queue)
+            if live_data:
+                file_listen_raw(watch_dir, msg_queue)
+            else:
+                file_replay_raw(watch_dir, msg_queue)
         case _:
             logger.error('Unsupported sonar file type')
 
@@ -142,41 +141,48 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                     sleep(errorWaitInterval)
 
 
-def file_replay_netcdf(replay_file, beamGroup, msg_queue):
-    """Replay all data in the newest file. Used for testing."""
-    logger.info('Reading from file: %s.', replay_file)
+def file_replay_netcdf(watchDir, beamGroup, msg_queue):
+    """Replay all data in the directory. Used for testing."""
 
-    # open netcdf file
-    import h5py  # deferred to save startup time
-    f = h5py.File(replay_file, 'r')
+    files = list(watchDir.glob('*.nc'))
 
-    t = f[beamGroup + '/ping_time']
+    if not files:
+        logger.info('No .nc files in %s', watchDir)
 
-    # Send off each ping at a sedate rate...
-    for i in range(0, t.shape[0]):
-        theta, tilt = beamAnglesFromNetCDF4(f, beamGroup, i)
-        sv, ts, gains = SvTSFromSonarNetCDF4(f, beamGroup, i, tilt)
+    for file in sorted(files, key=lambda p: p.stem):
+        logger.info('Replaying file: %s', file)
 
-        samInt = f[beamGroup + '/sample_interval'][i]
-        c = f['Environment/sound_speed_indicative'][()]
-        labels = f[beamGroup + '/beam']
+        # open netcdf file
+        import h5py  # deferred to save startup time
+        f = h5py.File(file, 'r')
 
-        # convert HDF5 text to list of str
-        labels = np.array([s.decode('utf-8') for s in labels])
+        t = f[beamGroup + '/ping_time']
 
-        # send the data off to be plotted
-        ping_time = nt_time_to_datetime(t[i]/100)
-        msg_queue.put((ping_time, samInt, c, sv, ts, theta, gains, labels))
+        # Send off each ping at a sedate rate...
+        for i in range(0, t.shape[0]):
+            theta, tilt = beamAnglesFromNetCDF4(f, beamGroup, i)
+            sv, ts, gains = SvTSFromSonarNetCDF4(f, beamGroup, i, tilt)
 
-        sleep(config.replayPingInterval())
+            samInt = f[beamGroup + '/sample_interval'][i]
+            c = f['Environment/sound_speed_indicative'][()]
+            labels = f[beamGroup + '/beam']
 
-    f.close()
+            # convert HDF5 text to list of str
+            labels = np.array([s.decode('utf-8') for s in labels])
 
-    logger.info('Finished replaying file: %s', replay_file)
+            # send the data off to be plotted
+            ping_time = nt_time_to_datetime(t[i]/100)
+            msg_queue.put((ping_time, samInt, c, sv, ts, theta, gains, labels))
+
+            sleep(config.replayPingInterval())
+
+        f.close()
+    
+    logger.info('Finished replaying files in %s', watchDir)
 
 
-def play_raw_file(live: bool, watchDir: Path, msg_queue):
-    """Reads and processes raw files."""
+def file_listen_raw(watchDir: Path, msg_queue):
+    """Replay live files."""
 
     previous_file = None
 
@@ -191,7 +197,7 @@ def play_raw_file(live: bool, watchDir: Path, msg_queue):
         files = list(watchDir.glob('*.raw'))
 
         if not files:
-            logger.info('No .raw files in the given directory. Waiting...')
+            logger.info('No .raw files in %s. Waiting...', watchDir)
             sleep(file_wait)
             continue
 
@@ -228,8 +234,31 @@ def play_raw_file(live: bool, watchDir: Path, msg_queue):
 
                         sleep(config.replayPingInterval())
                 except raw.SimradFileFinished:
-                    if live:
-                        break  # go back to the outer 'while True' loop to look for a new file.
+                    break  # go back to the outer 'while True' loop to look for a new file.
 
-                    logger.info('Finished playing files.')
-                    return  # stop playing files
+
+def file_replay_raw(watchDir: Path, msg_queue):
+    """Replays raw files."""
+
+    files = list(watchDir.glob('*.raw'))
+
+    if not files:
+        logger.info('No .raw files in %s', watchDir)
+
+    for file in sorted(files, key=lambda p: p.stem):
+        with raw.RawSimradFile(file) as fid:
+            proc = rawDatagramProcessor()
+            logger.info('Reading datagrams from %s', file.name)
+
+            while True:
+                try:
+                    dg = fid.read(1)
+
+                    if proc.add_datagram(dg):  # returns True when a processed ping is available
+                        msg_queue.put((proc.ping_time, proc.sample_interval, proc.sound_speed,
+                                      proc.sv, proc.ts, proc.theta, proc.gain_rx, proc.labels))
+                        sleep(config.replayPingInterval())
+                except raw.SimradEOF:
+                    break  # go back to the outer 'while True' loop for the next file
+    
+    logger.info('Finished replaying files in %s', watchDir)
