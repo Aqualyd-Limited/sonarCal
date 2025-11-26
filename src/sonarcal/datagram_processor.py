@@ -202,12 +202,13 @@ class rawDatagramProcessor():
             sa_a.append(b['performance_info']['sa_correction_adjust'])
             alpha.append(b['performance_info']['absorption_coefficient'])
 
-            eba.append(b['performance_info']['equivalent_beam_angle'])            
+            EBA = b['performance_info']['equivalent_beam_angle']
+            if EBA == 0.0:
+                # Use the classic Simrad approximate formula
+                EBA = 10*np.log10(b['beam_width_x'] * b['beam_width_y'] / 5800)
+                logger.warning('No EBA for beam %s - using %.1f dB', b['beam_name'], EBA)
+            eba.append(EBA)
 
-            if eba[-1] == 0.0:
-                eba[-1] = -18.0207
-                # TODO - estimate from beam widths otherwise
-                logger.warning('Equivalent beam angle of 0.0 - using default value')
 
         # TODO - check that the direction of these angles is as required by the polar plot
         # - first glance suggests it is not!
