@@ -36,7 +36,7 @@ class rawDatagramProcessor():
         self.equivalent_beam_angle = None  # [dB]
         self.labels = None
         self.theta = None  # [rad]
-        self.tilt = None  # [rad]
+        self.tilts = None  # [rad]
         self.gain_rx = None  # [dB]
         self.gain_adjust = None  # [dB]
         self.sa_correction = None  # [dB]
@@ -90,7 +90,7 @@ class rawDatagramProcessor():
         gain_tx = 0  # unknown value so default to zero
 
         wavenumber = self.sound_speed / self.frequency
-        tilt_corr = 30.0 *np.log10(np.cos(self.tilt))
+        tilt_corr = 30.0 *np.log10(np.cos(self.tilts))
         range_corr = 3.0  # [m] empirical range correction
         sample_range = self.sound_speed * self.sample_interval / 2.0
         r = np.arange(num_samples) * sample_range - range_corr
@@ -213,7 +213,7 @@ class rawDatagramProcessor():
         # TODO - check that the direction of these angles is as required by the polar plot
         # - first glance suggests it is not!
         self.theta = np.array(th)
-        self.tilt = np.array(tl)
+        self.tilts = np.array(tl)
         self.labels = np.array(lbls)
         self.gain_rx = np.array(g)
         self.gain_adjust = np.array(g_a)

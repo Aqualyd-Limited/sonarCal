@@ -63,7 +63,7 @@ class echogramPlotter:
 
         self.firstPing = True
 
-    def createGUI(self, samInt, c, sv, ts, theta, labels):
+    def createGUI(self, samInt, c, sv, ts, theta, tilts, labels):
         """Create the GUI."""
         cmap = mpl.colormaps['jet']  # viridis looks nice too...
         cmap.set_under('w')  # and for values below self.minSv, if desired
@@ -221,6 +221,10 @@ class echogramPlotter:
         # the tight_layout call causes a resize of the polar plot, so update the
         # inverse transform that beamline keeps
         self.beamLine.resized(None)
+        
+        # Text for the horizontal beam tilt
+        self.beamTiltText = self.polarPlotAx.text(0.05, 1.0, s='',
+                                                  transform=self.polarPlotAx.transAxes)
 
         # range slider to adjust the echogram thresholds. Do this after the tight_layout
         # call as it otherwise complains
@@ -238,6 +242,8 @@ class echogramPlotter:
         self.slider.on_changed(self.updateEchogramThresholds)
         
         self.gui_created = True
+        
+        self.updateTiltValue(tilts.mean())
 
     def updateEchogramThresholds(self, val):
         """Update the image colormaps."""
@@ -248,6 +254,10 @@ class echogramPlotter:
 
         # Redraw the figure to ensure it updates
         self.fig.canvas.draw_idle()
+
+    def updateTiltValue(self, tilt: float):
+        if self.gui_created:
+            self.beamTiltText.set_text(f'Tilt: {tilt:0.1f}°')
 
     def updateDiffPlotYLim(self):
         """Update the lower limit of the difference plot y-axis."""
@@ -276,11 +286,11 @@ class echogramPlotter:
         self.new_ping_cb = cb
 
     @staticmethod
-    def sort_beams(sv, ts, theta, gains, labels):
+    def sort_beams(sv, ts, theta, tilts, gains, labels):
         """Sorts everything by the values in theta."""
         sort_i = np.argsort(theta)
 
-        return sv[sort_i], ts[sort_i], theta[sort_i], gains[sort_i], labels[sort_i]
+        return sv[sort_i], ts[sort_i], theta[sort_i], tilts[sort_i], gains[sort_i], labels[sort_i]
 
     def newPing(self, label):
         """Receive messages from the queue, decodes them and updates the echogram."""
@@ -291,7 +301,7 @@ class echogramPlotter:
                 logger.info('No new data in received message.')
             else:
                 try:
-                    (pingTime, samInt, c, sv, ts, theta, gains, labels) = message
+                    (pingTime, samInt, c, sv, ts, theta, tilts, gains, labels) = message
                     # pingTime - datetime
                     # samInt - sample interval: float [m]
                     # c - sound speed: float [m/s]
@@ -299,15 +309,17 @@ class echogramPlotter:
                     # ts - TS: 2D numpy float [dB]
                     # the rest are all 1d numpy vectors
                     # theta - float [rad]
+                    # tilts - float [rad]
                     # gains - float [dB]
                     # labels - str 
 
                     # sort on theta - needed to avoid a warning from the polar plot
-                    (sv, ts, theta, gains, labels) = self.sort_beams(sv, ts, theta, gains, labels)
+                    (sv, ts, theta, tilts, gains, labels) =\
+                        self.sort_beams(sv, ts, theta, tilts, gains, labels)
 
                     if self.firstPing:
                         self.firstPing = False
-                        self.createGUI(samInt, c, sv, ts, theta, labels)
+                        self.createGUI(samInt, c, sv, ts, theta, tilts, labels)
 
                     # Update our copy of the beam gains
                     self.gains = gains
@@ -413,6 +425,7 @@ class echogramPlotter:
                                                axis=0)
 
                     self.polarPlot.set_array(self.polar.ravel())
+                    self.updateTiltValue(tilts[self.beamIdx])
 
                     if self.new_ping_cb:
                         self.new_ping_cb()

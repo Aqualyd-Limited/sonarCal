@@ -107,8 +107,8 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
 
                     if t > t_previous:  # there is a new ping in the file
 
-                        theta, tilt = beamAnglesFromNetCDF4(f, beamGroup, pingIndex)
-                        sv, ts, gains = SvTSFromSonarNetCDF4(f, beamGroup, pingIndex, tilt)
+                        theta, tilts = beamAnglesFromNetCDF4(f, beamGroup, pingIndex)
+                        sv, ts, gains = SvTSFromSonarNetCDF4(f, beamGroup, pingIndex, tilts)
 
                         samInt = f[beamGroup + '/sample_interval'][pingIndex]
                         c = f['Environment/sound_speed_indicative'][()]
@@ -121,7 +121,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                         noNewDataCount = 0  # reset the count
                        
                         # send the data off to be plotted
-                        msg_queue.put((t, samInt, c, sv, ts, theta, gains, labels))
+                        msg_queue.put((t, samInt, c, sv, ts, theta, tilts, gains, labels))
                     else:
                         noNewDataCount += 1
                         if noNewDataCount > maxNoNewDataCount:
@@ -160,8 +160,8 @@ def file_replay_netcdf(watchDir, beamGroup, msg_queue):
 
         # Send off each ping at a sedate rate...
         for i in range(0, t.shape[0]):
-            theta, tilt = beamAnglesFromNetCDF4(f, beamGroup, i)
-            sv, ts, gains = SvTSFromSonarNetCDF4(f, beamGroup, i, tilt)
+            theta, tilts = beamAnglesFromNetCDF4(f, beamGroup, i)
+            sv, ts, gains = SvTSFromSonarNetCDF4(f, beamGroup, i, tilts)
 
             samInt = f[beamGroup + '/sample_interval'][i]
             c = f['Environment/sound_speed_indicative'][()]
@@ -172,7 +172,7 @@ def file_replay_netcdf(watchDir, beamGroup, msg_queue):
 
             # send the data off to be plotted
             ping_time = nt_time_to_datetime(t[i]/100)
-            msg_queue.put((ping_time, samInt, c, sv, ts, theta, gains, labels))
+            msg_queue.put((ping_time, samInt, c, sv, ts, theta, gains, tilts, labels))
 
             sleep(config.replayPingInterval())
 
@@ -230,7 +230,8 @@ def file_listen_raw(watchDir: Path, msg_queue):
                     if proc.add_datagram(dg):  # returns True when a processed ping is available
                         
                         msg_queue.put((proc.ping_time, proc.sample_interval, proc.sound_speed,
-                                      proc.sv, proc.ts, proc.theta, proc.gain_rx, proc.labels))
+                                      proc.sv, proc.ts, proc.theta, proc.tilts,
+                                      proc.gain_rx, proc.labels))
 
                         sleep(config.replayPingInterval())
                 except raw.SimradFileFinished:
@@ -256,7 +257,8 @@ def file_replay_raw(watchDir: Path, msg_queue):
 
                     if proc.add_datagram(dg):  # returns True when a processed ping is available
                         msg_queue.put((proc.ping_time, proc.sample_interval, proc.sound_speed,
-                                      proc.sv, proc.ts, proc.theta, proc.gain_rx, proc.labels))
+                                      proc.sv, proc.ts, proc.theta, proc.tilts, proc.gain_rx,
+                                      proc.labels))
                         sleep(config.replayPingInterval())
                 except raw.SimradEOF:
                     break  # go back to the outer 'while True' loop for the next file
