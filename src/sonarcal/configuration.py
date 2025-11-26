@@ -83,7 +83,8 @@ class sonarcalConfig():
                     'movingAveragePoints': '10',
                     'sphereStatsOver': '5',
                     'sliderLowestSv': '-100',
-                    'sliderHighestSv': '10'
+                    'sliderHighestSv': '10',
+                    'diffPlotYMin': '-3.0'
                     }
 
         if not c:  # config file not found, so make one
@@ -161,6 +162,10 @@ class sonarcalConfig():
     @float_config
     def minSv(self, value=None):
         return 'minSv'
+
+    @float_config
+    def diffPlotYMin(self, value=None):
+        return 'diffPlotYMin'
 
     @bool_config
     def realtimeReplay(self, value=None):

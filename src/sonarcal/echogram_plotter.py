@@ -42,7 +42,7 @@ class echogramPlotter:
 
         self.varNum = config.sphereStatsOver()
 
-        self.diffPlotXlim = (-3, 0)  # [dB]
+        self.diffPlotYlim = (config.diffPlotYMin(), 0)  # [dB]
 
         self.numPings = config.numPings()  # to show in the echograms
         self.maxRange = config.maxRange()  # [m] of the echograms
@@ -124,9 +124,9 @@ class echogramPlotter:
         self.ampDiffPlotAx.yaxis.set_label_position("right")
         self.ampDiffPlotAx.grid(axis='y', linestyle=':')
 
-        self.portEchogramAx.set_title('Port', loc='left')
-        self.mainEchogramAx.set_title(f'Beam {self.beamLabel}', loc='left')
-        self.stbdEchogramAx.set_title('Starboard', loc='left')
+        self.portEchogramAx.set_title('', loc='left', color='red')
+        self.mainEchogramAx.set_title(f' {self.beamLabel}', loc='left')
+        self.stbdEchogramAx.set_title('', loc='left', color='green')
 
         # Create the lines in the plots
         # Sphere TS from 3 beams
@@ -154,7 +154,7 @@ class echogramPlotter:
         self.ampDiffStbdPlotSmooth, = self.ampDiffPlotAx.plot(self.ampDiffStbdSmooth, 'g-',
                                                               linewidth=2)
         self.ampDiffPlotAx.set_xlim(0, self.numPings)
-        self.ampDiffPlotAx.set_ylim(self.diffPlotXlim)
+        self.ampDiffPlotAx.set_ylim(self.diffPlotYlim)
 
         # Echograms for the 3 selected beams
         ee = [0.0, self.numPings, self.maxRange, 0.0]
@@ -286,11 +286,15 @@ class echogramPlotter:
             else:
                 try:
                     (pingTime, samInt, c, sv, ts, theta, gains, labels) = message
-                    # pingTime is a datetime
-                    # samInt is a float
-                    # c is a float
-                    # sv and ts are 2d numpy
-                    # theta, gains, and labels are 1d numpy
+                    # pingTime - datetime
+                    # samInt - sample interval: float [m]
+                    # c - sound speed: float [m/s]
+                    # sv - Sv: 2D numpy float [dB]
+                    # ts - TS: 2D numpy float [dB]
+                    # the rest are all 1d numpy vectors
+                    # theta - float [rad]
+                    # gains - float [dB]
+                    # labels - str 
 
                     # sort on theta - needed to avoid a warning from the polar plot
                     (sv, ts, theta, gains, labels) = self.sort_beams(sv, ts, theta, gains, labels)

@@ -39,6 +39,7 @@ class configDialog:
             Param('* Number of pings in plots', 'numPings', 'int'),
             Param('* Echogram range [m]', 'maxRange', 'float'),
             Param('', '', 'horizline'),
+            Param('Difference plot y-axis minimum [dB]', 'diffPlotYMin', 'float'),
             Param('* Default minimum echogram Sv [dB]', 'minSv', 'float'),
             Param('* Default maximum echogram Sv [dB]', 'maxSv', 'float'),
             Param('Minimum allowed Sv colour [dB]', 'sliderLowestSv', 'float'),
