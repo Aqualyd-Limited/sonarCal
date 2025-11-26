@@ -11,9 +11,12 @@ This is the user documentation for Sonarcal, a program to assist with calibratin
 |Brand|Model|Supported file format|
 |---|---|---|
 |Furuno|FSV25|sonar-netCDF4|
-|Simrad|SU90 & SX90|sonar-netCDF4|
-|Simrad|CS90|raw & sonar-netCDF4|
-|Simrad|SN90|raw & sonar-netCDF4|
+|Simrad|SU90 & SX90|sonar-netCDF4**|
+|Simrad|CS90|raw* & sonar-netCDF4**|
+|Simrad|SN90|raw* & sonar-netCDF4**|
+
+(* = under development, ** = requires testing)
+
 
 Other sonars that output sonar-netCDF4 files may also work, but there can often be small adjustments needed for full support. Contact the developer via Sonarcal's [GitHub](https://github.com/Aqualyd-Limited/sonarCal) page for further information.
 
