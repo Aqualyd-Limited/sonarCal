@@ -1,6 +1,5 @@
 import sys
 from time import sleep
-from datetime import datetime, timedelta
 # import h5py
 import numpy as np
 from .utils import beamAnglesFromNetCDF4, SvTSFromSonarNetCDF4
