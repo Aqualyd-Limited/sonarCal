@@ -455,22 +455,21 @@ class SimradRAWParser(_SimradDatagramParser):
             'port' / Int16ul,
             'padding' / Int16ul,
             'message_length' / Int32sl,
-            'message' / Struct(
-                'length' / Int32ul,
-                'id' / PaddedString(4, 'ascii'),
-                'time' / Timestamp(Int64ul, 1e-7, 1600),
-                'ping_number' / Int32ul,
-                'datagram_number' / Int32ul,
-                'sample_index' / Int32sl,
-                'no_of_samples' / Int32ul,
-                'heave' / Float32l,
-                'roll' / Float32l,
-                'pitch' / Float32l,
-                'yaw' / Float32l,
-                'beam_index_start' / Int16ul,
-                'spare' / Bytes(2),
-                'no_of_beams' / Int32ul,
-                'data' / Array(this.no_of_samples * this.no_of_beams * 2, Float32l)
+            'length' / Int32ul,
+            'id' / PaddedString(4, 'ascii'),
+            'time' / Timestamp(Int64ul, 1e-7, 1600),
+            'ping_number' / Int32ul,
+            'datagram_number' / Int32ul,
+            'sample_index' / Int32sl,
+            'no_of_samples' / Int32ul,
+            'heave' / Float32l,
+            'roll' / Float32l,
+            'pitch' / Float32l,
+            'yaw' / Float32l,
+            'beam_index_start' / Int16ul,
+            'spare' / Bytes(2),
+            'no_of_beams' / Int32ul,
+            'data' / Array(this.no_of_samples * this.no_of_beams * 2, Float32l
             )
         )
 
@@ -478,11 +477,10 @@ class SimradRAWParser(_SimradDatagramParser):
         data = self.dg_def.parse(raw_string)
         data = construct_to_dict(data)
 
-        real = np.array(data['message']['data'][0::2])
-        imag = np.array(data['message']['data'][1::2])
+        real = np.array(data['data'][0::2])
+        imag = np.array(data['data'][1::2])
 
-        data['message']['data'] =\
-            (real + 1.0j * imag).reshape(data['message']['no_of_beams'],
-                                         data['message']['no_of_samples'])
+        data['data'] = (real + 1.0j * imag).reshape(data['no_of_beams'],
+                                                    data['no_of_samples'])
 
         return data

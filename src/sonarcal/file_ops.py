@@ -230,7 +230,7 @@ def play_raw_file(live: bool, watchDir: Path, msg_queue):
                         # print(proc.ping_time, proc.ping_interval, proc.sound_speed,)
                         
                         msg_queue.put((proc.ping_time, proc.sample_interval, proc.sound_speed,
-                                      proc.sv, proc.ts, proc.theta, proc.gains, proc.labels))
+                                      proc.sv, proc.ts, proc.theta, proc.gain_rx, proc.labels))
 
                         # Ping at recorded ping rate if asked
                         if config.realtimeReplay():
