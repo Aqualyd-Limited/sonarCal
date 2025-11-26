@@ -76,7 +76,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
 
     # Config how and when to give up looking for new data in an existing file.
     maxNoNewDataCount = 20  # number of tries to find new pings in an existing file
-    waitInterval = 0.5  # [s] time period between checking for new pings
+    waitInterval = 0.25  # [s] time period between checking for new pings
     waitIntervalFile = 1.0  # [s] time period between checking for new files
     errorWaitInterval = 0.2  # [s] time period to wait if there is a file read error
 
@@ -131,6 +131,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                     f.close()
                     # try this instead of opening and closing the file
                     # t.id.refresh(), etc
+
                     sleep(waitInterval)
                 except OSError:
                     f.close()  # just in case...
@@ -232,8 +233,9 @@ def file_listen_raw(watchDir: Path, msg_queue):
                         msg_queue.put((proc.ping_time, proc.sample_interval, proc.sound_speed,
                                       proc.sv, proc.ts, proc.theta, proc.tilts,
                                       proc.gain_rx, proc.labels))
-
-                        sleep(config.replayPingInterval())
+                        # we want to read the file as quick as possible, but no too fast
+                        # that the GUI becomes unresponsive.
+                        sleep(0.25)
                 except raw.SimradFileFinished:
                     break  # go back to the outer 'while True' loop to look for a new file.
 
