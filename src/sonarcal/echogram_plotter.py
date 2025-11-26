@@ -292,7 +292,10 @@ class echogramPlotter:
     @staticmethod
     def sort_beams(sv, ts, theta, tilts, gains, labels):
         """Sorts everything by the values in theta."""
-        sort_i = np.argsort(theta)
+        
+        # sort by the negative of theta because of Matplotlib's polar plot has increasing
+        # angle values to anti-clockwise, but Sonarcal has then to clockwise.
+        sort_i = np.argsort(-theta)
 
         return sv[sort_i], ts[sort_i], theta[sort_i], tilts[sort_i], gains[sort_i], labels[sort_i]
 
