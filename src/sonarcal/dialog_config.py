@@ -124,7 +124,8 @@ class configDialog:
         if isinstance(variable.get(), bool):
             ent = ttk.Checkbutton(container, variable=variable)
         else:
-            ent = ttk.Entry(master=container, textvariable=variable, justify='right', width=15)
+            ent = ttk.Entry(master=container, textvariable=variable,
+                            justify='right', width=15, font=('Arial 12'))
         ent.pack(side=tk.RIGHT, padx=5, fill=tk.X, expand=tk.YES)
 
     def apply(self):
