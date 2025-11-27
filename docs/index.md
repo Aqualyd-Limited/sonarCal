@@ -106,7 +106,7 @@ When using Sonarcal to calibrate, follow these steps:
 
 - Start Sonarcal
 - In the Config dialog:
-    - Set the calibration sphere TS
+    - Set the calibration sphere TS (see [here](#sphere-target-strength))
     - Set the sonar data directory to where the sonar will be recording data files
     - Turn on the use of live data
     - Close and restart Sonarcal for these changes to take effect
@@ -120,3 +120,13 @@ When using Sonarcal to calibrate, follow these steps:
 Every time that the `on-axis` box is unticked all calibration results are saved to a backup file. The results can also be exported at any time using the `Save` button on the results dialog box - you will be prompted for a directory and filename for saving.
 
 The beam being calibrated is highlighted in orange in the results dialog box and the beam line on the polar plot can not be moved while calibrating.
+
+## Sphere target strength
+
+Sonarcal requires you to enter calibration sphere target strength (TS) into the Configuration dialog box. Make sure to do this before you start using Sonarcal to collect data.
+
+The TS is derived from the sphere size and material and the temperature and salinity of the water surrounding the sphere. The are a few options to calculate TS from these:
+
+- [NOAA sphere calculator](https://www.fisheries.noaa.gov/data-tools/standard-sphere-target-strength-calculator) - an online app
+- [SphereTS](https://github.com/gavinmacaulay/SphereTS) - a Python app that runs locally
+- [TS_package](https://github.com/gavinmacaulay/calibration-code/tree/master/matlab/TS_Package) - Matlab code
