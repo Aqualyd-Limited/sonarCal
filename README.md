@@ -1,8 +1,6 @@
 
 This repository contains a Python packages to assist with the calibration of ship-mounted fisheries omni-sonar systems.
 
-_This package is under active development_
-
 # Installation
 
 Install using pip:
