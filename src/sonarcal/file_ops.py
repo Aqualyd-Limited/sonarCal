@@ -104,7 +104,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                     if first_ping:
                         product_name = f['/Sonar'].attrs['sonar_model'].decode('utf-8')
                         logger.info('File contains data from a %s sonar', product_name)
-                        first_ping = False
+                    first_ping = False
 
                     # f = h5py.File(mostRecentFile, 'r') # without HDF5 swmr option
                     f_previous = mostRecentFile
