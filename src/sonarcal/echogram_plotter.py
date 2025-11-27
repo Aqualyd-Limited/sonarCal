@@ -38,10 +38,11 @@ class echogramPlotter:
         self.beamIdx = 0  # dummy value. Is updated once some data are received.
         self.beamLabel = ''
 
+        self.sphere_stats_over = 5  # [pings]
+        self.moving_average_pts = 10  # [pings]
+
         self.minTargetRange = 0.33*config.maxRange()
         self.maxTargetRange = 0.66*config.maxRange()
-
-        self.varNum = config.sphereStatsOver()
 
         self.diffPlotYlim = (config.diffPlotYMin(), 0)  # [dB]
 
@@ -51,8 +52,6 @@ class echogramPlotter:
         self.minSv = config.minSv()  # [dB] min Sv to show in the echograms
 
         self.checkQueueInterval = 200  # [ms] duration between checking the queue for new data
-
-        self.movingAveragePoints = config.movingAveragePoints()
 
         self.emptySv = -999.0  # initialisation value of echogram data
 
@@ -380,9 +379,9 @@ class echogramPlotter:
                     self.ampPlotLineMain.set_ydata(self.amp[1, :])
                     self.ampPlotLineStbd.set_ydata(self.amp[2, :])
                     # and smoothed plots
-                    coeff = np.ones(self.movingAveragePoints)/self.movingAveragePoints
+                    coeff = np.ones(self.moving_average_pts)/self.moving_average_pts
                     # and measure of ping-to-ping variability
-                    variability = np.std(self.amp[1, -self.varNum: -1])
+                    variability = np.std(self.amp[1, -self.sphere_stats_over: -1])
                     if not np.isnan(variability):
                         self.diffVariability.set_text(rf'$\sigma$ = {variability:.1f} dB')
 

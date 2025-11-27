@@ -43,9 +43,6 @@ class configDialog:
             Param('* Default maximum echogram Sv', 'maxSv', 'float', 'dB re 1 m⁻¹'),
             Param('Minimum allowed Sv colour', 'sliderLowestSv', 'float', 'dB re 1 m⁻¹'),
             Param('Maximum allowed Sv colour', 'sliderHighestSv', 'float', 'dB re 1 m⁻¹'),
-            Param('', '', 'horizline'),
-            Param('* TS smoothing over', 'movingAveragePoints', 'int', 'pings'),
-            Param('* Sphere stats over', 'sphereStatsOver', 'int', 'pings'),
         ]
 
         self.vars = {}  # mapping for name to tkinter Var

@@ -79,8 +79,6 @@ class sonarcalConfig():
                     'watchDir': '.',
                     'liveData': 'no',
                     'calibrating_colour': '#EE9A00',  # an orange
-                    'movingAveragePoints': '10',
-                    'sphereStatsOver': '5',
                     'sliderLowestSv': '-100',
                     'sliderHighestSv': '10',
                     'diffPlotYMin': '-3.0'
