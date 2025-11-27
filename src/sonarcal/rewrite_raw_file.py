@@ -14,10 +14,12 @@ from pathlib import Path
 from construct import PaddedString, Timestamp, Bytes, Int32sl, Int64ul, this, Struct, StreamError
 
 base_dir = Path(r'C:\Users\GavinMacaulay\OneDrive - Aqualyd Limited\Documents\Aqualyd\Projects'
-                r'\2025-08 AZTI coding\example data\SN90')
+                r'\2025-08 AZTI coding\example data')
 
-raw_dir = base_dir/'Haz9'
-out_dir = base_dir/'Replayed'
+raw_dir = base_dir/'CS90-raw'
+out_dir = base_dir/'CS90-raw-replay'
+
+out_dir.mkdir(parents=True, exist_ok=True)
 
 raw_files = sorted(raw_dir.glob('*.raw'), key=lambda p: p.stem)
 
@@ -51,7 +53,7 @@ for in_file in raw_files:
                 if dg['type'] == 'EOP0':
                     fout.flush()
                     print(f'  End of ping at {dg["timestamp"]}')
-                    sleep(1.0)
+                    sleep(2.0)
 
         except StreamError:
             # end of file so pause a little to simulate the sonar taking a while to start
