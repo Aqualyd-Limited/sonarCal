@@ -70,7 +70,14 @@ def get_sonar_model(hdf_attrs: dict) -> str:
         product_name = hdf_attrs['sonar_software_name'].decode('utf-8')
 
     return product_name
+
+def shorten_beam_label(label: str) -> str:
+    """Shorten the beam label and remove unnecessary text."""
     
+    # Simrad sonars have beam labels of the form 'Horizontal-H01', 
+    # 'Vertical-H01', etc. 
+    return label.replace('Horizontal-', '').replace('Vertical-', '')
+
 def file_listen_netcdf(watchDir, beamGroup, msg_queue):
     """Listen for new data in a file.
 
@@ -128,8 +135,8 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                         c = f['Environment/sound_speed_indicative'][()]
                         labels = f[beamGroup + '/beam']
 
-                        # convert HDF5 text to list of str
-                        labels = np.array([s.decode('utf-8') for s in labels])
+                        # convert HDF5 text to list of str and shorten if needed
+                        labels = np.array([shorten_beam_label(s.decode('utf-8')) for s in labels])
 
                         t_previous = t
                         noNewDataCount = 0  # reset the count
@@ -184,8 +191,8 @@ def file_replay_netcdf(watchDir, beamGroup, msg_queue):
             c = f['Environment/sound_speed_indicative'][()]
             labels = f[beamGroup + '/beam']
 
-            # convert HDF5 text to list of str
-            labels = np.array([s.decode('utf-8') for s in labels])
+            # convert HDF5 text to list of str and shorten if needed
+            labels = np.array([shorten_beam_label(s.decode('utf-8')) for s in labels])
 
             # send the data off to be plotted
             ping_time = nt_time_to_datetime(t[i]/100)
