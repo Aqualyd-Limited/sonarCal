@@ -13,6 +13,13 @@ class configDialog:
         self.top = tk.Toplevel(parent)
         self.top.title("Config")
         self.updated_cb = updated_cb
+        self.label_width = 20  # [characters]
+        # for config values that need a program restart to take effect
+        self.label_colour_restart = 'orange red'
+
+        # Widget styles
+        ttk.Style().configure('needs_restart.TLabel', foreground=self.label_colour_restart)
+        ttk.Style().configure('select_dir.TButton', font=('Arial', 10))
 
         if icon:
             self.top.iconphoto(False, icon)
@@ -21,6 +28,7 @@ class configDialog:
         
         @dataclass
         class Param:
+            needs_restart: bool
             label: str
             name: str
             type: str
@@ -28,21 +36,22 @@ class configDialog:
             special: str = None
 
         self.params = [
-            Param('Settings marked with * take effect with a program restart', '', 'label'),
-            Param('', '', 'horizline'),
-            Param('Calibration sphere TS', 'sphereTS', 'float', 'dB re 1 m²'),
-            Param('* Sonar data directory', 'watchDir', 'str', '', 'filechooser'),
-            Param('* Use live data (otherwise replay)', 'liveData', 'boolean'),
-            Param('Replay ping interval', 'replayPingInterval', 'float', 's'),
-            Param('', '', 'horizline'),
-            Param('* Plot x-axis size', 'numPings', 'int', 'pings'),
-            Param('* Echogram range', 'maxRange', 'float', 'm'),
-            Param('', '', 'horizline'),
-            Param('Difference plot y-axis minimum', 'diffPlotYMin', 'float', 'dB'),
-            Param('* Default minimum echogram Sv', 'minSv', 'float', 'dB re 1 m⁻¹'),
-            Param('* Default maximum echogram Sv', 'maxSv', 'float', 'dB re 1 m⁻¹'),
-            Param('Minimum allowed Sv colour', 'sliderLowestSv', 'float', 'dB re 1 m⁻¹'),
-            Param('Maximum allowed Sv colour', 'sliderHighestSv', 'float', 'dB re 1 m⁻¹'),
+            Param(True, 'Coloured settings apply when the program restarts', '', 'label'),
+            Param(False, '', '', 'horizline'),
+            Param(True, 'Sonar data directory', 'watchDir', 'str', '', 'filechooser'),
+            Param(True, 'Use live data', 'liveData', 'boolean'),
+            Param(False, 'Replay ping interval', 'replayPingInterval', 'float', 's'),
+            Param(False, '', '', 'horizline'),
+            Param(False, 'Calibration sphere TS', 'sphereTS', 'float', 'dB re 1 m²'),
+            Param(False, '', '', 'horizline'),
+            Param(True, 'X-axis size', 'numPings', 'int', 'pings'),
+            Param(True, 'Echogram range', 'maxRange', 'float', 'm'),
+            Param(False, '', '', 'horizline'),
+            Param(False, 'Y-axis minimum on Δ plot', 'diffPlotYMin', 'float', 'dB'),
+            Param(True, 'Echogram Sv minimum', 'minSv', 'float', 'dB re 1 m⁻¹'),
+            Param(True, 'Echogram Sv maximum', 'maxSv', 'float', 'dB re 1 m⁻¹'),
+            Param(False, 'Minimum Sv colour', 'sliderLowestSv', 'float', 'dB re 1 m⁻¹'),
+            Param(False, 'Maximum Sv colour', 'sliderHighestSv', 'float', 'dB re 1 m⁻¹'),
         ]
 
         self.vars = {}  # mapping for name to tkinter Var
@@ -51,8 +60,9 @@ class configDialog:
                 ttk.Separator(self.top, orient=tk.HORIZONTAL).pack(fill=tk.X, padx=10, pady=5)
                 continue
             if p.type == 'label':
-                ttk.Label(self.top, text=p.label).pack(side=tk.TOP,fill=tk.BOTH,
-                                                       expand=tk.TRUE, pady=10)
+                s = 'needs_restart.TLabel' if p.needs_restart else  ''
+                ttk.Label(self.top, text=p.label, style=s).\
+                    pack(side=tk.TOP,fill=tk.BOTH, expand=tk.TRUE, pady=10)
                 continue
 
             v = getattr(cfg, p.name)()  # get value of current config parameter
@@ -67,9 +77,9 @@ class configDialog:
                     self.vars[p.name] = tk.StringVar(value=v)
 
             if p.special == 'filechooser':
-                self.create_dir_chooser_row(p.label, self.vars[p.name])
+                self.create_dir_chooser_row(p.needs_restart, p.label, self.vars[p.name])
             else:
-                self.create_config_row(p.label, self.vars[p.name], p.unit)
+                self.create_config_row(p.needs_restart, p.label, self.vars[p.name], p.unit)
 
         btn_frame = ttk.Frame(self.top)
         ttk.Button(btn_frame, text="Close", command=self.close_dialog).pack(side=tk.RIGHT)
@@ -78,15 +88,23 @@ class configDialog:
         config_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=tk.TRUE)
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH)
 
-    def create_dir_chooser_row(self, label, variable):
+    def create_dir_chooser_row(self, needs_restart, label, variable):
         """Create a directory chooser config row."""
 
         container = ttk.Frame(self.top)
         container.pack(fill=tk.X, expand=tk.YES, pady=5)
 
-        lbl = ttk.Label(master=container, text=label, width=35)
-        lbl.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=tk.NO)
+        subcon = ttk.Frame(container)
+        lbl = ttk.Label(master=subcon, text=label, width=self.label_width,
+                        style='needs_restart.TLabel' if needs_restart else  '')
+        lbl.pack(side=tk.TOP, padx=5, fill=tk.X, expand=tk.NO)
 
+        btn = ttk.Button(subcon, text='Select directory', style='select_dir.TButton',
+                         command=lambda: _dir_chooser(variable))
+        btn.pack(side=tk.TOP, padx=5, expand=tk.NO, anchor=tk.W)
+
+        subcon.pack(side=tk.LEFT)
+        
         def _text_edit(event):
             """Keeps the config variable updated with text in the text widget."""
             event.widget.edit_modified(False)
@@ -94,38 +112,45 @@ class configDialog:
 
         ent = tk.Text(container, wrap=tk.CHAR, width=35, height=4)
         ent.insert('1.0', variable.get())
-        ent.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=tk.YES)
+        ent.pack(side=tk.TOP, padx=5, fill=tk.X, expand=tk.NO)
         ent.bind('<<Modified>>', _text_edit)
+        ent.config(state=tk.DISABLED)
+
+
 
         def _dir_chooser(variable):
             """Uses a filedialog to get a directory."""
             d = filedialog.askdirectory(parent=container, title='Select data directory',
                                         initialdir=variable.get())
             if d:
+                ent.config(state=tk.NORMAL)  # allows us to change the contents
                 ent.delete('1.0', tk.END)
                 ent.insert('1.0', d)
                 variable.set(d)
+                ent.config(state=tk.DISABLED)
 
-        btn = ttk.Button(container, text='...', width=3,
-                         command=lambda: _dir_chooser(variable))
-        btn.pack(side=tk.LEFT)
 
-    def create_config_row(self, label, variable, unit):
+    def create_config_row(self, needs_restart, label, variable, unit):
         """Create a single row in the config dialog"""
+        
         container = ttk.Frame(self.top)
         container.pack(fill=tk.X, expand=tk.YES, pady=5)
 
-        lbl = ttk.Label(master=container, text=label, width=35)
+        lbl = ttk.Label(master=container, text=label, width=self.label_width,
+                        style='needs_restart.TLabel' if needs_restart else  '')
         lbl.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=tk.NO)
 
         if isinstance(variable.get(), bool):
             ent = ttk.Checkbutton(container, variable=variable)
+            ent.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=tk.NO)
         else:
             ent = ttk.Entry(master=container, textvariable=variable,
-                            justify='right', width=15, font=('Arial 12'))
+                            justify='right', width=10, font=('Arial 12'))
             unit = ttk.Label(master=container, text=unit, width=10)
-            unit.pack(side=tk.RIGHT, padx=5)
-        ent.pack(side=tk.RIGHT, padx=5, fill=tk.X, expand=tk.YES)
+
+            ent.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=tk.NO)
+            unit.pack(side=tk.LEFT, padx=5)
+
 
     def apply(self):
         for p in self.params:
