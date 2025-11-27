@@ -72,34 +72,34 @@ Sonarcal is started from a command line with:
 sonarcal
 ```
 
-(or if using uv, the command is `uv tool run sonarcal`).
+(or if using uv, the command is `uv tool run sonarcal`). It make take a few seconds to start, after which the Sonarcal window will appear.
 
-It make take a few seconds to start, after which the Sonarcal window will appear:
+If there are suitable sonar files in the configured data directory, the program will start to replay them. Replay happens in two ways:
+
+**Live data enabled**
+
+:    The last file in the directory will be replayed and then any new data added to that file will also be replayed. If a newer file appears, that will be replayed too.
+
+**Live data disabled**
+
+:    All files in the directory will be replayed in chronological order.
+
 
 ![Main screen](assets/screenshot.png){ align=right }
 /// caption
 The main operation screen.
 ///
 
-If there are suitable sonar files in the configured data directory, the program will start to replay them. Replay happens in two ways:
-
-`Live data enabled`
-
-:    The last file in the directory will be replayed and then any new data added to that file will also be replayed. If a newer file appears, that will be replayed too.
-
-`Live data disabled`
-
-:    All files in the directory will be replayed in chronological order.
 
 Each new ping is displayed in the polar plot to the left. The three centre plots show an echogram of the data from the three sonar beams at and adjacent to the beam line (the black radial line in the polar plot).
 
-The target strength of the maximum amplitude echo on the three beams between the minimum and maximum ranges is shown in the plots to the right. The upper plot uses **black** lines for the selected beam, <span style="color:red">**red**</span> for the beam to port, and <span style="color:green">**green**</span> for starboard. The lower plot shows the difference in amplitude between the echo in the centre beam and the two adjacent beams.
+The target strength of the maximum amplitude echo on the three beams between the range rings is shown in the plots to the right. The upper plot uses **black** lines for the selected beam, <span style="color:red">**red**</span> for the beam to port, and <span style="color:green">**green**</span> for starboard. The lower plot shows the difference in amplitude between the echo in the centre beam and the two adjacent beams.
 
-The upper right plot also includes smoothed lines to aid in seeing trends in the sphere amplitude - these use a thicker line style than the raw echo amplitudes.
+The plots also include smoothed lines to aid in seeing trends in the sphere amplitude - these use a thicker line style than the raw echo amplitudes.
 
 The beam being calibrated is selected by using the mouse to click on and drag the black radial line on the polar plot. The range over which the sphere is detected can be changed by clicking on and dragging the two range rings in the polar plot.
 
-The echogram colour bounds can be adjusted by clicking and dragging on the slider to the left of the polar plot.
+The echogram colour thresholds can be adjusted by clicking and dragging on the slider to the left of the polar plot.
 
 ## Calibrating
 
@@ -114,7 +114,7 @@ When using Sonarcal to calibrate, follow these steps:
 - Repeat for multiple beams:
     - Move the beam line and range rings to select the beam and ranges
     - Locate the sphere on-axis of a beam using the sphere amplitude plots to assist
-    - Tick the `on-axis` box when the sphere on-axis
+    - Tick the `on-axis` box when the sphere is on-axis
     - Monitor the results in the Results dialog box
     - Untick the `on-axis` box when sufficient data have been collected for the beam
 
