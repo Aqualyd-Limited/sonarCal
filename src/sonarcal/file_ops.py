@@ -62,7 +62,15 @@ def sonar_file_read(msg_queue):
         case _:
             logger.error('Unsupported sonar file type')
 
+def get_sonar_model(hdf_attrs: dict) -> str:
+    """Get the sonar model name - some older Simrad files have it in a different place."""
+    product_name = hdf_attrs['sonar_model'].decode('utf-8')
 
+    if 'TBD:sonar_model' in product_name:
+        product_name = hdf_attrs['sonar_software_name'].decode('utf-8')
+
+    return product_name
+    
 def file_listen_netcdf(watchDir, beamGroup, msg_queue):
     """Listen for new data in a file.
 
@@ -102,7 +110,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                     import h5py  # deferred to save startup time
                     f = h5py.File(mostRecentFile, 'r', libver='latest', swmr=True)
                     if first_ping:
-                        product_name = f['/Sonar'].attrs['sonar_model'].decode('utf-8')
+                        product_name = get_sonar_model(f['/Sonar'].attrs)
                         logger.info('File contains data from a %s sonar', product_name)
                     first_ping = False
 
@@ -164,7 +172,7 @@ def file_replay_netcdf(watchDir, beamGroup, msg_queue):
         f = h5py.File(file, 'r')
 
         t = f[beamGroup + '/ping_time']
-        product_name = f['/Sonar'].attrs['sonar_model'].decode('utf-8')
+        product_name = get_sonar_model(f['/Sonar'].attrs)
         logger.info('File contains data from a %s sonar', product_name)
 
         # Send off each ping at a sedate rate...
