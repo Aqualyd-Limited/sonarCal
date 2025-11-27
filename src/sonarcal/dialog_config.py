@@ -34,7 +34,6 @@ class configDialog:
             Param('* Sonar data directory', 'watchDir', 'str', '', 'filechooser'),
             Param('* Use live data (otherwise replay)', 'liveData', 'boolean'),
             Param('Replay ping interval', 'replayPingInterval', 'float', 's'),
-            Param('* Sonar-netCDF4 beam group path', 'horizontalBeamGroup', 'str'),
             Param('', '', 'horizline'),
             Param('* Plot x-axis size', 'numPings', 'int', 'pings'),
             Param('* Echogram range', 'maxRange', 'float', 'm'),

@@ -76,7 +76,6 @@ class sonarcalConfig():
                     'minSv': '-60',
                     'realtimeReplay': 'yes',
                     'replayPingInterval': '0.2',
-                    'horizontalBeamGroupPath': 'Sonar/Beam_group1',
                     'watchDir': '.',
                     'liveData': 'no',
                     'calibrating_colour': '#EE9A00',  # an orange
@@ -170,10 +169,6 @@ class sonarcalConfig():
     @float_config
     def replayPingInterval(self, value=None):
         return 'replayPingInterval'
-
-    @str_config
-    def horizontalBeamGroup(self, value=None):
-        return 'horizontalBeamGroupPath'
 
     @pathlib_config
     def watchDir(self, value=None) -> str:

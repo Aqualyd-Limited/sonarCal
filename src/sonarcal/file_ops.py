@@ -41,7 +41,6 @@ def sonar_file_read(msg_queue):
     """Run code to listen to or read from the last file in the watched directory."""
     
     watch_dir = config.watchDir()
-    beam_group = config.horizontalBeamGroup()
     live_data = config.liveData()
 
     last_file = most_recent_file(watch_dir)
@@ -51,9 +50,9 @@ def sonar_file_read(msg_queue):
     match file_type(last_file):
         case 'sonar-netcdf4':
             if live_data:
-                file_listen_netcdf(watch_dir, beam_group, msg_queue)
+                file_listen_netcdf(watch_dir, msg_queue)
             else:
-                file_replay_netcdf(watch_dir, beam_group, msg_queue)
+                file_replay_netcdf(watch_dir, msg_queue)
         case 'simrad-raw':
             if live_data:
                 file_listen_raw(watch_dir, msg_queue)
@@ -78,7 +77,26 @@ def shorten_beam_label(label: str) -> str:
     # 'Vertical-H01', etc. 
     return label.replace('Horizontal-', '').replace('Vertical-', '')
 
-def file_listen_netcdf(watchDir, beamGroup, msg_queue):
+def get_horiz_beam_group(hdf) -> str:
+    """Work out which beam group has the horizontal beam data."""
+
+    # List of all Beam_group paths in the Sonar group file
+    groups = ['Sonar/' + k for k in (hdf['Sonar'].keys()) if 'Beam_group' in k]
+    modes = [hdf[g].attrs['beam_mode'].decode('utf-8') for g in groups]
+
+    # Some info that may be useful in the log when things don't work out as expected
+    for g, m in zip(groups, modes):
+        logger.info('%s contains %s beams', g, m)
+
+    # Use the first horizontal beam group
+    for g, m in zip(groups, modes):
+        if m == 'horizontal':
+            return g
+
+    logger.error('No horizontal beam group found in current .nc file')
+    return ''
+
+def file_listen_netcdf(watchDir, msg_queue):
     """Listen for new data in a file.
 
     Find new data in the most recent file (and keep checking for more new data).
@@ -116,24 +134,27 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                 try:
                     import h5py  # deferred to save startup time
                     f = h5py.File(mostRecentFile, 'r', libver='latest', swmr=True)
+                    beam_group = get_horiz_beam_group(f)
+
                     if first_ping:
-                        product_name = get_sonar_model(f['/Sonar'].attrs)
+                        product_name = get_sonar_model(f['Sonar'].attrs)
                         logger.info('File contains data from a %s sonar', product_name)
+                    
                     first_ping = False
 
                     # f = h5py.File(mostRecentFile, 'r') # without HDF5 swmr option
                     f_previous = mostRecentFile
 
-                    t = nt_time_to_datetime(f[beamGroup + '/ping_time'][pingIndex]/100)
+                    t = nt_time_to_datetime(f[beam_group + '/ping_time'][pingIndex]/100)
 
                     if t > t_previous:  # there is a new ping in the file
 
-                        theta, tilts = beamAnglesFromNetCDF4(f, beamGroup, pingIndex)
-                        sv, ts, gains = SvTSFromSonarNetCDF4(f, beamGroup, pingIndex, tilts)
+                        theta, tilts = beamAnglesFromNetCDF4(f, beam_group, pingIndex)
+                        sv, ts, gains = SvTSFromSonarNetCDF4(f, beam_group, pingIndex, tilts)
 
-                        samInt = f[beamGroup + '/sample_interval'][pingIndex]
+                        samInt = f[beam_group + '/sample_interval'][pingIndex]
                         c = f['Environment/sound_speed_indicative'][()]
-                        labels = f[beamGroup + '/beam']
+                        labels = f[beam_group + '/beam']
 
                         # convert HDF5 text to list of str and shorten if needed
                         labels = np.array([shorten_beam_label(s.decode('utf-8')) for s in labels])
@@ -163,7 +184,7 @@ def file_listen_netcdf(watchDir, beamGroup, msg_queue):
                     sleep(errorWaitInterval)
 
 
-def file_replay_netcdf(watchDir, beamGroup, msg_queue):
+def file_replay_netcdf(watchDir, msg_queue):
     """Replay all data in the directory. Used for testing."""
 
     files = list(watchDir.glob('*.nc'))
@@ -177,19 +198,20 @@ def file_replay_netcdf(watchDir, beamGroup, msg_queue):
         # open netcdf file
         import h5py  # deferred to save startup time
         f = h5py.File(file, 'r')
+        beam_group = get_horiz_beam_group(f)
 
-        t = f[beamGroup + '/ping_time']
-        product_name = get_sonar_model(f['/Sonar'].attrs)
+        t = f[beam_group + '/ping_time']
+        product_name = get_sonar_model(f['Sonar'].attrs)
         logger.info('File contains data from a %s sonar', product_name)
 
         # Send off each ping at a sedate rate...
         for i in range(0, t.shape[0]):
-            theta, tilts = beamAnglesFromNetCDF4(f, beamGroup, i)
-            sv, ts, gains = SvTSFromSonarNetCDF4(f, beamGroup, i, tilts)
+            theta, tilts = beamAnglesFromNetCDF4(f, beam_group, i)
+            sv, ts, gains = SvTSFromSonarNetCDF4(f, beam_group, i, tilts)
 
-            samInt = f[beamGroup + '/sample_interval'][i]
+            samInt = f[beam_group + '/sample_interval'][i]
             c = f['Environment/sound_speed_indicative'][()]
-            labels = f[beamGroup + '/beam']
+            labels = f[beam_group + '/beam']
 
             # convert HDF5 text to list of str and shorten if needed
             labels = np.array([shorten_beam_label(s.decode('utf-8')) for s in labels])
