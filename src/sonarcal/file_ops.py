@@ -134,12 +134,11 @@ def file_listen_netcdf(watchDir, msg_queue):
                 try:
                     import h5py  # deferred to save startup time
                     f = h5py.File(mostRecentFile, 'r', libver='latest', swmr=True)
-                    beam_group = get_horiz_beam_group(f)
 
                     if first_ping:
                         product_name = get_sonar_model(f['Sonar'].attrs)
                         logger.info('File contains data from a %s sonar', product_name)
-                    
+                        beam_group = get_horiz_beam_group(f)                    
                     first_ping = False
 
                     # f = h5py.File(mostRecentFile, 'r') # without HDF5 swmr option
