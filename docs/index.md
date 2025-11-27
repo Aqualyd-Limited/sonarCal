@@ -11,8 +11,8 @@ This is the user documentation for Sonarcal, a program to assist with calibratin
 |Brand|Model|Supported file format|
 |---|---|---|
 |Furuno|FSV25|sonar-netCDF4|
-|Simrad|SU90|sonar-netCDF4**|
-|Simrad|SX90|sonar-netCDF4**|
+|Simrad|SU90|sonar-netCDF4|
+|Simrad|SX90|sonar-netCDF4|
 |Simrad|CS90|raw & sonar-netCDF4**|
 |Simrad|SN90|raw & sonar-netCDF4**|
 
@@ -126,8 +126,9 @@ The beam being calibrated is highlighted in orange in the results dialog box and
 
 Sonarcal requires you to enter calibration sphere target strength (TS) into the Configuration dialog box. Make sure to do this before you start using Sonarcal to collect data.
 
-The TS is derived from the sphere size and material and the temperature and salinity of the water surrounding the sphere. The are a few options to calculate TS from these:
+The TS is derived from the sphere size and material and the temperature and salinity of the water surrounding the sphere. There are a few options to calculate TS from these:
 
 - [NOAA sphere calculator](https://www.fisheries.noaa.gov/data-tools/standard-sphere-target-strength-calculator) - an online app
 - [SphereTS](https://github.com/gavinmacaulay/SphereTS) - a Python app that runs locally
 - [TS_package](https://github.com/gavinmacaulay/calibration-code/tree/master/matlab/TS_Package) - Matlab code
+- [echoSMs](https://ices-tools-dev.github.io/echoSMs/) - contains an elastic sphere scattering model applicable to calibration spheres
