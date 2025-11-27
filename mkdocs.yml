@@ -48,23 +48,6 @@ plugins:
     - autorefs
     - offline:
         enabled: !ENV [OFFLINE_PLUGIN_ENABLED, false]
-    - mkdocstrings:
-        handlers:
-            python:
-                paths: [src]
-                options:
-                    docstring_style: numpy
-                    show_submodules: false
-                    show_symbol_type_heading: true
-                    merge_init_into_class: true
-                    show_bases: true
-                    inherited_members: true
-                    show_root_heading: true
-                    show_root_toc_entry: false
-                    show_source: true
-                    heading_level: 3
-                    filters:
-                        - "!^_"
 
 watch:
     - ./docs
