@@ -11,7 +11,8 @@ This is the user documentation for Sonarcal, a program to assist with calibratin
 |Brand|Model|Supported file format|
 |---|---|---|
 |Furuno|FSV25|sonar-netCDF4|
-|Simrad|SU90 & SX90|sonar-netCDF4**|
+|Simrad|SU90|sonar-netCDF4**|
+|Simrad|SX90|sonar-netCDF4**|
 |Simrad|CS90|raw & sonar-netCDF4**|
 |Simrad|SN90|raw & sonar-netCDF4**|
 
