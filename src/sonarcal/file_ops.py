@@ -77,7 +77,7 @@ def shorten_beam_label(label: str) -> str:
     # 'Vertical-H01', etc. 
     return label.replace('Horizontal-', '').replace('Vertical-', '')
 
-def get_horiz_beam_group(hdf) -> str:
+def get_horiz_beam_group(hdf, log=True) -> str:
     """Work out which beam group has the horizontal beam data."""
 
     # List of all Beam_group paths in the Sonar group file
@@ -85,8 +85,9 @@ def get_horiz_beam_group(hdf) -> str:
     modes = [hdf[g].attrs['beam_mode'].decode('utf-8') for g in groups]
 
     # Some info that may be useful in the log when things don't work out as expected
-    for g, m in zip(groups, modes):
-        logger.info('%s contains %s beams', g, m)
+    if log:
+        for g, m in zip(groups, modes):
+            logger.info('%s contains %s beams', g, m)
 
     # Use the first horizontal beam group
     for g, m in zip(groups, modes):
