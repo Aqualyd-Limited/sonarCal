@@ -103,8 +103,8 @@ class calibrationGUI:
             self.echogram.beamLine.freeze(True)
             logger.info('Beam %s calibration started', self.echogram.beamLabel)
         else:  # finished calibrating a beam
-            self.auto_save()
             logger.info('Beam %s calibration complete', self.echogram.beamLabel)
+            self.auto_save()
             self.echogram.beamLine.freeze(False)
             self.sphere_echoes = []
             if self.results_dialog:
