@@ -48,8 +48,6 @@ class configDialog:
             Param(True, 'Echogram range', 'maxRange', 'float', 'm'),
             Param(False, '', '', 'horizline'),
             Param(False, 'Y-axis minimum on Δ plot', 'diffPlotYMin', 'float', 'dB'),
-            Param(True, 'Echogram Sv minimum', 'minSv', 'float', 'dB re 1 m⁻¹'),
-            Param(True, 'Echogram Sv maximum', 'maxSv', 'float', 'dB re 1 m⁻¹'),
             Param(False, 'Minimum Sv colour', 'sliderLowestSv', 'float', 'dB re 1 m⁻¹'),
             Param(False, 'Maximum Sv colour', 'sliderHighestSv', 'float', 'dB re 1 m⁻¹'),
         ]
@@ -160,7 +158,6 @@ class configDialog:
         if self.updated_cb:
             self.updated_cb()  # tell others that we've updated
         cfg.save_config()
-        logger.info('Saved configuration')
 
     def close_dialog(self):
         self.top.destroy()

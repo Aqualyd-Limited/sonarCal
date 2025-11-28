@@ -40,6 +40,7 @@ def on_exit(root, job, sig):
 
 def window_closed(root, job):
     """Call to nicely end the whole program."""
+    config.save_config()
     root.after_cancel(job)
     logging.info('Program ending...')
     logging.shutdown()  # not working???

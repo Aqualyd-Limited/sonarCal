@@ -2,8 +2,11 @@
 
 from pathlib import Path
 import configparser
+import logging
 from platformdirs import PlatformDirs
 
+app_name = 'sonarcal'
+logger = logging.getLogger(app_name)
 
 def int_config(func):
     """A decorator to set and return an int from the configuration."""
@@ -54,7 +57,7 @@ def pathlib_config(func):
 class sonarcalConfig():
 
     def __init__(self):
-        self.app_name = 'sonarcal'
+        self.app_name = app_name
         self.app_author = 'Aqualyd'
         self.ini_section_name = 'sonarcal'
         
@@ -107,6 +110,7 @@ class sonarcalConfig():
     def save_config(self):
         with open(self.config_filename, 'w', encoding='utf-8') as configfile:
             self.config.write(configfile)
+        logger.info('Saved configuration')
     
     def appName(self) -> str:
         return self.app_name
