@@ -83,15 +83,8 @@ class echogramPlotter:
         self.stbd = np.ones((self.maxSamples, self.numPings), dtype=float) * self.emptySv
         # Amplitude of sphere
         self.amp = np.ones((3, self.numPings), dtype=float) * np.nan
-        self.ampSmooth = np.ones((3, self.numPings), dtype=float) * np.nan
         # Range of the max amplitude within the range range on the selected beam
         self.rangeMax = None  # [m]
-
-        # Differences in sphere amplitudes, smoothed version
-        self.ampDiffPort = np.ones((self.numPings), dtype=float) * np.nan
-        self.ampDiffStbd = np.ones((self.numPings), dtype=float) * np.nan
-        self.ampDiffPortSmooth = np.ones((self.numPings), dtype=float) * np.nan
-        self.ampDiffStbdSmooth = np.ones((self.numPings), dtype=float) * np.nan
 
         # Make the plot axes and set up static things
         self.polarPlotAx = plt.subplot2grid((3, 3), (0, 0), rowspan=3, projection='polar')
@@ -135,9 +128,13 @@ class echogramPlotter:
         self.ampPlotLineStbd, = self.ampPlotAx.plot(self.amp[2, :], 'g-', linewidth=1)
      
         # Smoothed curves for the TS from 3 beams
-        self.ampPlotLinePortSmooth, = self.ampPlotAx.plot(self.ampSmooth[0, :], 'r-', linewidth=2)
-        self.ampPlotLineMainSmooth, = self.ampPlotAx.plot(self.ampSmooth[1, :], 'k-', linewidth=2)
-        self.ampPlotLineStbdSmooth, = self.ampPlotAx.plot(self.ampSmooth[2, :], 'g-', linewidth=2)
+        # Initialise these with a vector of nan as we calculate the actual values on
+        # the fly each time a new ping is received, but we want the implicit x data
+        # to be created for us.
+        tmp = np.full((self.numPings), np.nan)
+        self.ampPlotLinePortSmooth, = self.ampPlotAx.plot(tmp, 'r-', linewidth=2)
+        self.ampPlotLineMainSmooth, = self.ampPlotAx.plot(tmp, 'k-', linewidth=2)
+        self.ampPlotLineStbdSmooth, = self.ampPlotAx.plot(tmp, 'g-', linewidth=2)
         self.ampPlotAx.set_xlim(0, self.numPings)
      
         # a informative number on the TS plot
@@ -146,13 +143,11 @@ class echogramPlotter:
         self.diffVariability.set_bbox({'color': 'w', 'alpha': 0.5})
 
         # Difference in sphere TS from the 3 beams
-        self.ampDiffPortPlot, = self.ampDiffPlotAx.plot(self.ampDiffPort, 'r-', linewidth=1)
-        self.ampDiffStbdPlot, = self.ampDiffPlotAx.plot(self.ampDiffStbd, 'g-', linewidth=1)
+        self.ampDiffPortPlot, = self.ampDiffPlotAx.plot(tmp, 'r-', linewidth=1)
+        self.ampDiffStbdPlot, = self.ampDiffPlotAx.plot(tmp, 'g-', linewidth=1)
         # Smoothed curves of the difference in TS
-        self.ampDiffPortPlotSmooth, = self.ampDiffPlotAx.plot(self.ampDiffPortSmooth, 'r-',
-                                                              linewidth=2)
-        self.ampDiffStbdPlotSmooth, = self.ampDiffPlotAx.plot(self.ampDiffStbdSmooth, 'g-',
-                                                              linewidth=2)
+        self.ampDiffPortPlotSmooth, = self.ampDiffPlotAx.plot(tmp, 'r-', linewidth=2)
+        self.ampDiffStbdPlotSmooth, = self.ampDiffPlotAx.plot(tmp, 'g-', linewidth=2)
         self.ampDiffPlotAx.set_xlim(0, self.numPings)
         self.ampDiffPlotAx.set_ylim(self.diffPlotYlim)
 
@@ -297,6 +292,59 @@ class echogramPlotter:
         """Do the work to update the plots that show pings."""
         if self.numPings != config.numPings():
             pass
+            # self._changeNumPings(config.numPings())
+
+    def _changeNumPings(self, numPings):
+        """Resize things to fit the new number of pings we'll be displaying."""
+        
+        if numPings == self.numPings:
+            return
+        
+        if numPings < self.numPings:  # reduce size
+            logger.info('Reducing number of pings from %d to %d', self.numPings, numPings)
+            self.numPings = numPings
+
+            # when reducing, keep the more recent data
+            
+            # echogram storage
+            self.port = self.port[:, -self.numPings:]
+            self.main = self.main[:, -self.numPings:]
+            self.stbd = self.stbd[:, -self.numPings:]
+            
+            # Sphere amplitude
+            self.amp = self.amp[:, -self.numPings:]
+            
+            # then update the data that the plots have
+            self.portEchogram.set_data(self.port)
+            self.mainEchogram.set_data(self.main)
+            self.stbdEchogram.set_data(self.stbd)
+            
+            self.ampPlotLinePort.set_ydata(self.amp[0, :])
+            self.ampPlotLineMain.set_ydata(self.amp[1, :])
+            self.ampPlotLineStbd.set_ydata(self.amp[2, :])
+
+            # The difference plot and the smoothed lines are all derived data 
+            # that don't have a self. variable for their data. So get the data from the
+            # plot object, shorted it, and set it back.
+
+            # get y data, shorten it, set y data
+            
+            self.ampPlotLinePortSmooth.set_ydata(self.ampSmooth[0, :])
+            self.ampPlotLineMainSmooth.set_ydata(self.ampSmooth[1, :])
+            self.ampPlotLineStbdSmooth.set_ydata(self.ampSmooth[2, :])
+
+            self.ampDiffPortPlot.set_ydata()
+            self.ampDiffStbdPlot.set_ydata()
+
+            self.ampDiffPortPlotSmooth.set_ydata()
+            self.ampDiffStbdPlotSmooth.set_ydata()
+
+            # Then tell the various axes to recalculate their limits
+            self.ampDiffPlotAx.relim()
+            self.ampDiffPlotAx.autoscale_view(scaley=False)
+
+        else:  # increase size
+            pass
 
     def set_ping_callback(self, cb):
         """Set the callback that is called after each new ping is displayed."""
@@ -400,12 +448,12 @@ class echogramPlotter:
                         self.diffVariability.set_text(rf'$\sigma$ = {variability:.1f} dB')
 
                     from scipy import signal  # deferred to save startup time
-                    self.ampSmooth[0, :] = signal.filtfilt(coeff, 1, self.amp[0, :])
-                    self.ampSmooth[1, :] = signal.filtfilt(coeff, 1, self.amp[1, :])
-                    self.ampSmooth[2, :] = signal.filtfilt(coeff, 1, self.amp[2, :])
-                    self.ampPlotLinePortSmooth.set_ydata(self.ampSmooth[0, :])
-                    self.ampPlotLineMainSmooth.set_ydata(self.ampSmooth[1, :])
-                    self.ampPlotLineStbdSmooth.set_ydata(self.ampSmooth[2, :])
+                    s0 = signal.filtfilt(coeff, 1, self.amp[0, :])
+                    s1 = signal.filtfilt(coeff, 1, self.amp[1, :])
+                    s2 = signal.filtfilt(coeff, 1, self.amp[2, :])
+                    self.ampPlotLinePortSmooth.set_ydata(s0)
+                    self.ampPlotLineMainSmooth.set_ydata(s1)
+                    self.ampPlotLineStbdSmooth.set_ydata(s2)
 
                     self.ampPlotAx.set_title(f'Maximum amplitude at {self.rangeMax:.1f} m')
                     self.ampPlotAx.relim()
