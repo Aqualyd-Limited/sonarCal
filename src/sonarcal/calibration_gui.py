@@ -169,6 +169,8 @@ class calibrationGUI:
         """Things to do when the configuration is updated."""
         self.echogram.updateRangeSliderSettings()
         self.echogram.updateDiffPlotYLim()
+        self.echogram.updateMaxRange()
+        self.echogram.updateNumPings()
 
     def status_label(self):
         return self.label

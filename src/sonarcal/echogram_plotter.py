@@ -250,6 +250,10 @@ class echogramPlotter:
         self.portEchogram.set_clim(val)
         self.mainEchogram.set_clim(val)
         self.stbdEchogram.set_clim(val)
+        
+        # update the config with the new thresholds
+        config.minSv(val[0])
+        config.maxSv(val[1])
 
         # Redraw the figure to ensure it updates
         self.fig.canvas.draw_idle()
@@ -283,6 +287,16 @@ class echogramPlotter:
             self.slider.ax.set_ylim(self.slider.valmin, self.slider.valmax)
 
         self.fig.canvas.draw_idle()
+
+    def updateMaxRange(self):
+        """Do the work to update the plots that show range."""
+        if self.maxRange != config.maxRange():
+            pass
+
+    def updateNumPings(self):
+        """Do the work to update the plots that show pings."""
+        if self.numPings != config.numPings():
+            pass
 
     def set_ping_callback(self, cb):
         """Set the callback that is called after each new ping is displayed."""
