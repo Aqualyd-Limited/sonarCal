@@ -198,11 +198,12 @@ def file_replay_netcdf(watchDir, msg_queue):
         # open netcdf file
         import h5py  # deferred to save startup time
         f = h5py.File(file, 'r')
+
+        product_name = get_sonar_model(f['Sonar'].attrs)
+        logger.info('File contains data from a %s sonar', product_name)
         beam_group = get_horiz_beam_group(f)
 
         t = f[beam_group + '/ping_time']
-        product_name = get_sonar_model(f['Sonar'].attrs)
-        logger.info('File contains data from a %s sonar', product_name)
 
         # Send off each ping at a sedate rate...
         for i in range(0, t.shape[0]):
