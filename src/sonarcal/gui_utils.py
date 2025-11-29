@@ -24,6 +24,11 @@ class draggable_ring:
         self.c.draw_idle()
         self.sid = self.c.mpl_connect('pick_event', self.clickonline)
 
+    def set_range(self, r):
+        """Set the range ring a value."""
+        self.range = r
+        self.line.set_ydata(np.full(self.numPoints, self.range))
+
     def new_max_range(self, r):
         """Change the range of the ring."""
         if r < self.range:

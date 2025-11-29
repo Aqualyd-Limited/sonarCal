@@ -321,20 +321,20 @@ class echogramPlotter:
         self.mainEchogram.set_extent(extent)
         self.stbdEchogram.set_extent(extent)
 
-        # The polar plot is more complication. Matplotlib provides no way to
+        # The polar plot is more complicated. Matplotlib provides no way to
         # update the range and angle data for an existing pcolormesh so a new
         # pcolormesh needs to be created and setup on the polar axes. The old
         # pcolormesh also needs to be removed.
-        self._create_polar_mesh()
+        self._new_polar_mesh()
 
 
-    def _create_polar_mesh(self):
+    def _new_polar_mesh(self):
         """Remake the polar mesh.
         
         Matplotlib does not provide a way to update the ranges on a pcolormesh so
         here we delete the old polar pcolormesh and make a new one.
         """
-        self.cb.remove()
+        self.cb.remove()  # do the colourbar too
         self.polarPlot.remove()
 
         # new pcolormesh
@@ -353,6 +353,12 @@ class echogramPlotter:
         # update the range rings and radial line
         self.rangeRing1.new_max_range(self.maxRange)
         self.rangeRing2.new_max_range(self.maxRange)
+        
+        # take care that the range rings don't end being the same
+        if abs(self.rangeRing1.range - self.rangeRing2.range) < 0.5:
+            r = self.rangeRing1.range
+            self.rangeRing2.set_range(r-1.0)
+        
         self.beamLine.new_max_range(self.maxRange)
 
     def updateNumPings(self):
