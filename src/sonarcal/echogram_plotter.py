@@ -289,14 +289,9 @@ class echogramPlotter:
             pass
 
     def updateNumPings(self):
-        """Do the work to update the plots that show pings."""
-        if self.numPings != config.numPings():
-            self._changeNumPings(config.numPings())
+        """Change the number of pings in the displays."""
 
-    def _changeNumPings(self, numPings):
-        """Resize things to fit the new number of pings we'll be displaying."""
-        
-        if numPings == self.numPings:
+        if self.numPings == config.numPings():
             return
 
         # All the lines on the plots that need adjusting
@@ -306,7 +301,7 @@ class echogramPlotter:
                     self.ampDiffPortPlot, self.ampDiffStbdPlot, 
                     self.ampDiffPortPlotSmooth, self.ampDiffStbdPlotSmooth]
 
-        def update_echograms():
+        def update_plots():
             # Update echograms with new data and adjust axes limits
             extent = [0.0, self.numPings, self.maxRange, 0.0]
             for e, s in zip([self.portEchogram, self.mainEchogram, self.stbdEchogram],
@@ -314,27 +309,27 @@ class echogramPlotter:
                 e.set_data(s)
                 e.set_extent(extent)
 
-        if numPings < self.numPings:
-            self.numPings = numPings
+            self.ampPlotAx.set_xlim(0, self.numPings)
+            self.ampDiffPlotAx.set_xlim((0, self.numPings))
+
+        if config.numPings() < self.numPings:
+            self.numPings = config.numPings()
 
             # Reduce storage variables
             self.port = self.port[:, -self.numPings:]
             self.main = self.main[:, -self.numPings:]
             self.stbd = self.stbd[:, -self.numPings:]
             self.amp = self.amp[:, -self.numPings:]
-            update_echograms()
 
             # Shorten all the line plots
             for line in lines:
                 y = line.get_ydata()
                 line.set_data(np.arange(self.numPings), y[-self.numPings:])
 
-            # and update the x axis limit for the line plots
-            self.ampPlotAx.set_xlim(0, self.numPings)
-            self.ampDiffPlotAx.set_xlim((0, self.numPings))
+            update_plots()
         else:  # increase size
-            extra_pings = numPings - self.numPings
-            self.numPings = numPings
+            extra_pings = config.numPings() - self.numPings
+            self.numPings = config.numPings()
 
             # Increase storage variables
             extra = np.full((self.maxSamples, extra_pings), self.emptySv)
@@ -342,15 +337,13 @@ class echogramPlotter:
             self.main = np.concatenate((extra, self.main), axis=1)
             self.stbd = np.concatenate((extra, self.stbd), axis=1)
             self.amp = np.concatenate((np.full((3, extra_pings), np.nan), self.amp), axis=1)
-            update_echograms() 
                        
+            # Lengthen all the line plots
             for line in lines:
                 y = np.concatenate((np.full(extra_pings, np.nan), line.get_ydata()))
                 line.set_data(np.arange(self.numPings), y)
 
-            # and update the x axis limit for the line plots
-            self.ampPlotAx.set_xlim(0, self.numPings)
-            self.ampDiffPlotAx.set_xlim((0, self.numPings))
+            update_plots()
 
     def set_ping_callback(self, cb):
         """Set the callback that is called after each new ping is displayed."""
