@@ -64,13 +64,13 @@ class echogramPlotter:
 
     def createGUI(self, samInt, c, sv, ts, theta, tilts, labels):
         """Create the GUI."""
-        cmap = mpl.colormaps['jet']  # viridis looks nice too...
-        cmap.set_under('w')  # and for values below self.minSv, if desired
+        self.cmap = mpl.colormaps['jet']  # viridis looks nice too...
+        self.cmap.set_under('w')  # and for values below self.minSv, if desired
 
         # number of samples to store per ping
         self.maxSamples = int(np.ceil(self.maxRange / (samInt*c/2.0)))
         self.numBeams = sv.shape[0]
-        
+
         # A copy of the beam gains from the file being read
         self.gains = None
 
@@ -163,9 +163,9 @@ class echogramPlotter:
                                                        aspect='auto', extent=ee, vmin=self.minSv,
                                                        vmax=self.maxSv)
 
-        self.portEchogram.set_cmap(cmap)
-        self.mainEchogram.set_cmap(cmap)
-        self.stbdEchogram.set_cmap(cmap)
+        self.portEchogram.set_cmap(self.cmap)
+        self.mainEchogram.set_cmap(self.cmap)
+        self.stbdEchogram.set_cmap(self.cmap)
 
         # Omni echogram axes setup
         self.polarPlotAx.set_theta_offset(np.pi/2)  # to make bow direction plot upwards
@@ -179,12 +179,12 @@ class echogramPlotter:
                                                      vmax=self.maxSv)
         self.polarPlotAx.grid(axis='y', linestyle=':')
 
-        self.polarPlot.set_cmap(cmap)
+        self.polarPlot.set_cmap(self.cmap)
 
         # Colorbar for the omni echogram
-        cb = plt.colorbar(self.polarPlot, ax=self.polarPlotAx, orientation='horizontal',
+        self.cb = plt.colorbar(self.polarPlot, ax=self.polarPlotAx, orientation='horizontal',
                           extend='both', fraction=0.05, location='bottom')
-        cb.set_label('$S_v$ re 1 m$^{-1}$ [dB]')
+        self.cb.set_label('$S_v$ re 1 m$^{-1}$ [dB]')
 
         # Range rings on the omni echogram
         self.rangeRing1 = draggable_ring(self.polarPlotAx, self.minTargetRange)
@@ -284,9 +284,64 @@ class echogramPlotter:
         self.fig.canvas.draw_idle()
 
     def updateMaxRange(self):
-        """Do the work to update the plots that show range."""
-        if self.maxRange != config.maxRange():
+        """Change the range of the echograms."""
+        if self.maxRange == config.maxRange():
+            return
+
+        if config.maxRange() < self.maxRange:
+            # make the range shorter
+            self.maxRange = config.maxRange()
+            self.maxSamples = int(np.ceil(self.maxRange
+                                          / (self.sample_interval*self.sound_speed/2.0)))
+            self.polar = self.polar[:self.maxSamples, :]
+            self.port = self.port[:self.maxSamples, :]
+            self.main = self.main[:self.maxSamples, :]
+            self.stbd = self.stbd[:self.maxSamples, :]
+
+            self.portEchogram.set_data(self.port)
+            self.mainEchogram.set_data(self.main)
+            self.stbdEchogram.set_data(self.stbd)
+
+            extent = [0.0, self.numPings, self.maxRange, 0.0]
+            self.portEchogram.set_extent(extent)
+            self.mainEchogram.set_extent(extent)
+            self.stbdEchogram.set_extent(extent)
+
+            # The polar plot is more complication. Matplotlib provides no way to
+            # update the range and angle data for an existing pcolormesh so a new
+            # pcolormesh needs to be created and setup on the polar axes. The old
+            # pcolormesh also needs to be removed.
+            self._create_polar_mesh()
+            
+        else:  # make the range larger
             pass
+
+    def _create_polar_mesh(self):
+        """Remake the polar mesh.
+        
+        Matplotlib does not provide a way to update the ranges on a pcolormesh so
+        here we delete the old polar pcolormesh and make a new one.
+        """
+        self.cb.remove()
+        self.polarPlot.remove()
+
+        # new pcolormesh
+        r = np.arange(0, self.maxSamples)*self.sample_interval*self.sound_speed/2.0
+        self.polarPlot = self.polarPlotAx.pcolormesh(self.theta, r, self.polar,
+                                                     shading='auto', vmin=self.minSv,
+                                                     vmax=self.maxSv)
+        self.polarPlotAx.set_rmax(self.maxRange)
+        self.polarPlot.set_cmap(self.cmap)
+
+        # new colourbar
+        self.cb = plt.colorbar(self.polarPlot, ax=self.polarPlotAx, orientation='horizontal',
+                          extend='both', fraction=0.05, location='bottom')
+        self.cb.set_label('$S_v$ re 1 m$^{-1}$ [dB]')
+
+        # update the range rings and radial line
+        self.rangeRing1.new_max_range(self.maxRange)
+        self.rangeRing2.new_max_range(self.maxRange)
+        self.beamLine.new_max_range(self.maxRange)
 
     def updateNumPings(self):
         """Change the number of pings in the displays."""
@@ -379,10 +434,14 @@ class echogramPlotter:
                     # tilts - float [rad]
                     # gains - float [dB]
                     # labels - str 
-
+\
                     # sort on theta - needed to avoid a warning from the polar plot
                     (sv, ts, theta, tilts, gains, labels) =\
                         self.sort_beams(sv, ts, theta, tilts, gains, labels)
+
+                    self.sound_speed = c
+                    self.sample_interval = samInt
+                    self.theta = theta
 
                     if self.firstPing:
                         self.firstPing = False

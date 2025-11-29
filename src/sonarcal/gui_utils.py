@@ -24,6 +24,12 @@ class draggable_ring:
         self.c.draw_idle()
         self.sid = self.c.mpl_connect('pick_event', self.clickonline)
 
+    def new_max_range(self, r):
+        """Change the range of the ring."""
+        if r < self.range:
+            self.range = r
+            self.line.set_ydata(np.full(self.numPoints, self.range))
+
     def clickonline(self, event):
         """Capture clicks on lines."""
         if event.artist == self.line:
@@ -50,6 +56,9 @@ class draggable_radial:
     def __init__(self, ax, angle: float, maxRange: float, theta: float, labels):
         from matplotlib import lines  # deferred to save import time
 
+        # Text range is this factor times the plot max range
+        self.text_range_factor = 1.2
+
         self.line_color_unfrozen = 'black'
         self.line_color_frozen = config.calibrating_colour()
         
@@ -69,7 +78,7 @@ class draggable_radial:
         self.line = lines.Line2D([angle, angle], [0, self.maxRange],
                                  linewidth=2, marker='o', markevery=[-1],
                                  color=self.line_color_unfrozen, picker=True)
-        self.text = self.ax.text(angle, 1.2*self.maxRange, '',
+        self.text = self.ax.text(angle, self.text_range_factor*self.maxRange, '',
                                  color=self.line_color_unfrozen,
                                  bbox={'boxstyle':'square,pad=0.0', 'fc': 'white', 'ec': 'none'},
                                  horizontalalignment='center', verticalalignment='center')
@@ -87,6 +96,14 @@ class draggable_radial:
     def resized(self, event):
         """Update the inverse polar plot transform when the plot is resized."""
         self.inv = self.ax.transData.inverted()
+
+    def new_max_range(self, r):
+        """Adjust the line and text to the given max range."""
+        self.maxRange = r
+        self.line.set_ydata([0, self.maxRange])
+        # and move the text to match
+        angle, _ = self.text.get_position()
+        self.text.set_position((angle, self.text_range_factor*self.maxRange))
 
     def frozen(self):
         return self.radial_frozen
