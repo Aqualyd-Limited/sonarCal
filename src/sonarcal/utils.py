@@ -27,6 +27,8 @@ def setupLogging():
     logger.addHandler(console)
 
     logger.info('Log files are in %s.', config.logDir().as_posix())
+    
+    return logger
 
 
 def on_exit(root, job, sig):
