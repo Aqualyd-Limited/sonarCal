@@ -44,7 +44,7 @@ class configDialog:
             Param(False, '', '', 'horizline'),
             Param(False, 'Calibration sphere TS', 'sphereTS', 'float', 'dB re 1 m²'),
             Param(False, '', '', 'horizline'),
-            Param(True, 'X-axis size', 'numPings', 'int', 'pings'),
+            Param(False, 'X-axis size', 'numPings', 'int', 'pings'),
             Param(True, 'Echogram range', 'maxRange', 'float', 'm'),
             Param(False, '', '', 'horizline'),
             Param(False, 'Y-axis minimum on Δ plot', 'diffPlotYMin', 'float', 'dB'),
