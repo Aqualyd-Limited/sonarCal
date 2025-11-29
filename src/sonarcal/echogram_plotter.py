@@ -288,33 +288,45 @@ class echogramPlotter:
         if self.maxRange == config.maxRange():
             return
 
+        new_num_samples = int(np.ceil(config.maxRange()
+                                      / (self.sample_interval*self.sound_speed/2.0)))
+
         if config.maxRange() < self.maxRange:
             # make the range shorter
-            self.maxRange = config.maxRange()
-            self.maxSamples = int(np.ceil(self.maxRange
-                                          / (self.sample_interval*self.sound_speed/2.0)))
+            self.maxSamples = new_num_samples
             self.polar = self.polar[:self.maxSamples, :]
             self.port = self.port[:self.maxSamples, :]
             self.main = self.main[:self.maxSamples, :]
             self.stbd = self.stbd[:self.maxSamples, :]
-
-            self.portEchogram.set_data(self.port)
-            self.mainEchogram.set_data(self.main)
-            self.stbdEchogram.set_data(self.stbd)
-
-            extent = [0.0, self.numPings, self.maxRange, 0.0]
-            self.portEchogram.set_extent(extent)
-            self.mainEchogram.set_extent(extent)
-            self.stbdEchogram.set_extent(extent)
-
-            # The polar plot is more complication. Matplotlib provides no way to
-            # update the range and angle data for an existing pcolormesh so a new
-            # pcolormesh needs to be created and setup on the polar axes. The old
-            # pcolormesh also needs to be removed.
-            self._create_polar_mesh()
-            
         else:  # make the range larger
-            pass
+            extra_samples = new_num_samples - self.maxSamples
+            self.maxSamples = new_num_samples
+
+            self.polar = np.concatenate((self.polar,
+                                np.full((extra_samples, self.numBeams), self.emptySv)), axis=0)
+
+            extra = np.full((extra_samples, self.numPings), self.emptySv)
+            self.port = np.concatenate((self.port, extra), axis=0)
+            self.main = np.concatenate((self.main, extra), axis=0)
+            self.stbd = np.concatenate((self.stbd, extra), axis=0)
+
+        self.maxRange = config.maxRange()
+
+        self.portEchogram.set_data(self.port)
+        self.mainEchogram.set_data(self.main)
+        self.stbdEchogram.set_data(self.stbd)
+
+        extent = [0.0, self.numPings, self.maxRange, 0.0]
+        self.portEchogram.set_extent(extent)
+        self.mainEchogram.set_extent(extent)
+        self.stbdEchogram.set_extent(extent)
+
+        # The polar plot is more complication. Matplotlib provides no way to
+        # update the range and angle data for an existing pcolormesh so a new
+        # pcolormesh needs to be created and setup on the polar axes. The old
+        # pcolormesh also needs to be removed.
+        self._create_polar_mesh()
+
 
     def _create_polar_mesh(self):
         """Remake the polar mesh.
@@ -380,8 +392,6 @@ class echogramPlotter:
             for line in lines:
                 y = line.get_ydata()
                 line.set_data(np.arange(self.numPings), y[-self.numPings:])
-
-            update_plots()
         else:  # increase size
             extra_pings = config.numPings() - self.numPings
             self.numPings = config.numPings()
@@ -398,7 +408,7 @@ class echogramPlotter:
                 y = np.concatenate((np.full(extra_pings, np.nan), line.get_ydata()))
                 line.set_data(np.arange(self.numPings), y)
 
-            update_plots()
+        update_plots()
 
     def set_ping_callback(self, cb):
         """Set the callback that is called after each new ping is displayed."""
