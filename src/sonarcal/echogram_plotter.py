@@ -291,8 +291,7 @@ class echogramPlotter:
     def updateNumPings(self):
         """Do the work to update the plots that show pings."""
         if self.numPings != config.numPings():
-            pass
-            # self._changeNumPings(config.numPings())
+            self._changeNumPings(config.numPings())
 
     def _changeNumPings(self, numPings):
         """Resize things to fit the new number of pings we'll be displaying."""
@@ -300,51 +299,40 @@ class echogramPlotter:
         if numPings == self.numPings:
             return
         
-        if numPings < self.numPings:  # reduce size
-            logger.info('Reducing number of pings from %d to %d', self.numPings, numPings)
+        if numPings < self.numPings:
             self.numPings = numPings
 
-            # when reducing, keep the more recent data
-            
-            # echogram storage
-            self.port = self.port[:, -self.numPings:]
-            self.main = self.main[:, -self.numPings:]
-            self.stbd = self.stbd[:, -self.numPings:]
-            
-            # Sphere amplitude
+            # Reduce storage variables
+            storage = (self.port, self.main, self.stbd)
+            for s in storage:
+                s = s[:, -self.numPings:]
+
             self.amp = self.amp[:, -self.numPings:]
             
-            # then update the data that the plots have
-            self.portEchogram.set_data(self.port)
-            self.mainEchogram.set_data(self.main)
-            self.stbdEchogram.set_data(self.stbd)
+            # Update echograms with shortened data and adjust axes limits
+            echograms = [self.portEchogram, self.mainEchogram, self.stbdEchogram]
+            extent = [0.0, self.numPings, self.maxRange, 0.0]
+            for e, s in zip(echograms, storage):
+                e.set_data(s)
+                e.set_extent(extent)
+
+            # Shorten all the line plots
+            lines = [self.ampPlotLinePort, self.ampPlotLineMain, self.ampPlotLineStbd,
+                     self.ampPlotLinePortSmooth, self.ampPlotLineMainSmooth,
+                     self.ampPlotLineStbdSmooth,
+                     self.ampDiffPortPlot, self.ampDiffStbdPlot, 
+                     self.ampDiffPortPlotSmooth, self.ampDiffStbdPlotSmooth]
             
-            self.ampPlotLinePort.set_ydata(self.amp[0, :])
-            self.ampPlotLineMain.set_ydata(self.amp[1, :])
-            self.ampPlotLineStbd.set_ydata(self.amp[2, :])
+            for line in lines:
+                y = line.get_ydata()
+                line.set_data(np.arange(self.numPings), y[-self.numPings:])
 
-            # The difference plot and the smoothed lines are all derived data 
-            # that don't have a self. variable for their data. So get the data from the
-            # plot object, shorted it, and set it back.
-
-            # get y data, shorten it, set y data
-            
-            self.ampPlotLinePortSmooth.set_ydata(self.ampSmooth[0, :])
-            self.ampPlotLineMainSmooth.set_ydata(self.ampSmooth[1, :])
-            self.ampPlotLineStbdSmooth.set_ydata(self.ampSmooth[2, :])
-
-            self.ampDiffPortPlot.set_ydata()
-            self.ampDiffStbdPlot.set_ydata()
-
-            self.ampDiffPortPlotSmooth.set_ydata()
-            self.ampDiffStbdPlotSmooth.set_ydata()
-
-            # Then tell the various axes to recalculate their limits
-            self.ampDiffPlotAx.relim()
-            self.ampDiffPlotAx.autoscale_view(scaley=False)
-
+            # and update the x axis limit for the line plots
+            self.ampPlotAx.set_xlim(0, self.numPings)
+            self.ampDiffPlotAx.set_xlim((0, self.numPings))
         else:  # increase size
-            pass
+            logger.info('Increasing number of pings from %d to %d', self.numPings, numPings)
+
 
     def set_ping_callback(self, cb):
         """Set the callback that is called after each new ping is displayed."""
