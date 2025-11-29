@@ -76,13 +76,13 @@ class echogramPlotter:
 
         # Storage for the things we plot
         # Polar plot
-        self.polar = np.ones((self.maxSamples, self.numBeams), dtype=float) * self.emptySv
+        self.polar = np.full((self.maxSamples, self.numBeams), self.emptySv)
         # Echograms
-        self.port = np.ones((self.maxSamples, self.numPings), dtype=float) * self.emptySv
-        self.main = np.ones((self.maxSamples, self.numPings), dtype=float) * self.emptySv
-        self.stbd = np.ones((self.maxSamples, self.numPings), dtype=float) * self.emptySv
+        self.port = np.full((self.maxSamples, self.numPings), self.emptySv)
+        self.main = np.full((self.maxSamples, self.numPings), self.emptySv)
+        self.stbd = np.full((self.maxSamples, self.numPings), self.emptySv)
         # Amplitude of sphere
-        self.amp = np.ones((3, self.numPings), dtype=float) * np.nan
+        self.amp = np.full((3, self.numPings), np.nan)
         # Range of the max amplitude within the range range on the selected beam
         self.rangeMax = None  # [m]
 
@@ -488,7 +488,7 @@ class echogramPlotter:
                         else:
                             samples = b.shape[0]
                             self.polar[:, i] =\
-                                np.concatenate((b, self.emptySv*np.ones(self.maxSamples-samples)),
+                                np.concatenate((b, np.full(self.maxSamples-samples, self.emptySv)),
                                                axis=0)
 
                     self.polarPlot.set_array(self.polar.ravel())
@@ -513,7 +513,7 @@ class echogramPlotter:
         else:
             samples = pingData.shape[0]
             data[:, -1] = np.concatenate((pingData[:],
-                                          self.emptySv*np.ones(self.maxSamples-samples)), axis=0)
+                                          np.full(self.maxSamples-samples, self.emptySv)), axis=0)
         return data
 
     def updateBeamNum(self, theta):
