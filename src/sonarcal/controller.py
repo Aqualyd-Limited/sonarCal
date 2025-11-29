@@ -9,16 +9,22 @@ from functools import partial
 import threading
 import queue
 import sys
+from importlib.metadata import version
+from platform import python_version, uname
 
 from .echogram_plotter import echogramPlotter
 from .utils import setupLogging, on_exit, window_closed
 from .file_ops import sonar_file_read
 from .calibration_gui import calibrationGUI
 
-setupLogging()
+logger  =setupLogging()
 
 def main():
-    """Omnisonar calibration graphical user interface."""    
+    """Omnisonar calibration graphical user interface."""
+
+    logger.info('Running Sonarcal version %s on Python %s', version("sonarcal"), python_version())
+    logger.info('Computer is a %s running %s release %s ',
+                uname().machine, uname().system, uname().release)
 
     # queue to communicate between two threads
     msg_queue = queue.Queue()
