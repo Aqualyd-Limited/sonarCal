@@ -53,9 +53,6 @@ class calibrationGUI:
         s.configure('TCheckbutton', font=('Arial', 16))
         s.configure('Treeview.Heading', font=('Arial', 12, 'bold'))
         s.configure('Treeview', font=('Arial', 12))
-        # this doesn't work for some reason so the font is set when the entry widget
-        # is created (in the configuration dialog).
-        s.configure('TEntry', font=('Arial', 20))
 
         # A label to show the last received message time
         self.label = ttk.Label(self.echogram.root)

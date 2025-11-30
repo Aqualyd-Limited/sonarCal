@@ -143,7 +143,7 @@ class configDialog:
             ent.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=tk.NO)
         else:
             ent = ttk.Entry(master=container, textvariable=variable,
-                            justify='right', width=10, font=('Arial 12'))
+                            justify='right', width=10)
             unit = ttk.Label(master=container, text=unit, width=10)
 
             ent.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=tk.NO)
