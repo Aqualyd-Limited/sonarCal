@@ -25,7 +25,7 @@ class draggable_ring:
         self.sid = self.c.mpl_connect('pick_event', self.clickonline)
 
     def set_range(self, r):
-        """Set the range ring a value."""
+        """Set the range ring radius."""
         self.range = r
         self.line.set_ydata(np.full(self.numPoints, self.range))
 

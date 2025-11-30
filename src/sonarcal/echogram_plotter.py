@@ -68,7 +68,7 @@ class echogramPlotter:
         self.cmap.set_under('w')  # and for values below self.minSv, if desired
 
         # number of samples to store per ping
-        self.maxSamples = int(np.ceil(self.maxRange / (samInt*c/2.0)))
+        self.maxSamples = self.sample_from_range(self.maxRange)
         self.numBeams = sv.shape[0]
 
         # A copy of the beam gains from the file being read
@@ -173,18 +173,14 @@ class echogramPlotter:
         self.polarPlotAx.xaxis.set_ticklabels([])
 
         # Omni echogram image
-        r = np.arange(0, self.maxSamples)*samInt*c/2.0
+        r = self.range_from_sample(np.arange(0, self.maxSamples))
         self.polarPlot = self.polarPlotAx.pcolormesh(theta, r, self.polar,
                                                      shading='auto', vmin=self.minSv,
                                                      vmax=self.maxSv)
         self.polarPlotAx.grid(axis='y', linestyle=':')
 
         self.polarPlot.set_cmap(self.cmap)
-
-        # Colorbar for the omni echogram
-        self.cb = plt.colorbar(self.polarPlot, ax=self.polarPlotAx, orientation='horizontal',
-                          extend='both', fraction=0.05, location='bottom')
-        self.cb.set_label('$S_v$ re 1 m$^{-1}$ [dB]')
+        self._create_polar_colourbar()
 
         # Range rings on the omni echogram
         self.rangeRing1 = draggable_ring(self.polarPlotAx, self.minTargetRange)
@@ -239,6 +235,14 @@ class echogramPlotter:
         
         self.updateTiltValue(tilts.mean())
 
+    def sample_from_range(self, r: float) -> int:
+        """Calculate the sample number for a given range."""
+        return int(np.ceil(2.0 * r / (self.sample_interval * self.sound_speed)))
+    
+    def range_from_sample(self, s: int) -> float:
+        """Calculate the range for a given sample number."""
+        return s * self.sample_interval * self.sound_speed/2.0
+
     def updateEchogramThresholds(self, val):
         """Update the image colormaps."""
         self.polarPlot.set_clim(val)
@@ -288,8 +292,7 @@ class echogramPlotter:
         if self.maxRange == config.maxRange():
             return
 
-        new_num_samples = int(np.ceil(config.maxRange()
-                                      / (self.sample_interval*self.sound_speed/2.0)))
+        new_num_samples = self.sample_from_range(config.maxRange())
 
         if config.maxRange() < self.maxRange:
             # make the range shorter
@@ -327,34 +330,34 @@ class echogramPlotter:
         # pcolormesh also needs to be removed.
         self._new_polar_mesh()
 
+    def _create_polar_colourbar(self):
+        self.cb = plt.colorbar(self.polarPlot, ax=self.polarPlotAx, orientation='horizontal',
+                          extend='both', fraction=0.05, location='bottom')
+        self.cb.set_label('$S_v$ re 1 m$^{-1}$ [dB]')
 
     def _new_polar_mesh(self):
         """Remake the polar mesh.
         
         Matplotlib does not provide a way to update the ranges on a pcolormesh so
-        here we delete the old polar pcolormesh and make a new one.
+        we delete the old polar pcolormesh and make a new one.
         """
         self.cb.remove()  # do the colourbar too
         self.polarPlot.remove()
 
         # new pcolormesh
-        r = np.arange(0, self.maxSamples)*self.sample_interval*self.sound_speed/2.0
+        r = self.range_from_sample(np.arange(0, self.maxSamples))
         self.polarPlot = self.polarPlotAx.pcolormesh(self.theta, r, self.polar,
                                                      shading='auto', vmin=self.minSv,
                                                      vmax=self.maxSv)
         self.polarPlotAx.set_rmax(self.maxRange)
         self.polarPlot.set_cmap(self.cmap)
-
-        # new colourbar
-        self.cb = plt.colorbar(self.polarPlot, ax=self.polarPlotAx, orientation='horizontal',
-                          extend='both', fraction=0.05, location='bottom')
-        self.cb.set_label('$S_v$ re 1 m$^{-1}$ [dB]')
+        self._create_polar_colourbar()
 
         # update the range rings and radial line
         self.rangeRing1.new_max_range(self.maxRange)
         self.rangeRing2.new_max_range(self.maxRange)
         
-        # take care that the range rings don't end being the same
+        # take care that the range rings don't end up being the same
         if abs(self.rangeRing1.range - self.rangeRing2.range) < 0.5:
             r = self.rangeRing1.range
             self.rangeRing2.set_range(r-1.0)
@@ -478,9 +481,14 @@ class echogramPlotter:
                     self.maxTargetRange = max(self.rangeRing1.range, self.rangeRing2.range)
 
                     # print('Range rings: {}, {}'.format(self.minTargetRange, self.maxTargetRange))
+                        
+                    minSample = self.sample_from_range(self.minTargetRange)
+                    maxSample = self.sample_from_range(self.maxTargetRange)
 
-                    minSample = int(np.floor(2*self.minTargetRange / (samInt * c)))
-                    maxSample = int(np.floor(2*self.maxTargetRange / (samInt * c)))
+                    # Various things select a range of samples, so ensure that they
+                    # always get something
+                    if minSample == maxSample:
+                        minSample -= 1
 
                     self.updateBeamNum(theta)  # sets self.beam from self.beamLineAngle
 
@@ -498,11 +506,18 @@ class echogramPlotter:
                     # Find the max ts between the min and max ranges set by the UI
                     # and store for plotting
                     self.amp = np.roll(self.amp, -1, 1)
-                    self.amp[0, -1] = np.max(ts[beamPort][minSample:maxSample])
-                    max_i = np.argmax(ts[self.beamIdx][minSample:maxSample])
-                    self.amp[1, -1] = ts[self.beamIdx][minSample+max_i]
-                    self.rangeMax = (minSample+max_i) * samInt * c / 2.0
-                    self.amp[2, -1] = np.max(ts[beamStbd][minSample:maxSample])
+                    if minSample >= ts.shape[1]:
+                        # we're beyond the range of the data so return such...
+                        self.amp[0, -1] = np.nan
+                        self.amp[1, -1] = np.nan
+                        self.amp[2, -1] = np.nan
+                        self.rangeMax = np.nan
+                    else:
+                        self.amp[0, -1] = np.max(ts[beamPort][minSample:maxSample])
+                        max_i = np.argmax(ts[self.beamIdx][minSample:maxSample])
+                        self.amp[1, -1] = ts[self.beamIdx][minSample+max_i]
+                        self.rangeMax = self.range_from_sample(minSample+max_i)
+                        self.amp[2, -1] = np.max(ts[beamStbd][minSample:maxSample])
 
                     # Store the amplitude for the 3 beams for the echograms
                     self.port = self.updateEchogramData(self.port, sv[beamPort])
@@ -569,6 +584,20 @@ class echogramPlotter:
                     self.polarPlot.set_array(self.polar.ravel())
 
                     self.updateTiltValue(tilts[self.beamIdx])
+
+                    # If the range rings are too close together it becomes impossible to move 
+                    # them separately, so check and move one if that happens
+                    r1 = self.rangeRing1.range
+                    r2 = self.rangeRing2.range
+                    minimum_range_difference = 0.5  # [m]
+                    range_shift = self.maxRange*0.1  # [m]
+
+                    if abs(r1 - r2) <= minimum_range_difference:
+                        # decrease the range of the inner one
+                        if r1 <= r2:
+                            self.rangeRing1.set_range(r1 - range_shift)
+                        else:
+                            self.rangeRing2.set_range(r2 - range_shift)
 
                     if self.new_ping_cb:
                         self.new_ping_cb()
