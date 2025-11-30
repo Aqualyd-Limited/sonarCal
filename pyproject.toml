@@ -33,6 +33,7 @@ dependencies = [
   "construct",
   "arrow",
   "natsort",
+  "sv-ttk",
   'pywin32; platform_system == "Windows"'
 ]
 classifiers = [

@@ -13,7 +13,7 @@ from .calibration_data import calibrationData
 from .calculate_gains import calculate_gain
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from .configuration import config as cfg
-
+import sv_ttk
 logger = logging.getLogger(cfg.appName())
 
 class calibrationGUI:
@@ -84,7 +84,7 @@ class calibrationGUI:
         results.pack(side=tk.RIGHT)
 
         frame.pack(side=tk.TOP, fill=tk.BOTH)
-
+        sv_ttk.set_theme('light')
         # Start listening for sonar data
         self.echogram.newPing(self.status_label())
 
