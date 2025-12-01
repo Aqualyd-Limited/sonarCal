@@ -97,7 +97,7 @@ class SimradUnknownParser(_SimradDatagramParser):
             Struct(
                 'type' / PaddedString(4, 'ascii'),
                 'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
-                'data' / GreedyBytes()
+                'data' / GreedyBytes
             )
 
     def _unpack_contents(self, raw_string, bytes_read, version):
