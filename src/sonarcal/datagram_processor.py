@@ -90,7 +90,7 @@ class rawDatagramProcessor():
         gain_tx = 0  # unknown value so default to zero
 
         wavenumber = self.sound_speed / self.frequency
-        tilt_corr = 30.0 *np.log10(np.cos(self.tilts))
+        tilt_corr = 40.0 * np.log10(np.cos(self.tilts))
         range_corr = 3.0  # [m] empirical range correction
         sample_range = self.sound_speed * self.sample_interval / 2.0
         r = np.arange(num_samples) * sample_range - range_corr
