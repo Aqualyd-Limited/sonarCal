@@ -10,7 +10,7 @@ from platform import python_version
 from PIL import Image, ImageTk
 from .utils import window_closed
 from .calibration_data import calibrationData
-from .calculate_gains import calculate_gain
+from .calculate_gains import calculate_calibration
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from .configuration import config as cfg
 import sv_ttk
@@ -120,11 +120,10 @@ class calibrationGUI:
             # store the current ping's sphere echo info
             self.sphere_echoes.append((datetime.now().isoformat(), e.amp[1, -1], e.rangeMax))
             # calculate the beam gain and other stats
-            (gain, ts, rms, r, num) = calculate_gain(self.sphere_echoes, cfg.sphereTS(),
-                                                     e.gains[e.beamIdx])
+            (cal_offset, ts, rms, r, num) = calculate_calibration(self.sphere_echoes, cfg.sphereTS())
             # store the latest beam gain values
             self.cal_data.update(e.beamLabel, datetime.now().strftime('%H:%M:%S'),
-                                 gain, ts, rms, r, num)
+                                 e.gains[e.beamIdx], cal_offset, ts, rms, r, num)
             # update the results dialog if present
             if self.results_dialog:
                 self.results_dialog.update_with(self.cal_data, e.beamLabel)

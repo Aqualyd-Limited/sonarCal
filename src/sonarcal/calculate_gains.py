@@ -1,6 +1,6 @@
 # this file uses deferred imports
 
-def calculate_gain(sphere_echoes: list[tuple], sphere_ts: float, beam_gain: float)\
+def calculate_calibration(sphere_echoes: list[tuple], sphere_ts: float)\
     -> tuple[float, float, float, int]:
     """Calculate the beam calibration gain and other stats."""
 
@@ -23,7 +23,7 @@ def calculate_gain(sphere_echoes: list[tuple], sphere_ts: float, beam_gain: floa
     # omnisonars as of 2025...
 
     # and the new gain correction is....
-    beam_gain_new = beam_gain + ts_mean - sphere_ts
+    gain_adjust = ts_mean - sphere_ts
 
-    return (beam_gain_new, ts_mean, ts_rms, np.mean(dfm['range']), len(dfm))
+    return (gain_adjust, ts_mean, ts_rms, np.mean(dfm['range']), len(dfm))
 
