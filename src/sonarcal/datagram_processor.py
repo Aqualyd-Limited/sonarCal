@@ -100,7 +100,7 @@ class rawDatagramProcessor():
         tvg = 20*np.log10(r) + 2*r*self.absorption_coefficient
         sv_const = (10*np.log10(self.transmit_power * wavenumber**2 * self.sound_speed
                                 * self.pulse_duration / (32.0 * np.pi**2)))\
-                    + gain_tx + self.gain_rx + tilt_corr\
+                    + 2*gain_tx + 2*self.gain_rx + tilt_corr\
                     + 2*self.sa_correction\
                     + self.equivalent_beam_angle
 
@@ -109,7 +109,7 @@ class rawDatagramProcessor():
 
         tvg = 40*np.log10(r) + 2*r*self.absorption_coefficient
         ts_const = (10*np.log10(self.transmit_power * wavenumber**2 / (16.0 * np.pi**2)))\
-                    + gain_tx + self.gain_rx + tilt_corr
+                    + 2*gain_tx + 2*self.gain_rx + tilt_corr
 
         self.ts = power + tvg[np.newaxis, :] - ts_const[:, np.newaxis]
 
@@ -203,6 +203,7 @@ class rawDatagramProcessor():
             alpha.append(b['performance_info']['absorption_coefficient'])
 
             EBA = b['performance_info']['equivalent_beam_angle']
+
             if EBA == 0.0:
                 # Use the classic Simrad approximate formula
                 EBA = 10*np.log10(b['beam_width_x'] * b['beam_width_y'] / 5800)
