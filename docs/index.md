@@ -18,7 +18,6 @@ This is the user documentation for Sonarcal, a program to assist with calibratin
 
 (** = requires testing)
 
-
 Other sonars that output sonar-netCDF4 files may also work, but there can often be small adjustments needed for full support. Contact the developer via Sonarcal's [GitHub](https://github.com/Aqualyd-Limited/sonarCal) page for further information.
 
 The current form of this program was funded by [AZTI](https://www.azti.es/en/). Earlier versions were developed while the author was employed at the Norwegian [Institute of Marine Research](https://www.hi.no).
@@ -29,67 +28,54 @@ Sonarcal requires Python version 3.11 or higher. If you are unfamiliar with inst
 
 Sonarcal is installed from the command line via:
 
-```
-pip install sonarcal
-```
+    pip install sonarcal
 
 and upgraded via:
 
-```
-pip install sonarcal --upgrade
-```
+    pip install sonarcal --upgrade
 
-The latest version of Sonarcal will always be listed [here](https://github.com/Aqualyd-Limited/sonarCal/releases). Sonarcal has been developed on Windows and is tested on Linux and MacOS. It may work on other operating systems.
+The latest version of Sonarcal will always be listed [github](https://github.com/Aqualyd-Limited/sonarCal/releases). Sonarcal has been developed on Windows and is tested on Linux and MacOS. It may work on other operating systems.
 
-###  Using `uv`
+### Using `uv`
 
 [uv](https://docs.astral.sh/uv/) can be used to install Python and Sonarcal and then to run Sonarcal. uv creates a Python installation just for Sonarcal (it is independent of all other Python installations on your computer).
 
-Install uv using the instructions [here](https://github.com/astral-sh/uv?tab=readme-ov-file#installation), then install Sonarcal with this command:
+Install uv using these [instructions](https://github.com/astral-sh/uv?tab=readme-ov-file#installation), then install Sonarcal with this command:
 
-````
-uv tool install sonarcal
-````
+    uv tool install sonarcal
 
 and run Sonarcal with this command:
 
-````
-uv tool run sonarcal
-````
+    uv tool run sonarcal
 
 uv's installation of Sonarcal can be upgraded with this command:
 
-````
-uv tool upgrade sonarcal
-````
-
+    uv tool upgrade sonarcal
 
 ## How to use
 
 Sonarcal is started from a command line with:
 
-```
-sonarcal
-```
+    sonarcal
 
 (or if using uv, the command is `uv tool run sonarcal`). It make take a few seconds to start, after which the Sonarcal window will appear.
 
 If there are suitable sonar files in the configured data directory, the program will start to replay them. Replay happens in two ways:
 
-**Live data enabled**
+Live data enabled
 
-:    The last file in the directory will be replayed and then any new data added to that file will also be replayed. If a newer file appears, that will be replayed too.
+:    The last file in the directory will be replayed[^1] and then any new data added to that file will also be replayed. If a newer file appears, that will be replayed too.
 
-**Live data disabled**
+[^1]: Just the last ping is replayed for sonar-netCDF4 files
+
+Live data disabled
 
 :    All files in the directory will be replayed in chronological order.
-
 
 ![Main screen](assets/screenshot.png){ align=right }
 /// caption
 The main operation screen.
 ///
-
 
 Each new ping is displayed in the polar plot to the left. The three centre plots show an echogram of the data from the three sonar beams at and adjacent to the beam line (the black radial line in the polar plot).
 
@@ -107,16 +93,16 @@ When using Sonarcal to calibrate, follow these steps:
 
 - Start Sonarcal
 - In the Config dialog:
-    - Set the calibration sphere TS (see [here](#sphere-target-strength))
-    - Set the sonar data directory to where the sonar will be recording data files
-    - Turn on the use of live data
-    - Close and restart Sonarcal for these changes to take effect
+  - Set the calibration [sphere TS](#sphere-target-strength))
+  - Set the sonar data directory to where the sonar will be recording data files
+  - Turn on the use of live data
+  - Close and restart Sonarcal for these changes to take effect
 - Repeat for multiple beams:
-    - Move the beam line and range rings to select the beam and ranges
-    - Locate the sphere on-axis of a beam using the sphere amplitude plots to assist
-    - Tick the `on-axis` box when the sphere is on-axis
-    - Monitor the results in the Results dialog box
-    - Untick the `on-axis` box when sufficient data have been collected for the beam
+  - Move the beam line and range rings to select the beam and ranges
+  - Locate the sphere on-axis of a beam using the sphere amplitude plots to assist
+  - Tick the `on-axis` box when the sphere is on-axis
+  - Monitor the results in the Results dialog box
+  - Untick the `on-axis` box when sufficient data have been collected for the beam
 
 Every time that the `on-axis` box is unticked all calibration results are saved to a backup file. The results can also be exported at any time using the `Save` button on the results dialog box - you will be prompted for a directory and filename for saving.
 
