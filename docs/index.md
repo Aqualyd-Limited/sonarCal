@@ -124,9 +124,9 @@ The beam being calibrated is highlighted in orange in the results dialog box and
 
 ## Using the calibration results
 
-Sonarcal calculates a `calibration offset` for each calibrated beam. This is the value in dB that should be added to the TS or $S_v$ output from the sonar to get a calibrated result.
+Sonarcal calculates a `calibration offset` for each calibrated beam. This is the value in dB that should be added to the TS or S~v~ output from the sonar to get a calibrated result.
 
-Both Simrad raw files and sonar-netCDF4 files contain a transducer gain value that is used to convert raw data into TS and $S_v$. It is not always correct to just add the calibration offset to this gain value - it depends on how the relevant raw to TS and $S_v$ equations use the gain. For example, raw files use double the gain value, while the process for sonar-netCDF4 files depends on the type of conversion equation used (see Chapter 4 in the sonar-netCDF4 document for details).
+Both Simrad raw files and sonar-netCDF4 files contain a transducer gain value that is used to convert raw data into TS and S~v~. It is not always correct to just add the calibration offset to this gain value - it depends on how the relevant raw to TS and S~v~ equations use the gain. For example, raw files use double the gain value, while the process for sonar-netCDF4 files depends on the type of conversion equation used (see Chapter 4 in the sonar-netCDF4 document for details).
 
 ## Sphere target strength
 
