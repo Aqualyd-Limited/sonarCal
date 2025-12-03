@@ -1,7 +1,7 @@
 # this file uses deferred imports
 
 def calculate_calibration(sphere_echoes: list[tuple], sphere_ts: float)\
-    -> tuple[float, float, float, int]:
+    -> tuple[float, float, float, float, int]:
     """Calculate the beam calibration gain and other stats."""
 
     # deferred imports to reduce program startup time
