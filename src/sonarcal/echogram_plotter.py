@@ -60,10 +60,15 @@ class echogramPlotter:
         self.fig = plt.figure(figsize=(11.5, 5))
         plt.ion()
 
-        self.firstPing = True
 
     def createGUI(self, samInt, c, sv, ts, theta, tilts, labels):
         """Create the GUI."""
+
+        # createGUI() can be called to reinitialise the entire plotting display when
+        # the data directory or live viewing setting is changed, so the old plots
+        # need to be cleared.
+        self.fig.clf()
+        
         self.cmap = mpl.colormaps['jet']  # viridis looks nice too...
         self.cmap.set_under('w')  # and for values below self.minSv, if desired
 
@@ -442,7 +447,8 @@ class echogramPlotter:
                 logger.info('No new data in received message.')
             else:
                 try:
-                    (pingTime, samInt, c, sv, ts, theta, tilts, gains, labels) = message
+                    (first, pingTime, samInt, c, sv, ts, theta, tilts, gains, labels) = message
+                    # first - bool - True when the first ping from a directory of files
                     # pingTime - datetime
                     # samInt - sample interval: float [m]
                     # c - sound speed: float [m/s]
@@ -453,7 +459,7 @@ class echogramPlotter:
                     # tilts - float [rad]
                     # gains - float [dB]
                     # labels - str 
-\
+
                     # sort on theta - needed to avoid a warning from the polar plot
                     (sv, ts, theta, tilts, gains, labels) =\
                         self.sort_beams(sv, ts, theta, tilts, gains, labels)
@@ -462,8 +468,7 @@ class echogramPlotter:
                     self.sample_interval = samInt
                     self.theta = theta
 
-                    if self.firstPing:
-                        self.firstPing = False
+                    if first:
                         self.createGUI(samInt, c, sv, ts, theta, tilts, labels)
 
                     # Update our copy of the beam gains
@@ -475,7 +480,7 @@ class echogramPlotter:
                     label.config(text=f'Ping at {pingTime:%Y-%m-%d %H:%M:%S}.' +
                                  f'{milliseconds:03.0f} '
                                  f'({humanize.precisedelta(timeBehind)} ago)')
-                    logger.info('Displaying ping from %s.', pingTime)
+                    logger.debug('Displaying ping from %s.', pingTime)
 
                     self.minTargetRange = min(self.rangeRing1.range, self.rangeRing2.range)
                     self.maxTargetRange = max(self.rangeRing1.range, self.rangeRing2.range)

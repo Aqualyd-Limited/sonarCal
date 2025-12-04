@@ -45,13 +45,16 @@ def sonar_file_read(msg_queue, reload_event):
     
     while not reload_event.set():
         reload_event.clear()
-        watch_dir = config.watchDir()
+        watch_dir = Path(config.watchDir())
         live_data = config.liveData()
 
         last_file = most_recent_file(watch_dir)
-        
-        logger.info('Looking for files in %s', watch_dir)
-        
+
+        if live_data:
+            logger.info('Listening for pings in %s', watch_dir)
+        else:                    
+            logger.info('Replaying files in %s', watch_dir)
+
         match file_type(last_file):
             case 'sonar-netcdf4':
                 if live_data:
@@ -135,7 +138,7 @@ def file_listen_netcdf(watchDir, msg_queue, reload_event):
             logger.info('No newer file found. Will try again in %s s.', str(waitIntervalFile))
             sleep(waitIntervalFile)  # wait and try again
         else:
-            logger.info('Listening to file: %s.', mostRecentFile)
+            logger.info('Listening to %s', mostRecentFile.name)
             first_ping = True
             noNewDataCount = 0
 
@@ -144,14 +147,13 @@ def file_listen_netcdf(watchDir, msg_queue, reload_event):
                 try:
                     import h5py  # deferred to save startup time
                     f = h5py.File(mostRecentFile, 'r', libver='latest', swmr=True)
+                    # f = h5py.File(mostRecentFile, 'r') # without HDF5 swmr option
 
                     if first_ping:
                         product_name = get_sonar_model(f['Sonar'].attrs)
                         logger.info('File contains data from a %s sonar', product_name)
-                        beam_group = get_horiz_beam_group(f)                    
-                    first_ping = False
+                        beam_group = get_horiz_beam_group(f)
 
-                    # f = h5py.File(mostRecentFile, 'r') # without HDF5 swmr option
                     f_previous = mostRecentFile
 
                     t = nt_time_to_datetime(f[beam_group + '/ping_time'][pingIndex]/100)
@@ -172,13 +174,14 @@ def file_listen_netcdf(watchDir, msg_queue, reload_event):
                         noNewDataCount = 0  # reset the count
                        
                         # send the data off to be plotted
-                        msg_queue.put((t, samInt, c, sv, ts, theta, tilts, gains, labels))
+                        msg_queue.put((first_ping, t, samInt, c, sv, ts, theta, tilts, gains, labels))
                     else:
                         noNewDataCount += 1
                         if noNewDataCount > maxNoNewDataCount:
                             logger.info('No new data found in file %s after waiting %.1f s.',
                                          mostRecentFile.name, noNewDataCount * waitInterval)
 
+                    first_ping = False
                     f.close()
 
                     if reload_event.is_set():
@@ -201,13 +204,15 @@ def file_replay_netcdf(watchDir, msg_queue, reload_event):
     """Replay all data in the directory. Used for testing."""
 
     files = list(watchDir.glob('*.nc'))
-    logger.info('NUmber of files to replay: %d', len(files))
+    logger.info('Number of files to replay: %d', len(files))
 
     if not files:
         logger.info('No .nc files in %s', watchDir)
 
+    first_ping = True
+
     for file in sorted(files, key=lambda p: p.stem):
-        logger.info('Replaying file: %s', file)
+        logger.info('Replaying %s', file.name)
 
         # open netcdf file
         import h5py  # deferred to save startup time
@@ -233,7 +238,8 @@ def file_replay_netcdf(watchDir, msg_queue, reload_event):
 
             # send the data off to be plotted
             ping_time = nt_time_to_datetime(t[i]/100)
-            msg_queue.put((ping_time, samInt, c, sv, ts, theta, tilts, gains, labels))
+            msg_queue.put((first_ping, ping_time, samInt, c, sv, ts, theta, tilts, gains, labels))
+            first_ping = False
 
             if reload_event.is_set():
                 f.close()
@@ -283,11 +289,12 @@ def file_listen_raw(watchDir: Path, msg_queue, reload_event):
         previous_file = last_file
         first_ping = True
 
+        logger.info('Listening to %s', last_file.name)
+
         # there is a new raw file to read
         with raw.RawSimradFile(last_file) as fid:
             proc = rawDatagramProcessor()
             # read and process datagrams in last_file as they get written to the file
-            logger.info('Reading datagrams from %s', last_file.name)
 
             while True:
                 # live_read() will block waiting for a new datagram to be appended to the file.
@@ -299,12 +306,14 @@ def file_listen_raw(watchDir: Path, msg_queue, reload_event):
                     if proc.add_datagram(dg):  # returns True when a processed ping is available
                         if first_ping:
                             logger.info('File contains data from a %s sonar', proc.product_name)
-                        first_ping = False
 
-                        msg_queue.put((proc.ping_time, proc.sample_interval, proc.sound_speed,
+                        msg_queue.put((first_ping,
+                                      proc.ping_time, proc.sample_interval, proc.sound_speed,
                                       proc.sv, proc.ts, proc.theta, proc.tilts,
                                       proc.gain_rx, proc.labels))
-                        
+
+                        first_ping = False
+
                         if reload_event.is_set():
                             return
 
@@ -319,28 +328,33 @@ def file_replay_raw(watchDir: Path, msg_queue, reload_event):
     """Replays raw files."""
 
     files = list(watchDir.glob('*.raw'))
-    logger.info('NUmber of files to replay: %d', len(files))
+    logger.info('Number of files to replay: %d', len(files))
 
     if not files:
         logger.info('No .raw files in %s', watchDir)
 
+    first_play_ping = True
+
     for file in sorted(files, key=lambda p: p.stem):
-        first_ping = True
+        first_ping_from_file = True
+        logger.info('Replaying %s', file.name)
+
         with raw.RawSimradFile(file) as fid:
             proc = rawDatagramProcessor()
-            logger.info('Reading datagrams from %s', file.name)
 
             while True:
                 try:
                     dg = fid.read(1)
 
                     if proc.add_datagram(dg):  # returns True when a processed ping is available
-                        if first_ping:
+                        if first_ping_from_file:
                             logger.info('File contains data from a %s sonar', proc.product_name)
-                        first_ping = False
-                        msg_queue.put((proc.ping_time, proc.sample_interval, proc.sound_speed,
+                        first_ping_from_file = False
+                        msg_queue.put((first_play_ping,
+                                      proc.ping_time, proc.sample_interval, proc.sound_speed,
                                       proc.sv, proc.ts, proc.theta, proc.tilts, proc.gain_rx,
                                       proc.labels))
+                        first_play_ping = False
                         if reload_event.is_set():
                             return
                         sleep(config.replayPingInterval())

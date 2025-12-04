@@ -44,15 +44,6 @@ def str_config(func):
         return self.sc[n]
     return wrapper
 
-def pathlib_config(func):
-    """A decorator to set and return a pathlib Path from the configuration."""
-    def wrapper(self, value=None):
-        n = func(self, value)
-        if value:
-            self.sc[n] = str(value)
-        return Path(self.sc[n])
-    return wrapper
-
 
 class sonarcalConfig():
 
@@ -172,7 +163,7 @@ class sonarcalConfig():
     def replayPingInterval(self, value=None):
         return 'replayPingInterval'
 
-    @pathlib_config
+    @str_config
     def watchDir(self, value=None) -> str:
         return 'watchDir'
 

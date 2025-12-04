@@ -169,8 +169,8 @@ class calibrationGUI:
         self.echogram.updateMaxRange()
         self.echogram.updateNumPings()
         
-        # if data directory or live play config has changed, tell the file reader to reload
-        # The get strings come from the setting name in the config file (also in the
+        # If data directory or live play config has changed, tell the file reader to reload.
+        # The strings in the get call come from the setting name in the config file (also in the
         # SonarcalConfig() class).
         if updated.get('watchDir', False) or updated.get('liveData', False):
             self.reload_event.set()
