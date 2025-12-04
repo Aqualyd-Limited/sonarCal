@@ -19,9 +19,10 @@ logger = logging.getLogger(cfg.appName())
 class calibrationGUI:
     """Provides the main GUI container and misc labels/buttons."""
 
-    def __init__(self, echogram):
+    def __init__(self, echogram, reload_event):
 
         self.echogram = echogram
+        self.reload_event = reload_event
         self.help_uri = str(cfg.helpURI())
 
         # Calibration gains are stored in here
@@ -161,12 +162,18 @@ class calibrationGUI:
         from .dialog_config import configDialog  # deferred importing
         configDialog(self.echogram.root, self.icon, self.config_updated)
 
-    def config_updated(self):
+    def config_updated(self, updated: dict = {}):
         """Things to do when the configuration is updated."""
         self.echogram.updateRangeSliderSettings()
         self.echogram.updateDiffPlotYLim()
         self.echogram.updateMaxRange()
         self.echogram.updateNumPings()
+        
+        # if data directory or live play config has changed, tell the file reader to reload
+        # The get strings come from the setting name in the config file (also in the
+        # SonarcalConfig() class).
+        if updated.get('watchDir', False) or updated.get('liveData', False):
+            self.reload_event.set()
 
     def status_label(self):
         return self.label

@@ -37,29 +37,35 @@ def file_type(filename: Path):
     return ''
 
 
-def sonar_file_read(msg_queue):
+def sonar_file_read(msg_queue, reload_event):
     """Run code to listen to or read from the last file in the watched directory."""
     
-    watch_dir = config.watchDir()
-    live_data = config.liveData()
-
-    last_file = most_recent_file(watch_dir)
-
-    # beamGroup is currently only correct for netcdf files, not raw files.
+    # The reload_event is used to restart listening to or reading from
+    # files and is set when the data directory and/or live data switch is changed.
     
-    match file_type(last_file):
-        case 'sonar-netcdf4':
-            if live_data:
-                file_listen_netcdf(watch_dir, msg_queue)
-            else:
-                file_replay_netcdf(watch_dir, msg_queue)
-        case 'simrad-raw':
-            if live_data:
-                file_listen_raw(watch_dir, msg_queue)
-            else:
-                file_replay_raw(watch_dir, msg_queue)
-        case _:
-            logger.error('Unsupported sonar file type')
+    while not reload_event.set():
+        reload_event.clear()
+        watch_dir = config.watchDir()
+        live_data = config.liveData()
+
+        last_file = most_recent_file(watch_dir)
+        
+        logger.info('Looking for files in %s', watch_dir)
+        
+        match file_type(last_file):
+            case 'sonar-netcdf4':
+                if live_data:
+                    file_listen_netcdf(watch_dir, msg_queue, reload_event)
+                else:
+                    file_replay_netcdf(watch_dir, msg_queue, reload_event)
+            case 'simrad-raw':
+                if live_data:
+                    file_listen_raw(watch_dir, msg_queue, reload_event)
+                else:
+                    file_replay_raw(watch_dir, msg_queue, reload_event)
+            case _:
+                logger.error('Unsupported sonar file type')
+
 
 def get_sonar_model(hdf_attrs: dict) -> str:
     """Get the sonar model name - some older Simrad files have it in a different place."""
@@ -97,7 +103,7 @@ def get_horiz_beam_group(hdf, log=True) -> str:
     logger.error('No horizontal beam group found in current .nc file')
     return ''
 
-def file_listen_netcdf(watchDir, msg_queue):
+def file_listen_netcdf(watchDir, msg_queue, reload_event):
     """Listen for new data in a file.
 
     Find new data in the most recent file (and keep checking for more new data).
@@ -121,6 +127,9 @@ def file_listen_netcdf(watchDir, msg_queue):
 
     while True:  # could add a timeout on this loop...
         mostRecentFile = most_recent_file(watchDir, waitIntervalFile)
+        
+        if reload_event.is_set():
+            return
 
         if mostRecentFile == f_previous:  # no new file was found
             logger.info('No newer file found. Will try again in %s s.', str(waitIntervalFile))
@@ -171,6 +180,10 @@ def file_listen_netcdf(watchDir, msg_queue):
                                          mostRecentFile.name, noNewDataCount * waitInterval)
 
                     f.close()
+
+                    if reload_event.is_set():
+                        return
+
                     # try this instead of opening and closing the file
                     # t.id.refresh(), etc
 
@@ -184,10 +197,11 @@ def file_listen_netcdf(watchDir, msg_queue):
                     sleep(errorWaitInterval)
 
 
-def file_replay_netcdf(watchDir, msg_queue):
+def file_replay_netcdf(watchDir, msg_queue, reload_event):
     """Replay all data in the directory. Used for testing."""
 
     files = list(watchDir.glob('*.nc'))
+    logger.info('NUmber of files to replay: %d', len(files))
 
     if not files:
         logger.info('No .nc files in %s', watchDir)
@@ -221,6 +235,10 @@ def file_replay_netcdf(watchDir, msg_queue):
             ping_time = nt_time_to_datetime(t[i]/100)
             msg_queue.put((ping_time, samInt, c, sv, ts, theta, tilts, gains, labels))
 
+            if reload_event.is_set():
+                f.close()
+                return
+
             sleep(config.replayPingInterval())
 
         f.close()
@@ -228,7 +246,7 @@ def file_replay_netcdf(watchDir, msg_queue):
     logger.info('Finished replaying files in %s', watchDir)
 
 
-def file_listen_raw(watchDir: Path, msg_queue):
+def file_listen_raw(watchDir: Path, msg_queue, reload_event):
     """Replay live files."""
 
     previous_file = None
@@ -242,6 +260,9 @@ def file_listen_raw(watchDir: Path, msg_queue):
 
     while True:
         files = list(watchDir.glob('*.raw'))
+
+        if reload_event.is_set():
+            return
 
         if not files:
             logger.info('No .raw files in %s. Waiting...', watchDir)
@@ -283,6 +304,10 @@ def file_listen_raw(watchDir: Path, msg_queue):
                         msg_queue.put((proc.ping_time, proc.sample_interval, proc.sound_speed,
                                       proc.sv, proc.ts, proc.theta, proc.tilts,
                                       proc.gain_rx, proc.labels))
+                        
+                        if reload_event.is_set():
+                            return
+
                         # we want to read the file as quick as possible, but no too fast
                         # that the GUI becomes unresponsive.
                         sleep(0.25)
@@ -290,10 +315,11 @@ def file_listen_raw(watchDir: Path, msg_queue):
                     break  # go back to the outer 'while True' loop to look for a new file.
 
 
-def file_replay_raw(watchDir: Path, msg_queue):
+def file_replay_raw(watchDir: Path, msg_queue, reload_event):
     """Replays raw files."""
 
     files = list(watchDir.glob('*.raw'))
+    logger.info('NUmber of files to replay: %d', len(files))
 
     if not files:
         logger.info('No .raw files in %s', watchDir)
@@ -315,6 +341,8 @@ def file_replay_raw(watchDir: Path, msg_queue):
                         msg_queue.put((proc.ping_time, proc.sample_interval, proc.sound_speed,
                                       proc.sv, proc.ts, proc.theta, proc.tilts, proc.gain_rx,
                                       proc.labels))
+                        if reload_event.is_set():
+                            return
                         sleep(config.replayPingInterval())
                 except raw.SimradEOF:
                     break  # go back to the outer 'while True' loop for the next file

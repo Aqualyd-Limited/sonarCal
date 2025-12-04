@@ -17,7 +17,7 @@ from .utils import setupLogging, on_exit, window_closed
 from .file_ops import sonar_file_read
 from .calibration_gui import calibrationGUI
 
-logger  =setupLogging()
+logger = setupLogging()
 
 def main():
     """Omnisonar calibration graphical user interface."""
@@ -29,13 +29,17 @@ def main():
     # queue to communicate between two threads
     msg_queue = queue.Queue()
     
+    # This event is used to signal to the file reading thread that the data directory 
+    # has changed and it should read files the new data directory
+    reload_event = threading.Event()
+
     # The GUI
     root = tk.Tk()
     echogram = echogramPlotter(msg_queue, root)
-    gui = calibrationGUI(echogram)
+    gui = calibrationGUI(echogram, reload_event)
 
     # Sonar files are read from a separate thread
-    t = threading.Thread(target=sonar_file_read, args=(msg_queue,))
+    t = threading.Thread(target=sonar_file_read, args=(msg_queue, reload_event))
 
     t.daemon = True  # makes the thread close when main() ends
     t.start()

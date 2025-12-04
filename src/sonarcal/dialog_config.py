@@ -36,10 +36,10 @@ class configDialog:
             special: str = None
 
         self.params = [
-            Param(True, 'Coloured settings apply when the program restarts', '', 'label'),
+            # Param(True, 'Coloured settings apply when the program restarts', '', 'label'),
             Param(False, '', '', 'horizline'),
-            Param(True, 'Sonar data directory', 'watchDir', 'str', '', 'filechooser'),
-            Param(True, 'Use live data', 'liveData', 'boolean'),
+            Param(False, 'Sonar data directory', 'watchDir', 'str', '', 'filechooser'),
+            Param(False, 'Use live data', 'liveData', 'boolean'),
             Param(False, 'Replay ping interval', 'replayPingInterval', 'float', 's'),
             Param(False, '', '', 'horizline'),
             Param(False, 'Calibration sphere TS', 'sphereTS', 'float', 'dB re 1 m²'),
@@ -151,12 +151,20 @@ class configDialog:
 
 
     def apply(self):
+        changed = {}
         for p in self.params:
             if p.name:
-                getattr(cfg, p.name)(self.vars[p.name].get())
-
+                # Work out which setting has been changed
+                dialog_value = self.vars[p.name].get()
+                cfg_value = getattr(cfg, p.name)()
+                if dialog_value != cfg_value:
+                    changed[p.name] = True
+                    # update the settings in the cfg object
+                    getattr(cfg, p.name)(dialog_value)
+    
         if self.updated_cb:
-            self.updated_cb()  # tell others that we've updated
+            # tell others that we've updated
+            self.updated_cb(changed)
         cfg.save_config()
 
     def close_dialog(self):
