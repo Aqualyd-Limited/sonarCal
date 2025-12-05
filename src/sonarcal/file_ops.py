@@ -135,7 +135,7 @@ def file_listen_netcdf(watchDir, msg_queue, reload_event):
             return
 
         if mostRecentFile == f_previous:  # no new file was found
-            logger.info('No newer file found. Will try again in %s s.', str(waitIntervalFile))
+            logger.debug('No newer file found. Will try again in %s s.', str(waitIntervalFile))
             sleep(waitIntervalFile)  # wait and try again
         else:
             logger.info('Listening to %s', mostRecentFile.name)
@@ -178,9 +178,8 @@ def file_listen_netcdf(watchDir, msg_queue, reload_event):
                     else:
                         noNewDataCount += 1
                         if noNewDataCount > maxNoNewDataCount:
-                            logger.info('No new data found in file %s after waiting %.1f s.',
-                                         mostRecentFile.name, noNewDataCount * waitInterval)
-
+                            logger.info('Finished listening to %s', mostRecentFile.name)
+                            logger.info('Waiting for a new file to listen to')
                     first_ping = False
                     f.close()
 
@@ -250,6 +249,13 @@ def file_replay_netcdf(watchDir, msg_queue, reload_event):
         f.close()
     
     logger.info('Finished replaying files in %s', watchDir)
+    
+    # if we return we'll immediately get run again, so wait for a reload event, otherwise
+    # just do nothing.
+    while True:
+        if reload_event.is_set():
+            return
+        sleep(1.0)
 
 
 def file_listen_raw(watchDir: Path, msg_queue, reload_event):
@@ -271,7 +277,7 @@ def file_listen_raw(watchDir: Path, msg_queue, reload_event):
             return
 
         if not files:
-            logger.info('No .raw files in %s. Waiting...', watchDir)
+            logger.debug('No .raw files in %s. Waiting...', watchDir)
             sleep(file_wait)
             continue
 
@@ -282,7 +288,7 @@ def file_listen_raw(watchDir: Path, msg_queue, reload_event):
             # there is no new file, we've already read through the
             # most recent file, so perhaps the sonar has finished
             # recording. We'll wait for more...
-            logger.info('No new .raw files to read. Waiting for more...')
+            logger.debug('No new .raw files to read. Waiting for more...')
             sleep(new_file_wait)
             continue
 
@@ -301,7 +307,7 @@ def file_listen_raw(watchDir: Path, msg_queue, reload_event):
                 # If nothing gets appended after a few seconds it raises a
                 # SimradFileFinished exception
                 try:
-                    dg = fid.live_read()
+                    dg = fid.live_read(eof_retries=7)
                     
                     if proc.add_datagram(dg):  # returns True when a processed ping is available
                         if first_ping:
@@ -322,6 +328,9 @@ def file_listen_raw(watchDir: Path, msg_queue, reload_event):
                         sleep(0.25)
                 except raw.SimradFileFinished:
                     break  # go back to the outer 'while True' loop to look for a new file.
+                
+        logger.info('Finished listening to %s', last_file.name)
+        logger.info('Waiting for a new file to listen to')
 
 
 def file_replay_raw(watchDir: Path, msg_queue, reload_event):
@@ -362,3 +371,10 @@ def file_replay_raw(watchDir: Path, msg_queue, reload_event):
                     break  # go back to the outer 'while True' loop for the next file
     
     logger.info('Finished replaying files in %s', watchDir)
+
+    # if we return we'll immediately get run again, so wait for a reload event, otherwise
+    # just do nothing.
+    while True:
+        if reload_event.is_set():
+            return
+        sleep(1.0)
