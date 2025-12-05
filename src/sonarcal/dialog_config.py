@@ -167,5 +167,8 @@ class configDialog:
             self.updated_cb(changed)
         cfg.save_config()
 
+    def reopen(self):
+        self.top.deiconify()
+
     def close_dialog(self):
-        self.top.destroy()
+        self.top.withdraw()

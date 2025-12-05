@@ -35,6 +35,7 @@ class calibrationGUI:
         
         # Dialogs that we keep around
         self.results_dialog = None
+        self.config_dialog = None
         
         # The toolbar and window icon/logo
         self.icon = ImageTk.PhotoImage(Image.open(cfg.iconFile()))
@@ -159,8 +160,11 @@ class calibrationGUI:
         
     def config(self):
         """Open the Config dialog box."""
-        from .dialog_config import configDialog  # deferred importing
-        configDialog(self.echogram.root, self.icon, self.config_updated)
+        if not self.config_dialog:
+            from .dialog_config import configDialog  # deferred importing
+            self.config_dialog = configDialog(self.echogram.root, self.icon, self.config_updated)
+        else:
+            self.config_dialog.reopen()
 
     def config_updated(self, updated: dict = {}):
         """Things to do when the configuration is updated."""
