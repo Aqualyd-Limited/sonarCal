@@ -166,7 +166,7 @@ class calibrationGUI:
         else:
             self.config_dialog.reopen()
 
-    def config_updated(self, updated: dict = {}):
+    def config_updated(self, updated: list = []):
         """Things to do when the configuration is updated."""
         self.echogram.updateRangeSliderSettings()
         self.echogram.updateDiffPlotYLim()
@@ -176,7 +176,7 @@ class calibrationGUI:
         # If data directory or live play config has changed, tell the file reader to reload.
         # The strings in the get call come from the setting name in the config file (also in the
         # SonarcalConfig() class).
-        if updated.get('watchDir', False) or updated.get('liveData', False):
+        if 'watchDir' in updated or 'liveData' in updated:
             self.reload_event.set()
 
     def status_label(self):

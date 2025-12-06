@@ -11,7 +11,18 @@ logger = logging.getLogger(cfg.appName())
 
 class configDialog:
     """A dialog box to set and change application parameters."""
+
     def __init__(self, parent, icon=None, updated_cb=None):
+        """
+        parent :
+            A tkinter widget
+        icon :
+            An icon suitable for tkinter's window top bar icon
+        updated_cb :
+            A callback function that is called whenever the configuration
+            is updated from the dialog
+        """
+
         self.top = tk.Toplevel(parent)
         self.top.title("Config")
         self.updated_cb = updated_cb
@@ -23,16 +34,19 @@ class configDialog:
             self.top.iconphoto(False, icon)
 
         config_frame = ttk.Frame(self.top)
-        
+
+        # The contents of the dialog are a vertical list of config values. The contents
+        # of each row are given as a list of Param instances.  
+      
         @dataclass
         class Param:
-            label: str
-            name: str
-            type: str
-            unit: str = ''
-            special: str = None
-            vmin:float = None
-            vmax:float = None
+            label: str  # the user visibl text for the parameter
+            name: str  # the config name
+            type: str  # 'float', 'int', 'boolean', 'horizline', 'label'
+            unit: str = ''  # the unit for the parameter
+            special: str = None  #  'filechooser', or '' for a normal parameter
+            vmin:float = None  # the minimum allowed value for the parameter
+            vmax:float = None  # the maximum allowed value for the parameter
 
 
         self.params = [
@@ -52,6 +66,8 @@ class configDialog:
         ]
 
         self.vars = {}  # mapping for name to tkinter Var
+
+        # Create a row in the dialog bos for each item in self.params
         for p in self.params:
             if p.type == 'horizline':
                 ttk.Separator(self.top, orient=tk.HORIZONTAL).pack(fill=tk.X, padx=10, pady=5)
@@ -78,18 +94,28 @@ class configDialog:
                 self.create_config_row(p.label, self.vars[p.name], p.type,
                                        p.unit, p.vmin, p.vmax)
 
+        # The dialog has Close and Apply buttons
         btn_frame = ttk.Frame(self.top)
         ttk.Button(btn_frame, text="Close", command=self.close_dialog).pack(side=tk.RIGHT)
 
         self.apply_btn = ttk.Button(btn_frame, text="Apply", command=self.apply)
         self.apply_btn.pack(side=tk.RIGHT)
-        self.apply_btn.state(['disabled'])
+        self.apply_btn.state(['disabled'])  # only enabled when a config parameter has changed
         
         config_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=tk.TRUE)
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH)
 
-    def create_dir_chooser_row(self, label, variable):
-        """Create a directory chooser config row."""
+    def create_dir_chooser_row(self, label: str, variable):
+        """Create a directory chooser config row.
+        
+        Parameters
+        ----------
+        label : 
+            The text to use for the row label.
+            
+        variable: 
+            The tkinter Var to associate with the Text widget
+        """
 
         container = ttk.Frame(self.top)
         container.pack(fill=tk.X, expand=tk.YES, pady=5)
@@ -101,21 +127,14 @@ class configDialog:
         btn = ttk.Button(subcon, text='Select directory', style='select_dir.TButton',
                          command=lambda: _dir_chooser(variable))
         btn.pack(side=tk.TOP, padx=5, expand=tk.NO, anchor=tk.W)
-
-        variable.trace_add('write', callback=self.update_apply_state)
-
         subcon.pack(side=tk.LEFT)
-        
-        def _text_edit(event):
-            """Keeps the config variable updated with text in the text widget."""
-            event.widget.edit_modified(False)
-            variable.set(event.widget.get('1.0', tk.END).rstrip())
 
         ent = tk.Text(container, wrap=tk.CHAR, width=35, height=4)
         ent.insert('1.0', variable.get())
         ent.pack(side=tk.TOP, padx=5, fill=tk.X, expand=tk.NO)
-        ent.bind('<<Modified>>', _text_edit)
         ent.config(state=tk.DISABLED)
+
+        variable.trace_add('write', callback=self.update_apply_state)
 
         def _dir_chooser(variable):
             """Uses a filedialog to get a directory."""
@@ -129,8 +148,26 @@ class configDialog:
                 ent.config(state=tk.DISABLED)
 
 
-    def create_config_row(self, label, variable, var_type, unit, vmin, vmax):
-        """Create a single row in the config dialog for a variable"""
+    def create_config_row(self, label: str, variable, var_type: str, unit: str = '',
+                          vmin: float|int|None = None,
+                          vmax: float|int|None = None):
+        """Create a row in the dialog for a config parameter.
+
+        Parameters
+        ----------
+        label :
+            The text to descrive the config parameter. Visible to the user.
+        variable:
+            A tkinter Var to associate with the config entry widget
+        var_type:
+            The type of the config parameter
+        unit:
+            A string containing the units for the config parameter (if any)
+        vmin:
+            The minimum allowed value for the config parameter (if any)
+        vmax:
+            The maximum allowed value for the config parameter (if any)
+        """
         
         container = ttk.Frame(self.top)
         container.pack(fill=tk.X, expand=tk.YES, pady=5)
@@ -141,11 +178,7 @@ class configDialog:
         match var_type:
             case 'boolean':
                 entry = ttk.Checkbutton(container, variable=variable)
-            case 'float':
-                entry = validated_entry(master=container, textvariable=variable,
-                                        justify='right', width=10,
-                                        min=vmin, max=vmax, vtype=var_type)
-            case 'int':
+            case 'float' | 'int':
                 entry = validated_entry(master=container, textvariable=variable,
                                         justify='right', width=10,
                                         min=vmin, max=vmax, vtype=var_type)
@@ -156,16 +189,15 @@ class configDialog:
         unit = ttk.Label(master=container, text=unit, width=10)
         bounds = ttk.Label(master=container, text=self.bounds_to_str(vmin, vmax))
 
-        variable.trace_add('write', callback=self.update_apply_state)
-
         entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=tk.NO)
         unit.pack(side=tk.LEFT, padx=5)
         bounds.pack(side=tk.RIGHT, padx=10)
 
+        variable.trace_add('write', callback=self.update_apply_state)
 
     @staticmethod
     def bounds_to_str(vmin, vmax):
-        """Convert the min/max limits into a text str for use display."""
+        """Convert the min/max limits into a str for display to the user."""
         if vmin is None and vmax is None:
             return ''
         
@@ -175,16 +207,16 @@ class configDialog:
         return vmin_str + ' x ' + vmax_str
 
 
-    def changed_values(self) -> dict:
-        """Which values have changed in the dialog compared to the config object."""
-        changed = {}
+    def changed_values(self) -> list:
+        """Return the dialog parameter names that have changed compared to the config object."""
+        changed = []
         for p in self.params:
             if p.name:
                 # Work out which settings have been changed
                 dialog_value = self.vars[p.name].get()
                 cfg_value = getattr(cfg, p.name)()
                 if dialog_value != cfg_value:
-                    changed[p.name] = True
+                    changed.append(p.name)
         return changed
 
 
@@ -198,18 +230,20 @@ class configDialog:
 
     def all_valid(self):
         """Are values in the dialog valid (only for those with vmin or vmax set)"""
-        all_valid = True
         for p in self.params:
             if p.name:
                 try:
                     dialog_value = self.vars[p.name].get()
                 except Exception:
-                    all_valid = False
-                if p.vmin:
-                    all_valid = all_valid & (False if p.vmin > dialog_value else True)
-                if p.vmax:
-                    all_valid = all_valid & (False if p.vmax < dialog_value else True)
-        return all_valid
+                    return False
+
+                if p.vmin and dialog_value < p.vmin:
+                    return False
+
+                if p.vmax and dialog_value > p.vmax:
+                    return False
+
+        return True
 
 
     def apply(self):
@@ -222,12 +256,11 @@ class configDialog:
             getattr(cfg, name)(dialog_value)
 
         cfg.save_config() 
+        self.apply_btn.state(['disabled'])
    
         if self.updated_cb:
             # tell others that we've updated
             self.updated_cb(changed)
-
-        self.apply_btn.state(['disabled'])
 
 
     def reopen(self):
@@ -242,6 +275,19 @@ class validated_entry(ttk.Entry):
     """Validated ttk Entry widget for ints and floats."""
 
     def __init__(self, master=None, vtype=None, min=None, max=None, **kwargs):
+        """
+        Parameters
+        ----------
+        master:
+            The parent tk widget for this Entry widget
+        vtype:
+            Type of variable ('int', 'float', or '')
+        min: 
+            The minumum allowed value for the value in the widget
+        max:
+            The maxumum allowed value for the value in the widget
+        """
+
         super().__init__(master, **kwargs)
         
         if vtype == 'float':
@@ -254,7 +300,8 @@ class validated_entry(ttk.Entry):
             self.regex = r'.*'
             self.convert = str
         
-        self.invalid_colour = 'red'
+        # Invalid entries are highlighted with this colour
+        self.invalid_colour = 'orange red'
         style = ttk.Style()
         self.foreground_color = style.lookup(self.winfo_class(), "foreground")
             
@@ -270,6 +317,10 @@ class validated_entry(ttk.Entry):
         if proposed_value == '':
             self.state(['invalid'])
             return True
+        
+        # We're only interested in characters that could be used in ints and floats
+        if re.findall(r'[^0-9e+\.\-]', proposed_value):
+            return False
 
         if re.fullmatch(self.regex, proposed_value):
             try:
