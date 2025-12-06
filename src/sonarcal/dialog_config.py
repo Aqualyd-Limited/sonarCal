@@ -50,7 +50,6 @@ class configDialog:
 
 
         self.params = [
-            Param('', '', 'horizline'),
             Param('Sonar data directory', 'watchDir', 'str', '', 'filechooser'),
             Param('Use live data', 'liveData', 'boolean'),
             Param('Replay ping interval', 'replayPingInterval', 'float', 's', '', 0.1),
@@ -61,8 +60,8 @@ class configDialog:
             Param('Echogram range', 'maxRange', 'float', 'm', '', 1.0, 300.0),
             Param('', '', 'horizline'),
             Param('y-axis minimum on Δ plot', 'diffPlotYMin', 'float', 'dB', '', None, -1.0),
-            Param('Minimum Sv colour', 'sliderLowestSv', 'float', 'dB re 1 m⁻¹'),
-            Param('Maximum Sv colour', 'sliderHighestSv', 'float', 'dB re 1 m⁻¹')
+            Param('Maximum Sv colour', 'sliderHighestSv', 'float', 'dB re 1 m⁻¹'),
+            Param('Minimum Sv colour', 'sliderLowestSv', 'float', 'dB re 1 m⁻¹')
         ]
 
         self.vars = {}  # mapping for name to tkinter Var
