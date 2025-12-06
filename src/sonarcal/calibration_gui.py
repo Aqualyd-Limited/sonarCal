@@ -177,6 +177,7 @@ class calibrationGUI:
         # The strings in the get call come from the setting name in the config file (also in the
         # SonarcalConfig() class).
         if 'watchDir' in updated or 'liveData' in updated:
+            logger.info('Resetting file reader - data directory or live viewing settings changed')
             self.reload_event.set()
 
     def status_label(self):
