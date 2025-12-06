@@ -82,7 +82,8 @@ class draggable_radial:
 
         self.line = lines.Line2D([angle, angle], [0, self.maxRange],
                                  linewidth=2, marker='o', markevery=[-1],
-                                 color=self.line_color_unfrozen, picker=True)
+                                 color=self.line_color_unfrozen, picker=True,
+                                 clip_on=False)
         self.text = self.ax.text(angle, self.text_range_factor*self.maxRange, '',
                                  color=self.line_color_unfrozen,
                                  bbox={'boxstyle':'square,pad=0.0', 'fc': 'white', 'ec': 'none'},
