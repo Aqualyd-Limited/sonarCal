@@ -93,7 +93,7 @@ When using Sonarcal to calibrate, follow these steps:
 
 - Start Sonarcal
 - In the Config dialog:
-  - Set the calibration [sphere TS](#sphere-target-strength))
+  - Set the calibration [sphere TS](#sphere-target-strength)
   - Set the sonar data directory to where the sonar will be recording data files
   - Turn on the use of live data
   - Close and restart Sonarcal for these changes to take effect
