@@ -290,9 +290,11 @@ class validated_entry(ttk.Entry):
         super().__init__(master, **kwargs)
         
         if vtype == 'float':
+            self.chars_regex = r'[^0-9eE+\-\.]'
             self.regex = r'^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d*)?$'
             self.convert = float
         elif vtype == 'int':
+            self.chars_regex = r'[^0-9+\-]'
             self.regex = r'[-+]?\d+'
             self.convert = int
         else:
@@ -318,7 +320,7 @@ class validated_entry(ttk.Entry):
             return True
         
         # We're only interested in characters that could be used in ints and floats
-        if re.findall(r'[^0-9e+\.\-]', proposed_value):
+        if re.findall(self.chars_regex, proposed_value):
             return False
 
         if re.fullmatch(self.regex, proposed_value):
