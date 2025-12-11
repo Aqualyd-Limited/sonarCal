@@ -44,16 +44,16 @@ def sonar_file_read(msg_queue, reload_event):
     # files and is set when the data directory and/or live data switch is changed.
     
     while True:
-        reload_event.clear()  # signifies that the file reading is starting afresh
+        reload_event.clear()  # because we've noticed it was set (or it's the first time through)
         watch_dir = Path(config.watchDir())
         live_data = config.liveData()
-
-        last_file = most_recent_file(watch_dir)
 
         if live_data:
             logger.info('Listening for pings in %s', watch_dir)
         else:                    
             logger.info('Replaying files in %s', watch_dir)
+
+        last_file = most_recent_file(watch_dir)
 
         # The listen functions only return if reload_event is set - they wait for 
         # new data indefinitely otherwise.
@@ -75,6 +75,8 @@ def sonar_file_read(msg_queue, reload_event):
                     file_replay_raw(watch_dir, msg_queue, reload_event)
             case _:
                 logger.error('Unsupported sonar file type')
+
+        logger.info('File listening and replaying ended - restarting')
 
 
 def get_sonar_model(hdf_attrs: dict) -> str:

@@ -252,7 +252,11 @@ class configDialog:
         for name in changed:
             dialog_value = self.vars[name].get()
             # update the settings in the cfg object
+            logger.info('Config parameter "%s" changing to "%s"', name, str(dialog_value))
             getattr(cfg, name)(dialog_value)
+            if getattr(cfg, name)() != dialog_value:
+                logger.error('Failed to set config parameter "%s" to "%s"',
+                             name, str(dialog_value))
 
         cfg.save_config() 
         self.apply_btn.state(['disabled'])
