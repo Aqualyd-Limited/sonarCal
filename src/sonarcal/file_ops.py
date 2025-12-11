@@ -43,8 +43,8 @@ def sonar_file_read(msg_queue, reload_event):
     # The reload_event is used to restart listening to or reading from
     # files and is set when the data directory and/or live data switch is changed.
     
-    while not reload_event.set():
-        reload_event.clear()
+    while True:
+        reload_event.clear()  # signifies that the file reading is starting afresh
         watch_dir = Path(config.watchDir())
         live_data = config.liveData()
 
@@ -54,6 +54,11 @@ def sonar_file_read(msg_queue, reload_event):
             logger.info('Listening for pings in %s', watch_dir)
         else:                    
             logger.info('Replaying files in %s', watch_dir)
+
+        # The listen functions only return if reload_event is set - they wait for 
+        # new data indefinitely otherwise.
+        # The replay functions replay all the files in the directory and don't return,
+        # but will abandon this and return if reload_event is set.
 
         match file_type(last_file):
             case 'sonar-netcdf4':
