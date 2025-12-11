@@ -26,7 +26,7 @@ def setupLogging():
     console.setFormatter(formatter)
     logger.addHandler(console)
 
-    logger.info('Log files are in %s.', config.logDir().as_posix())
+    logger.info('Log file is %s.', logger_filename)
     
     return logger
 
