@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 from importlib.metadata import version
 from platform import python_version
 from PIL import Image, ImageTk
@@ -84,6 +84,13 @@ class calibrationGUI:
 
         frame.pack(side=tk.TOP, fill=tk.BOTH)
         sv_ttk.set_theme('light')
+        
+        # At startup ask the user for the directory to watch for sonar files
+        d = filedialog.askdirectory(parent=self.echogram.root, title='Select sonar data directory',
+                                        initialdir=cfg.watchDir())
+        if d:
+            cfg.watchDir(d)
+        
         # Start listening for sonar data
         self.echogram.newPing(self.status_label())
 
