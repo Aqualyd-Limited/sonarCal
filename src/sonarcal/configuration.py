@@ -75,7 +75,8 @@ class sonarcalConfig():
                     'calibrating_colour': '#EE9A00',  # an orange
                     'sliderLowestSv': '-100',
                     'sliderHighestSv': '10',
-                    'diffPlotYMin': '-3.0'
+                    'diffPlotYMin': '-3.0',
+                    'askForWatchDir': 'yes'
                     }
 
         if not c:  # config file not found, so make one
@@ -170,6 +171,10 @@ class sonarcalConfig():
     @bool_config
     def liveData(self, value=None):
         return 'liveData'
+    
+    @bool_config
+    def askForWatchDir(self, value=None):
+        return 'askForWatchDir'
 
     @str_config
     def calibrating_colour(self, value=None):

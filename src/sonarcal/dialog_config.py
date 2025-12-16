@@ -51,6 +51,7 @@ class configDialog:
 
         self.params = [
             Param('Sonar data directory', 'watchDir', 'str', '', 'filechooser'),
+            Param('Ask for dir at startup', 'askForWatchDir', 'boolean'),
             Param('Use live data', 'liveData', 'boolean'),
             Param('Replay ping interval', 'replayPingInterval', 'float', 's', '', 0.1),
             Param('', '', 'horizline'),

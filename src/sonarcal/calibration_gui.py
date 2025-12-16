@@ -86,10 +86,11 @@ class calibrationGUI:
         sv_ttk.set_theme('light')
         
         # At startup ask the user for the directory to watch for sonar files
-        d = filedialog.askdirectory(parent=self.echogram.root, title='Select sonar data directory',
-                                        initialdir=cfg.watchDir())
-        if d:
-            cfg.watchDir(d)
+        if cfg.askForWatchDir():
+            d = filedialog.askdirectory(parent=self.echogram.root, title='Select sonar data directory',
+                                            initialdir=cfg.watchDir())
+            if d:
+                cfg.watchDir(d)
         
         # Start listening for sonar data
         self.echogram.newPing(self.status_label())
