@@ -142,8 +142,11 @@ class rawDatagramProcessor():
 
             # It seems that:
             # - for the CS90 sonar, beam_index_start == 0 selects the horizontal fan
-            # - for the SN90 sonar, beam_index_start == 32 selects the horizontal fan
-            
+            #                       beam_index_start == 64 selects the vertical fan
+            # - for the SN90 sonar, beam_index_start == 0 selects the vertical fan
+            #                       beam_index_start == 32 selects the horizontal fan
+            #                       beam_index_start == 64 selects the inspection beams
+            # print(raw['beam_index_start'])
             beam_index_start = 32 if self.product_name == 'SN90' else 0
             
             if raw['beam_index_start'] == beam_index_start:
