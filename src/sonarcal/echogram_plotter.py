@@ -7,6 +7,7 @@ import numpy as np
 # from scipy import signal
 from matplotlib.widgets import RangeSlider
 from .gui_utils import draggable_ring, draggable_radial
+from .utils import get_adjacent_beams
 import humanize
 import logging
 from .configuration import config
@@ -431,10 +432,8 @@ class echogramPlotter:
     @staticmethod
     def sort_beams(sv, ts, theta, tilts, gains, labels):
         """Sorts everything by the values in theta."""
-        
-        # sort by the negative of theta because of Matplotlib's polar plot has increasing
-        # angle values to anti-clockwise, but Sonarcal has then to clockwise.
-        sort_i = np.argsort(-theta)
+
+        sort_i = np.argsort(theta)
 
         return sv[sort_i], ts[sort_i], theta[sort_i], tilts[sort_i], gains[sort_i], labels[sort_i]
 
@@ -498,15 +497,8 @@ class echogramPlotter:
                     self.updateBeamNum(theta)  # sets self.beam from self.beamLineAngle
 
                     # work out the beam indices
-                    if self.beamIdx == 0:
-                        beamPort = self.numBeams-1
-                    else:
-                        beamPort = self.beamIdx-1
-
-                    if self.beamIdx == self.numBeams-1:
-                        beamStbd = 0
-                    else:
-                        beamStbd = self.beamIdx+1
+                    # beamPort, beamStbd = get_adjacent_beamsV1(self.beamIdx, self.numBeams)
+                    beamPort, beamStbd = get_adjacent_beams(self.beamIdx, self.numBeams)
 
                     # Find the max ts between the min and max ranges set by the UI
                     # and store for plotting

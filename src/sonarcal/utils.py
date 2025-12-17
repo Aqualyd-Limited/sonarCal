@@ -48,6 +48,15 @@ def window_closed(root, job):
     logging.shutdown()  # not working???
     root.quit()
 
+def get_adjacent_beams(beam_idx: int, num_beams: int):
+    """Work out the indices of the port and starboard beams."""
+    # This assumes that a larger theta is to port and that
+    # theta are sorted from lowest to highest.
+    port = beam_idx+1 % num_beams
+    stbd = beam_idx-1 % num_beams
+
+    return port, stbd
+
 
 def beamAnglesFromNetCDF4(f, beamGroup, i):
     """Calculate the beam angles as per the convention for the given beamGroup and ping index."""
