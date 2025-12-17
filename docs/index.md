@@ -60,13 +60,14 @@ Sonarcal is started from a command line with:
 
 (or if using uv, the command is `uv tool run sonarcal`). It make take a few seconds to start, after which the Sonarcal window will appear.
 
-If there are suitable sonar files in the configured data directory, the program will start to replay them. Replay happens in two ways:
+If there are suitable sonar files in the configured data directory[^1], the program will start to replay them. Replay happens in two ways:
 
 Live data enabled
 
-:    The last file in the directory will be replayed[^1] and then any new data added to that file will also be replayed. If a newer file appears, that will be replayed too.
+:    The last file in the directory will be replayed[^2] and then any new data added to that file will also be replayed. If a newer file appears, that will be replayed too.
 
-[^1]: Just the last ping is replayed for sonar-netCDF4 files
+[^1]: Sonarcal can be configured (via the Config dialog) to always ask for the data directory when starting.
+[^2]: Just the last ping is replayed for sonar-netCDF4 files.
 
 Live data disabled
 
