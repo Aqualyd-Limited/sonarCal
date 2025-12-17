@@ -82,7 +82,7 @@ class rawDatagramProcessor():
 
     def _calculate_sv_ts(self) -> None:
         """Calculate Sv and TS for the just finished ping."""
-        
+
         # reshape the power data to join together the separate blocks of power data
         power = np.concatenate(self._power, axis=1)
         num_samples = power.shape[1]
@@ -140,9 +140,13 @@ class rawDatagramProcessor():
                 # know when to process the backscatter into Sv and TS
                 return
 
-            # For the horizontal beams it looks like beam_index_start is 0, otherwise
-            # the datagram's data is from a different beam/fan
-            if raw['beam_index_start'] == 0:
+            # It seems that:
+            # - for the CS90 sonar, beam_index_start == 0 selects the horizontal fan
+            # - for the SN90 sonar, beam_index_start == 32 selects the horizontal fan
+            
+            beam_index_start = 32 if self.product_name == 'SN90' else 0
+            
+            if raw['beam_index_start'] == beam_index_start:
                 # don't need the complex values so save some space...
                 self._power.append(20.0*np.log10(np.abs(raw['data'])))
 
