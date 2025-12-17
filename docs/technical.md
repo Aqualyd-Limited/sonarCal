@@ -26,12 +26,10 @@ Sonarcal supports Simrad raw data files from selected sonars and sonar-netCDF4 d
 
 ### Beam angles and coordinate systems
 
-This can be tricky. The Sonarcal code requires that the beam angles go from -180 to 180 with 0 in the forward direction (drawn upwards on the omni echogram). Negative angles to port and positive angles to starboard.
+This can be tricky. The Sonarcal code requires that the beam angles go from -180 to 180 with 0 in the forward direction (drawn upwards on the omni echogram). Positive angles are to port, that is, the angles increase in the anticlockwise direction.
 
 Sonar-netCDF4 files have their beam angles given as vectors in the sonar-netCDF4 coordinate system (x-axis is forward, y-axis to starboard, and z-axis down). The Sonarcal code transforms these to -180 to +180. The sonar-netCDF4 also contains beam labels that are separate from any other beam property.
 
 The various raw files are not so consistent and sonar-specific conversions are included in the code that reads those files. Some raw files do not have explicit beam labels and instead the order (index) of the beams in the raw file is used as the beam name (so 0, 1, 2, etc).
 
 When adding support for a new sonar it is very important to check that the beam angles and labels that Sonarcal uses do correspond to the beam labels that would be used when applying a beam calibration/gain.
-
-Sonarcal also assumes that for a given beam index, the beam to port has an index of one less and the beam to starboard has an index of one more. This assumption may be problematic if a sonar has an angle convention the opposite of this.
