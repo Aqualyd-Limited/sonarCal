@@ -210,11 +210,7 @@ class rawDatagramProcessor():
                 logger.warning('No EBA for beam %s - using %.1f dB', b['beam_name'], EBA)
             eba.append(EBA)
 
-
-        # TODO - check that the direction of these angles is as required by the polar plot
-        # - first glance suggests it is not!
-        
-        self.theta = np.array(th)
+        self.theta = -np.array(th)
         self.tilts = np.pi/2 - np.array(tl)
         self.labels = np.array(lbls)
         self.gain_rx = np.array(g)
