@@ -19,6 +19,13 @@ from .calibration_gui import calibrationGUI
 
 logger = setupLogging()
 
+def handle_uncaught_exception(exc_type, exc_value, exc_traceback):
+    logger.critical("Uncaught exception, application will terminate.",
+                    exc_info=(exc_type, exc_value, exc_traceback))
+
+sys.excepthook = handle_uncaught_exception
+
+
 def main():
     """Omnisonar calibration graphical user interface."""
 
