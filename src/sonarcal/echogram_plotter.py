@@ -600,9 +600,8 @@ class echogramPlotter:
                         self.new_ping_cb()
 
                 except Exception:  # if anything goes wrong, just ignore it...
-                    logger.warning('Error when processing and displaying echo data:')
-                    logger.warning(traceback.print_exc())
-                    logger.warning('Ignoring the above and waiting for next ping.')
+                    logger.exception('Exception when processing and displaying echo data')
+                    logger.info('Ignoring the exception and waiting for next ping.')
 
         self.job = self.root.after(self.checkQueueInterval, self.newPing, label)
 

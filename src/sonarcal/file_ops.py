@@ -201,10 +201,8 @@ def file_listen_netcdf(watchDir, msg_queue, reload_event):
                     sleep(waitInterval)
                 except OSError:
                     f.close()  # just in case...
-                    e = sys.exc_info()
-                    logger.warning('OSError when reading netCDF4 file:')
-                    logger.warning(e)
-                    logger.warning('Ignoring the above and trying again.')
+                    logger.exception('OSError when reading netCDF4 file')
+                    logger.info('Ignoring the OSError exception and trying again.')
                     sleep(errorWaitInterval)
 
 
