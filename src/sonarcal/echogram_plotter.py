@@ -1,4 +1,3 @@
-import traceback
 from queue import Empty
 from datetime import datetime, timezone
 import matplotlib.pyplot as plt
