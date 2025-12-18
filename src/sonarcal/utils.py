@@ -13,7 +13,7 @@ def setupLogging():
     logger = logging.getLogger(config.appName())
     logger.setLevel(logging.INFO)
 
-    formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(filename)s:%(lineno)s - %(message)s')
 
     # A logger to a file that is changed periodically
     rotatingFile = logging.handlers.TimedRotatingFileHandler(logger_filename, when='H',
