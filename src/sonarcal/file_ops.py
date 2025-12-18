@@ -68,7 +68,7 @@ def sonar_file_read(msg_queue, reload_event):
                 else:
                     file_replay_netcdf(watch_dir, msg_queue, reload_event)
             case 'simrad-raw':
-                logger.info('File type is Simard raw')
+                logger.info('File type is Simrad raw')
                 if live_data:
                     file_listen_raw(watch_dir, msg_queue, reload_event)
                 else:
