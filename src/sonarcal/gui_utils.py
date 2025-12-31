@@ -22,7 +22,7 @@ class draggable_ring:
         self.line.set_pickradius(5)
         self.ax.add_line(self.line)
         self.c.draw_idle()
-        self.sid = self.c.mpl_connect('pick_event', self.clickonline)
+        self.c.mpl_connect('pick_event', self.clickonline)
 
     def set_range(self, r):
         """Set the range ring radius."""
@@ -94,8 +94,8 @@ class draggable_radial:
         self.line.set_pickradius(5)
         self.ax.add_line(self.line)
         self.c.draw_idle()
-        self.sid = self.c.mpl_connect('pick_event', self.clickonline)
-        self.sid = self.c.mpl_connect('resize_event', self.resized)
+        self.c.mpl_connect('pick_event', self.clickonline)
+        self.c.mpl_connect('resize_event', self.resized)
         
         self.radial_frozen = False
 
