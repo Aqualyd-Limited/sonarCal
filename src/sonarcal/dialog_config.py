@@ -59,6 +59,8 @@ class configDialog:
             Param('', '', 'horizline'),
             Param('x-axis size', 'numPings', 'int', 'pings', '', 10, 500),
             Param('Echogram range', 'maxRange', 'float', 'm', '', 1.0, 300.0),
+            Param('Polar range label angle', 'polarRangeLabelAngle', 'float', '°', '',
+                  -180.0, 180.0),
             Param('', '', 'horizline'),
             Param('y-axis minimum on Δ plot', 'diffPlotYMin', 'float', 'dB', '', None, -1.0),
             Param('Maximum Sv colour', 'sliderHighestSv', 'float', 'dB re 1 m⁻¹'),

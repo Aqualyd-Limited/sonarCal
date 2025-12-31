@@ -180,6 +180,7 @@ class calibrationGUI:
         self.echogram.updateDiffPlotYLim()
         self.echogram.updateMaxRange()
         self.echogram.updateNumPings()
+        self.echogram.updatePolarAxisLabels()
         
         # If data directory or live play config has changed, tell the file reader to reload.
         # The strings in the get call come from the setting name in the config file (also in the

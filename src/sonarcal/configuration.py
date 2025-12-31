@@ -76,7 +76,8 @@ class sonarcalConfig():
                     'sliderLowestSv': '-100',
                     'sliderHighestSv': '10',
                     'diffPlotYMin': '-3.0',
-                    'askForWatchDir': 'yes'
+                    'askForWatchDir': 'yes',
+                    'polarPlotRangeLabelAngle': '-22.5'
                     }
 
         if not c:  # config file not found, so make one
@@ -200,6 +201,11 @@ class sonarcalConfig():
     def sliderHighestSv(self, value=None):
         "Echogram colour scheme upper threshold."
         return 'sliderHighestSv'
+
+    @float_config
+    def polarRangeLabelAngle(self, value=None):
+        "Angle of polar echogram range labels."
+        return 'polarPlotRangeLabelAngle'
 
 # Simple way to get a singleton...
 config = sonarcalConfig()

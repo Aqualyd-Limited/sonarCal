@@ -176,6 +176,7 @@ class echogramPlotter:
         self.polarPlotAx.set_theta_offset(np.pi/2)  # to make bow direction plot upwards
         self.polarPlotAx.set_frame_on(False)
         self.polarPlotAx.xaxis.set_ticklabels([])
+        self.polarPlotAx.set_rlabel_position(config.polarRangeLabelAngle())
 
         # Omni echogram image
         r = self.range_from_sample(np.arange(0, self.maxSamples))
@@ -237,7 +238,6 @@ class echogramPlotter:
         self.slider.on_changed(self.updateEchogramThresholds)
         
         self.gui_created = True
-        
         self.updateTiltValue(tilts.mean())
 
     def sample_from_range(self, r: float) -> int:
@@ -269,6 +269,11 @@ class echogramPlotter:
         """
         if self.gui_created:
             self.beamTiltText.set_text(f'Tilt: {tilt*180/np.pi:0.1f}°')
+
+    def updatePolarAxisLabels(self):
+        """Update the angle of the polar plot range axis labels."""
+        if self.gui_created:
+            self.polarPlotAx.set_rlabel_position(config.polarRangeLabelAngle())
 
     def updateDiffPlotYLim(self):
         """Update the lower limit of the difference plot y-axis."""
