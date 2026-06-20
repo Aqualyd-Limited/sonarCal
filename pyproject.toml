@@ -59,17 +59,19 @@ source = 'vcs'
 [tool.hatch.version.raw-options]
 local_scheme = "no-local-version"  # otherwise the non-tagged version is not accepted by testpypi
 
+[tool.uv]
+no-cache = true
+exclude-newer = "7 days"
+
 [tool.pytest.ini_options]
 testpaths = ['tests',]
 addopts = ["--import-mode=importlib",]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-  "mkdocs-material",
-  "twine",
   "pytest",
+  "zensical",
 ]
-
 
 [project.urls]
 Homepage = 'https://github.com/Aqualyd-Limited/sonarCal'
