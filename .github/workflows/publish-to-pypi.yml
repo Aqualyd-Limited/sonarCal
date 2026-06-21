@@ -30,7 +30,7 @@ jobs:
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
       - name: Build offline documentation (should get this done via pyproject.toml settings)
         run: |
-          uv tool run --with mkdocs --with mkdocs-material --with mkdocs-autorefs mkdocs build --clean --verbose
+          uv tool run zensical build --clean
       - name: Build package
         run: |
           uv build
@@ -66,7 +66,7 @@ jobs:
     - name: Build offline documentation
       run: |
         export OFFLINE_PLUGIN_ENABLED=true
-        uv tool run --with mkdocs --with mkdocs-material --with mkdocs-autorefs mkdocs build --clean --verbose  # writes offline docs to directory 'site'
+        uv tool run zensical build --clean
     - name: Get history and tags for SCM versioning to work
       run: |
         git branch
