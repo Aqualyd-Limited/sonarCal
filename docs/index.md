@@ -6,7 +6,7 @@
 
 ## Introduction
 
-This is the user documentation for Sonarcal, a program to assist with calibrating fisheries sonars using the target sphere method. Sonarcal currently supports these sonars and file formats:
+This is the user documentation for `Sonarcal`, a program to assist with calibrating fisheries sonars using the target sphere method. `Sonarcal` currently supports these sonars and file formats:
 
 |Brand|Model|Supported file format|
 |---|---|---|
