@@ -13,6 +13,6 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
-      - run: pip install mkdocs mkdocstrings[python] mkdocs-material
-      - run: mkdocs gh-deploy --force --clean --verbose
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+      - run: uv tool run --with mkdocs --with mkdocs-material --with mkdocs-autorefs mkdocs gh-deploy --force --clean --verbose
       

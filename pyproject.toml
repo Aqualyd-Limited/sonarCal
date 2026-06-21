@@ -60,7 +60,6 @@ source = 'vcs'
 local_scheme = "no-local-version"  # otherwise the non-tagged version is not accepted by testpypi
 
 [tool.uv]
-no-cache = true
 exclude-newer = "7 days"
 
 [tool.pytest.ini_options]
@@ -70,7 +69,6 @@ addopts = ["--import-mode=importlib",]
 [dependency-groups]
 dev = [
   "pytest",
-  "zensical",
 ]
 
 [project.urls]

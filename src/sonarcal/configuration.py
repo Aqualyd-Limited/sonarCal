@@ -4,6 +4,7 @@ from pathlib import Path
 import configparser
 import logging
 from platformdirs import PlatformDirs
+from importlib.metadata import distribution
 
 app_name = 'sonarcal'
 logger = logging.getLogger(app_name)
@@ -122,6 +123,13 @@ class sonarcalConfig():
 
     @staticmethod
     def helpURI() -> Path:
+        # Path to offline docs depends on whether the package has been installed normally
+        # or is an editable install (as is often the case when developing the 
+        # code).
+        dist = distribution(app_name)
+        if hasattr(dist.origin, 'dir_info') and hasattr(dist.origin.dir_info, 'editable'):
+            return Path(__file__).parent.parent.parent/'site'/'index.html'
+
         return Path(__file__).parent/'offline-docs'/'index.html'
     
     @staticmethod
