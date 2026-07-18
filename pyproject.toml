@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", 'hatch-vcs']
+requires = ["hatchling", "hatch-build-scripts", 'hatch-vcs']
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
@@ -70,6 +70,14 @@ addopts = ["--import-mode=importlib",]
 dev = [
   "pytest",
 ]
+
+[[tool.hatch.build.hooks.build-scripts.scripts]]
+commands = [
+    "echo Building docs",
+    "uv tool run zensical build",
+    # using 'uv run zensical build' with zensical as a dev dependency doesn't work for some reason
+]
+
 
 [project.urls]
 Homepage = 'https://github.com/Aqualyd-Limited/sonarCal'
