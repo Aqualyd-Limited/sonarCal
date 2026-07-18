@@ -14,23 +14,12 @@ jobs:
       DISPLAY: ":99.0"
 
     steps:
-      - name: Set environment variables (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: echo "OFFLINE_PLUGIN_ENABLED=true" >> $GITHUB_ENV
-      - name: Set environment variables (Windows)
-        if: runner.os == 'Windows'
-        run: echo "OFFLINE_PLUGIN_ENABLED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Checkout sonarcal
         uses: actions/checkout@v7
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
-      - name: Build offline documentation (should get this done via pyproject.toml settings)
-        run: |
-          uv tool run zensical build --clean
       - name: Build package
         run: |
           uv build
@@ -54,26 +43,22 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - test
-
     steps:
     - uses: actions/checkout@v7
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
         python-version: "3.x"
-    - name: Install uv
-      uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
-    - name: Build offline documentation
-      run: |
-        export OFFLINE_PLUGIN_ENABLED=true
-        uv tool run zensical build --clean
     - name: Get history and tags for SCM versioning to work
       run: |
         git branch
         git fetch --prune --unshallow
         git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+    - name: Install uv
+      uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
     - name: Build a binary wheel and a source tarball
-      run: uv build
+      run: |
+        uv build
     - name: Store the distribution packages
       uses: actions/upload-artifact@v7
       with:
@@ -147,6 +132,8 @@ jobs:
 
   publish-to-testpypi:
     name: Publish sonarcal to TestPyPI
+    if: ${{ github.ref_type != 'tag'}}  # don't publish to testpypi if this is a tag push
+
     needs:
     - build
     runs-on: ubuntu-latest
