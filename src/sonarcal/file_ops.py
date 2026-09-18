@@ -28,7 +28,7 @@ def most_recent_file(watch_dir: Path, wait_interval: float=5.0):
 
 def file_type(filename: Path):
     """Works out what sonar the data file is from and what format it is."""
-    
+
     match filename.suffix:
         case '.nc':
             return 'sonar-netcdf4'
@@ -39,10 +39,10 @@ def file_type(filename: Path):
 
 def sonar_file_read(msg_queue, reload_event):
     """Run code to listen to or read from the last file in the watched directory."""
-    
+
     # The reload_event is used to restart listening to or reading from
     # files and is set when the data directory and/or live data switch is changed.
-    
+
     while True:
         reload_event.clear()  # because we've noticed it was set (or it's the first time through)
         watch_dir = Path(config.watchDir())
@@ -50,12 +50,12 @@ def sonar_file_read(msg_queue, reload_event):
 
         if live_data:
             logger.info('Listening for pings in %s', watch_dir)
-        else:                    
+        else:
             logger.info('Replaying files in %s', watch_dir)
 
         last_file = most_recent_file(watch_dir)
 
-        # The listen functions only return if reload_event is set - they wait for 
+        # The listen functions only return if reload_event is set - they wait for
         # new data indefinitely otherwise.
         # The replay functions replay all the files in the directory and don't return,
         # but will abandon this and return if reload_event is set.
@@ -90,9 +90,9 @@ def get_sonar_model(hdf_attrs: dict) -> str:
 
 def shorten_beam_label(label: str) -> str:
     """Shorten the beam label and remove unnecessary text."""
-    
-    # Simrad sonars have beam labels of the form 'Horizontal-H01', 
-    # 'Vertical-H01', etc. 
+
+    # Simrad sonars have beam labels of the form 'Horizontal-H01',
+    # 'Vertical-H01', etc.
     return label.replace('Horizontal-', '').replace('Vertical-', '')
 
 def get_horiz_beam_group(hdf, log=True) -> str:
@@ -139,7 +139,7 @@ def file_listen_netcdf(watchDir, msg_queue, reload_event):
 
     while True:  # could add a timeout on this loop...
         mostRecentFile = most_recent_file(watchDir, waitIntervalFile)
-        
+
         if reload_event.is_set():
             return
 
@@ -181,9 +181,10 @@ def file_listen_netcdf(watchDir, msg_queue, reload_event):
 
                         t_previous = t
                         noNewDataCount = 0  # reset the count
-                       
+
                         # send the data off to be plotted
-                        msg_queue.put((first_ping, t, samInt, c, sv, ts, theta, tilts, gains, labels))
+                        msg_queue.put(
+                            (first_ping, t, samInt, c, sv, ts, theta, tilts, gains, labels))
                     else:
                         noNewDataCount += 1
                         if noNewDataCount > maxNoNewDataCount:
@@ -254,9 +255,9 @@ def file_replay_netcdf(watchDir, msg_queue, reload_event):
             sleep(config.replayPingInterval())
 
         f.close()
-    
+
     logger.info('Finished replaying files in %s', watchDir)
-    
+
     # if we return we'll immediately get run again, so wait for a reload event, otherwise
     # just do nothing.
     while True:
@@ -272,7 +273,7 @@ def file_listen_raw(watchDir: Path, msg_queue, reload_event):
 
     # Check this often for files to appear in the directory if there are none
     file_wait = 2.0  # [s]
-    
+
     # Check this often for new files to appear in the directory once we've finished
     # reading an existing file
     new_file_wait = 2.0  # [s]
@@ -315,7 +316,7 @@ def file_listen_raw(watchDir: Path, msg_queue, reload_event):
                 # SimradFileFinished exception
                 try:
                     dg = fid.live_read(eof_retries=7)
-                    
+
                     if proc.add_datagram(dg):  # returns True when a processed ping is available
                         if first_ping:
                             logger.info('File contains data from a %s sonar', proc.product_name)
@@ -335,7 +336,7 @@ def file_listen_raw(watchDir: Path, msg_queue, reload_event):
                         sleep(0.25)
                 except raw.SimradFileFinished:
                     break  # go back to the outer 'while True' loop to look for a new file.
-                
+
         logger.info('Finished listening to %s', last_file.name)
         logger.info('Waiting for a new file to listen to')
 
@@ -376,7 +377,7 @@ def file_replay_raw(watchDir: Path, msg_queue, reload_event):
                         sleep(config.replayPingInterval())
                 except raw.SimradEOF:
                     break  # go back to the outer 'while True' loop for the next file
-    
+
     logger.info('Finished replaying files in %s', watchDir)
 
     # if we return we'll immediately get run again, so wait for a reload event, otherwise

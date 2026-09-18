@@ -30,7 +30,7 @@ def setupLogging():
     logger.addHandler(console)
 
     logger.info('Log file is %s.', logger_filename)
-    
+
     return logger
 
 
@@ -68,11 +68,11 @@ def beamAnglesFromNetCDF4(f, beamGroup, i):
     z = f[beamGroup + '/beam_direction_z'][i]
     tilt = np.arctan(z / np.sqrt(x**2 + y**2))  # [rad]
 
-    # convert x,y,z direction into a horizontal angle for use elsewhere as per the 
+    # convert x,y,z direction into a horizontal angle for use elsewhere as per the
     # coordinate system in the sonar-netcdf4 convention. This is the x-axis to forward
     # and the y-axis to starboard (and z-axis down).
 
-    # Due to the -y below, the arctan2 angles are 0 to forward, decreasing to -pi to port and 
+    # Due to the -y below, the arctan2 angles are 0 to forward, decreasing to -pi to port and
     # increasing to +pi to starboard
     theta = np.arctan2(-y, x)
 
@@ -83,7 +83,7 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
     """Calculate Sv and TS from the given beam group and ping."""
     eqn_type = f[beamGroup].attrs['conversion_equation_type']
     # work around the current Simrad files using integers instead of the
-    # type defined in the convetion (which shows up here as a string)
+    # type defined in the convention (which shows up here as a string)
     if isinstance(eqn_type, np.ndarray):
         eqn_type = f'type_{eqn_type[0]}'
     else:
@@ -164,7 +164,7 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
 
         samInt = f[beamGroup + '/sample_interval'][i]  # [s]
 
-        r_offset = 0.0  # incase we need this in the future
+        r_offset = 0.0  # in case we need this in the future
 
         gain = G  # the beam gain from the file
 
@@ -183,7 +183,7 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
                     - G[k] - 40.0*np.log10(np.cos(tilt[k])))
         sv = np.array(sv)
         ts = np.array(ts)
-    else:  # unsupported format - just take the log10 of the numbers. Usually usefull.
+    else:  # unsupported format - just take the log10 of the numbers. Usually useful.
         sv = f[beamGroup + '/backscatter_r'][i]
         with np.errstate(divide='ignore'):
             for j in range(sv.shape[0]):
@@ -214,9 +214,8 @@ def acousticAbsorption(temperature, salinity, depth, frequency):
         + 0.52*(1+temperature/43.0) * (salinity/35.0) \
         * (f2*frequency**2)/(frequency**2+f2**2) * np.exp(z/6.0) \
         + 0.00049*frequency**2 * np.exp(-(temperature/27.0+z/17.0))
-    alpha = alpha * 1e-3  # [dB/m]
 
-    return alpha
+    return alpha * 1e-3  # [dB/m]
 
 def cartesian_to_spherical(x: float, y: float, z: float) -> tuple:
     """Convert Cartesian coordinates (x, y, z) to spherical coordinates (r, theta, phi).
@@ -246,12 +245,12 @@ def cartesian_to_spherical(x: float, y: float, z: float) -> tuple:
 def nt_time_to_datetime(nt_time: int):
     """Convert a Windows time number to a Python datetime object.
 
-    Paramters
+    Parameters
     --------
     nt_time :
         The Windows NT time value (number of 100-nanosecond
         intervals since January 1, 1601 UTC)
-        
+
     Returns
     -------
         datetime.datetime: The corresponding datetime object in UTC.

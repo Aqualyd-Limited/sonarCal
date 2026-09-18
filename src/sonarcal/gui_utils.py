@@ -68,7 +68,7 @@ class draggable_radial:
 
         self.line_color_unfrozen = 'black'
         self.line_color_frozen = config.calibrating_colour()
-        
+
         self.ax = ax
         self.inv = self.ax.transData.inverted()  # used in followmouse()
         self.ax.set_zorder(2) # so that it is on top of the rangeslider
@@ -98,7 +98,7 @@ class draggable_radial:
         self.c.draw_idle()
         self.c.mpl_connect('pick_event', self.clickonline)
         self.c.mpl_connect('resize_event', self.resized)
-        
+
         self.radial_frozen = False
 
     def resized(self, event):
@@ -141,12 +141,12 @@ class draggable_radial:
 
         # Could just use event.xdata here, but that doesn't return values when the motion notify
         # event is outside of the axes that the radial line is in. So we do the conversion
-        # between mouse coordinates and axes coordinates ourselves, which works over the 
+        # between mouse coordinates and axes coordinates ourselves, which works over the
         # entire computer screen.
 
         if event.x and event.y:  # avoid None's
             x, _ = self.inv.transform((event.x, event.y))
-            # The matplotlib inverse transform gives angles from -90 to 270 (but in radians) 
+            # The matplotlib inverse transform gives angles from -90 to 270 (but in radians)
             # with increasing values in an anticlockwise direction.
             # Convert the 180 to 270 to be -90 to -180 (in radians).
             if x > np.pi:

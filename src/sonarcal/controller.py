@@ -35,8 +35,8 @@ def main():
 
     # queue to communicate between two threads
     msg_queue = queue.Queue()
-    
-    # This event is used to signal to the file reading thread that the data directory 
+
+    # This event is used to signal to the file reading thread that the data directory
     # has changed and it should read files the new data directory
     reload_event = threading.Event()
 

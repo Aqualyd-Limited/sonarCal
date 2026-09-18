@@ -36,11 +36,11 @@ class configDialog:
         config_frame = ttk.Frame(self.top)
 
         # The contents of the dialog are a vertical list of config values. The contents
-        # of each row are given as a list of Param instances.  
-      
+        # of each row are given as a list of Param instances.
+
         @dataclass
         class Param:
-            label: str  # the user visibl text for the parameter
+            label: str  # the user visible text for the parameter
             name: str  # the config name
             type: str  # 'float', 'int', 'boolean', 'horizline', 'label'
             unit: str = ''  # the unit for the parameter
@@ -103,19 +103,19 @@ class configDialog:
         self.apply_btn = ttk.Button(btn_frame, text="Apply", command=self.apply)
         self.apply_btn.pack(side=tk.RIGHT)
         self.apply_btn.state(['disabled'])  # only enabled when a config parameter has changed
-        
+
         config_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=tk.TRUE)
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH)
 
     def create_dir_chooser_row(self, label: str, variable):
         """Create a directory chooser config row.
-        
+
         Parameters
         ----------
-        label : 
+        label :
             The text to use for the row label.
-            
-        variable: 
+
+        variable:
             The tkinter Var to associate with the Text widget
         """
 
@@ -170,7 +170,7 @@ class configDialog:
         vmax:
             The maximum allowed value for the config parameter (if any)
         """
-        
+
         container = ttk.Frame(self.top)
         container.pack(fill=tk.X, expand=tk.YES, pady=5)
 
@@ -202,7 +202,7 @@ class configDialog:
         """Convert the min/max limits into a str for display to the user."""
         if vmin is None and vmax is None:
             return ''
-        
+
         vmin_str = f'{vmin} ≤' if vmin else ''
         vmax_str = f'≤ {vmax}' if vmax else ''
 
@@ -261,9 +261,9 @@ class configDialog:
                 logger.error('Failed to set config parameter "%s" to "%s"',
                              name, str(dialog_value))
 
-        cfg.save_config() 
+        cfg.save_config()
         self.apply_btn.state(['disabled'])
-   
+
         if self.updated_cb:
             # tell others that we've updated
             self.updated_cb(changed)
@@ -288,14 +288,14 @@ class validated_entry(ttk.Entry):
             The parent tk widget for this Entry widget
         vtype:
             Type of variable ('int', 'float', or '')
-        min: 
-            The minumum allowed value for the value in the widget
+        min:
+            The minimum allowed value for the value in the widget
         max:
-            The maxumum allowed value for the value in the widget
+            The maximum allowed value for the value in the widget
         """
 
         super().__init__(master, **kwargs)
-        
+
         if vtype == 'float':
             self.chars_regex = r'[^0-9eE+\-\.]'
             self.regex = r'^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d*)?$'
@@ -307,12 +307,12 @@ class validated_entry(ttk.Entry):
         else:
             self.regex = r'.*'
             self.convert = str
-        
+
         # Invalid entries are highlighted with this colour
         self.invalid_colour = 'orange red'
         style = ttk.Style()
         self.foreground_color = style.lookup(self.winfo_class(), "foreground")
-            
+
         self.min = min
         self.max = max
         vcmd = self.register(self._validate)
@@ -325,7 +325,7 @@ class validated_entry(ttk.Entry):
         if proposed_value == '':
             self.state(['invalid'])
             return True
-        
+
         # We're only interested in characters that could be used in ints and floats
         if re.findall(self.chars_regex, proposed_value):
             return False
@@ -337,10 +337,7 @@ class validated_entry(ttk.Entry):
                 self.state(['invalid'])
                 return True
 
-            if self.min and v < self.min:
-                self.config(foreground=self.invalid_colour)
-                self.state(['invalid'])
-            elif self.max and v > self.max:
+            if self.min and v < self.min or self.max and v > self.max:
                 self.config(foreground=self.invalid_colour)
                 self.state(['invalid'])
             else:

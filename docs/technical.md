@@ -8,7 +8,7 @@ The best reference for how Sonarcal works is the code and configuration in its' 
 
 Sonarcal is a Python program. It runs as two threads - one for the tkinter-based graphical user interface (GUI) and one that reads sonar data files. Data is passed between the threads using a queue.
 
-The data reading thread reads the relevant sonar data files, calculates Sv and TS for all beams and sends that data to the GUI thread ping-by-ping. The main GUI display is an interative matplotlib figure in a tkinter canvas widget.
+The data reading thread reads the relevant sonar data files, calculates Sv and TS for all beams and sends that data to the GUI thread ping-by-ping. The main GUI display is an interactive matplotlib figure in a tkinter canvas widget.
 
 The main() function for Sonarcal is in the `controller.py` file. The `calibration_gui.py` file sets up the GUI and the `echogram_plotter.py` contains the code that generates and updates the matplotlib figure.
 

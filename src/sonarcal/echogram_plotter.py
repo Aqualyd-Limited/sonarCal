@@ -71,7 +71,7 @@ class echogramPlotter:
         # the data directory or live viewing setting is changed, so the old plots
         # need to be cleared.
         self.fig.clf()
-        
+
         self.cmap = mpl.colormaps['jet']  # viridis looks nice too...
         self.cmap.set_under('w')  # and for values below self.minSv, if desired
 
@@ -134,7 +134,7 @@ class echogramPlotter:
         self.ampPlotLinePort, = self.ampPlotAx.plot(self.amp[0, :], 'r-', linewidth=1)
         self.ampPlotLineMain, = self.ampPlotAx.plot(self.amp[1, :], 'k-', linewidth=1)
         self.ampPlotLineStbd, = self.ampPlotAx.plot(self.amp[2, :], 'g-', linewidth=1)
-     
+
         # Smoothed curves for the TS from 3 beams
         # Initialise these with a vector of nan as we calculate the actual values on
         # the fly each time a new ping is received, but we want the implicit x data
@@ -144,7 +144,7 @@ class echogramPlotter:
         self.ampPlotLineMainSmooth, = self.ampPlotAx.plot(tmp, 'k-', linewidth=2)
         self.ampPlotLineStbdSmooth, = self.ampPlotAx.plot(tmp, 'g-', linewidth=2)
         self.ampPlotAx.set_xlim(0, self.numPings)
-     
+
         # a informative number on the TS plot
         self.diffVariability = self.ampPlotAx.text(0.05, 0.95, '', ha='left', va='top',
                                                    transform=self.ampPlotAx.transAxes)
@@ -197,8 +197,8 @@ class echogramPlotter:
         self.beamLine = draggable_radial(self.polarPlotAx, self.beamLineAngle,
                                          self.maxRange, theta, labels)
 
-        # sets self.beamIdx and self.beamLabel from the positon of the radial line
-        self.updateBeamNum(theta)  
+        # sets self.beamIdx and self.beamLabel from the position of the radial line
+        self.updateBeamNum(theta)
 
         # Axes labels
         self.stbdEchogramAx.set_xlabel('Pings')
@@ -216,11 +216,11 @@ class echogramPlotter:
         self.ampPlotAx.set_title('Maximum amplitude at 0 m')
 
         plt.tight_layout(pad=1.5, w_pad=0.0, h_pad=0.0)
-        
+
         # the tight_layout call causes a resize of the polar plot, so update the
         # inverse transform that beamline keeps
         self.beamLine.resized(None)
-        
+
         # Text for the horizontal beam tilt
         self.beamTiltText = self.polarPlotAx.text(0.05, 1.0, s='',
                                                   transform=self.polarPlotAx.transAxes)
@@ -239,14 +239,14 @@ class echogramPlotter:
         self.slider.valtext.set_visible(False)
         self.slider.label.set_rotation(90)
         self.slider.on_changed(self.updateEchogramThresholds)
-        
+
         self.gui_created = True
         self.updateTiltValue(tilts.mean())
 
     def sample_from_range(self, r: float) -> int:
         """Calculate the sample number for a given range."""
         return int(np.ceil(2.0 * r / (self.sample_interval * self.sound_speed)))
-    
+
     def range_from_sample(self, s: int) -> float:
         """Calculate the range for a given sample number."""
         return s * self.sample_interval * self.sound_speed/2.0
@@ -257,7 +257,7 @@ class echogramPlotter:
         self.portEchogram.set_clim(val)
         self.mainEchogram.set_clim(val)
         self.stbdEchogram.set_clim(val)
-        
+
         # update the config with the new thresholds
         config.minSv(val[0])
         config.maxSv(val[1])
@@ -267,7 +267,7 @@ class echogramPlotter:
 
     def updateTiltValue(self, tilt: float):
         """Update the display of beam tilt on GUI.
-        
+
         Units of tilt are radians
         """
         if self.gui_created:
@@ -289,10 +289,10 @@ class echogramPlotter:
             vmin, vmax = self.slider.val
             if vmin < config.sliderLowestSv():
                 self.slider.set_min(config.sliderLowestSv())
-                config.minSv(config.sliderLowestSv())  # TODO - doesn't update the config dialog...
+                config.minSv(config.sliderLowestSv())  # TODO: - doesn't update the config dialog
             if vmax > config.sliderHighestSv():
                 self.slider.set_max(config.sliderHighestSv())
-                config.maxSv(config.sliderHighestSv())  # TODO - doesn't update the config dialog...
+                config.maxSv(config.sliderHighestSv())  # TODO: - doesn't update the config dialog
 
             self.slider.valmin = config.sliderLowestSv()
             self.slider.valmax = config.sliderHighestSv()
@@ -350,7 +350,7 @@ class echogramPlotter:
 
     def _new_polar_mesh(self):
         """Remake the polar mesh.
-        
+
         Matplotlib does not provide a way to update the ranges on a pcolormesh so
         we delete the old polar pcolormesh and make a new one.
         """
@@ -369,12 +369,12 @@ class echogramPlotter:
         # update the range rings and radial line
         self.rangeRing1.new_max_range(self.maxRange)
         self.rangeRing2.new_max_range(self.maxRange)
-        
+
         # take care that the range rings don't end up being the same
         if abs(self.rangeRing1.range - self.rangeRing2.range) < 0.5:
             r = self.rangeRing1.range
             self.rangeRing2.set_range(r-1.0)
-        
+
         self.beamLine.new_max_range(self.maxRange)
 
     def updateNumPings(self):
@@ -387,7 +387,7 @@ class echogramPlotter:
         lines = [self.ampPlotLinePort, self.ampPlotLineMain, self.ampPlotLineStbd,
                     self.ampPlotLinePortSmooth, self.ampPlotLineMainSmooth,
                     self.ampPlotLineStbdSmooth,
-                    self.ampDiffPortPlot, self.ampDiffStbdPlot, 
+                    self.ampDiffPortPlot, self.ampDiffStbdPlot,
                     self.ampDiffPortPlotSmooth, self.ampDiffStbdPlotSmooth]
 
         def update_plots():
@@ -424,7 +424,7 @@ class echogramPlotter:
             self.main = np.concatenate((extra, self.main), axis=1)
             self.stbd = np.concatenate((extra, self.stbd), axis=1)
             self.amp = np.concatenate((np.full((3, extra_pings), np.nan), self.amp), axis=1)
-                       
+
             # Lengthen all the line plots
             for line in lines:
                 y = np.concatenate((np.full(extra_pings, np.nan), line.get_ydata()))
@@ -464,7 +464,7 @@ class echogramPlotter:
                     # theta - float [rad]
                     # tilts - float [rad]
                     # gains - float [dB]
-                    # labels - str 
+                    # labels - str
 
                     # sort on theta - needed to avoid a warning from the polar plot
                     (sv, ts, theta, tilts, gains, labels) =\
@@ -483,7 +483,7 @@ class echogramPlotter:
                     # Update the plots with the data in the new ping
                     timeBehind = datetime.now(UTC) - pingTime
                     milliseconds = pingTime.microsecond / 1000
-                    label.config(text=f'Ping at {pingTime:%Y-%m-%d %H:%M:%S}.' +
+                    label.config(text=f'Ping at {pingTime:%Y-%m-%d %H:%M:%S}.'
                                  f'{milliseconds:03.0f} '
                                  f'({humanize.precisedelta(timeBehind)} ago)')
                     logger.debug('Displaying ping from %s.', pingTime)
@@ -492,7 +492,7 @@ class echogramPlotter:
                     self.maxTargetRange = max(self.rangeRing1.range, self.rangeRing2.range)
 
                     # print('Range rings: {}, {}'.format(self.minTargetRange, self.maxTargetRange))
-                        
+
                     minSample = self.sample_from_range(self.minTargetRange)
                     maxSample = self.sample_from_range(self.maxTargetRange)
 
@@ -589,7 +589,7 @@ class echogramPlotter:
 
                     self.updateTiltValue(tilts[self.beamIdx])
 
-                    # If the range rings are too close together it becomes impossible to move 
+                    # If the range rings are too close together it becomes impossible to move
                     # them separately, so check and move one if that happens
                     r1 = self.rangeRing1.range
                     r2 = self.rangeRing2.range

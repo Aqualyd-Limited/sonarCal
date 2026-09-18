@@ -7,8 +7,8 @@ nav:
     - User Manual: index.md
     - Technical Manual: technical.md
 
-theme: 
-    name: material 
+theme:
+    name: material
     logo: assets/logo.svg
     favicon: assets/logo.svg
     icon:
@@ -47,8 +47,6 @@ theme:
 plugins:
     - search
     - autorefs
-    - offline:
-        enabled: !ENV [OFFLINE_PLUGIN_ENABLED, false]
 
 watch:
     - ./docs
@@ -71,4 +69,3 @@ markdown_extensions:
     - pymdownx.superfences
     - admonition
     - pymdownx.details
-  

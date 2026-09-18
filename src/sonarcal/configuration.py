@@ -53,7 +53,7 @@ class sonarcalConfig:
         self.app_name = app_name
         self.app_author = 'Aqualyd'
         self.ini_section_name = 'sonarcal'
-        
+
         self.dirs = PlatformDirs(appname=self.app_name, appauthor=self.app_author)
 
         self.config_filename = Path(self.dirs.user_config_dir)/'config.ini'
@@ -62,7 +62,7 @@ class sonarcalConfig:
         self.config = configparser.ConfigParser()
         c = self.config.read(self.config_filename, encoding='utf8')
 
-        # default values, used if an entry is not present in the config file or 
+        # default values, used if an entry is not present in the config file or
         # the config file doesn't exist.
         defaults = {'title': 'Sonar calibration',
                     'spherets': '-35.0',
@@ -86,7 +86,7 @@ class sonarcalConfig:
             self.config[self.ini_section_name] = defaults
             self.save_config()
         else:
-            # if the config file doesn't have all of the entries in the defaults, add 
+            # if the config file doesn't have all of the entries in the defaults, add
             # the missing ones in.
             if not self.config.has_section(self.ini_section_name):
                 self.config.add_section(self.ini_section_name)
@@ -106,7 +106,7 @@ class sonarcalConfig:
         with open(self.config_filename, 'w', encoding='utf-8') as configfile:
             self.config.write(configfile)
         logger.info('Saved configuration to %s', str(self.config_filename))
-    
+
     def appName(self) -> str:
         return self.app_name
 
@@ -125,18 +125,18 @@ class sonarcalConfig:
     @staticmethod
     def helpURI() -> Path:
         # Path to offline docs depends on whether the package has been installed normally
-        # or is an editable install (as is often the case when developing the 
+        # or is an editable install (as is often the case when developing the
         # code).
         dist = distribution(app_name)
         if hasattr(dist.origin, 'dir_info') and hasattr(dist.origin.dir_info, 'editable'):
             return Path(__file__).parent.parent.parent/'site'/'index.html'
 
         return Path(__file__).parent/'offline-docs'/'index.html'
-    
+
     @staticmethod
     def iconFile() -> Path:
         return Path(__file__).parent/'assets'/'logo.png'
-    
+
     def autoSaveDir(self) -> Path:
         d = Path(self.dirs.user_data_dir)/'autosave'
         d.mkdir(parents=True, exist_ok=True)
@@ -146,22 +146,22 @@ class sonarcalConfig:
         d = Path(self.dirs.user_log_dir)
         d.mkdir(parents=True, exist_ok=True)
         return d
-    
+
     def userDocumentsDir(self) -> str:
         return self.dirs.user_documents_dir
-    
+
     @int_config
     def numPings(self, value=None):
         return 'numPingsToShow'
-    
+
     @float_config
     def maxRange(self, value=None):
         return 'maxRange'
 
-    @float_config  
+    @float_config
     def maxSv(self, value=None):
         return 'maxSv'
-    
+
     @float_config
     def minSv(self, value=None):
         return 'minSv'
@@ -181,7 +181,7 @@ class sonarcalConfig:
     @bool_config
     def liveData(self, value=None):
         return 'liveData'
-    
+
     @bool_config
     def askForWatchDir(self, value=None):
         return 'askForWatchDir'
@@ -205,7 +205,7 @@ class sonarcalConfig:
     def sliderLowestSv(self, value=None):
         "Echogram colour scheme lower threshold."
         return 'sliderLowestSv'
-        
+
     @float_config
     def sliderHighestSv(self, value=None):
         "Echogram colour scheme upper threshold."

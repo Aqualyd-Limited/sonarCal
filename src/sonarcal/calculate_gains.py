@@ -26,4 +26,3 @@ def calculate_calibration(sphere_echoes: list[tuple], sphere_ts: float)\
     gain_adjust = ts_mean - sphere_ts
 
     return (gain_adjust, ts_mean, ts_rms, np.mean(dfm['range']), len(dfm))
-

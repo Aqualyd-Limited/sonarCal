@@ -12,9 +12,9 @@ class resultsDialog:
     """A dialog box to show completed calibration results per beam."""
 
     def __init__(self, parent, data: dict | None = None, icon=None):
-        
+
         self.data = data
-        
+
         self.top = tk.Toplevel(parent)
         self.top.title("Results")
         if icon:
@@ -29,7 +29,7 @@ class resultsDialog:
         # Make scrollbars for the treeview widget
         vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=vsb.set)
-        
+
         # pack the scrollbars and treeview
         vsb.pack(side="right", fill="y")
         self.tree.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5)
@@ -39,7 +39,7 @@ class resultsDialog:
         remove = ttk.Button(btn_frame, text="Remove selected", command=self.remove_rows)
         save = ttk.Button(btn_frame, text="Save", command=self.save)
         close = ttk.Button(btn_frame, text="Close", command=self.close_dialog)
-        
+
         close.pack(side=tk.RIGHT)
         save.pack(side=tk.RIGHT)
         remove.pack(side=tk.RIGHT)
@@ -49,9 +49,9 @@ class resultsDialog:
 
     def setup_treeview(self, top, data):
         """Create the treeview columns, etc."""
-        
+
         headings = [data.df().index.name] + list(data.df().columns)
-        
+
         self.tree = ttk.Treeview(top, columns=headings, show='headings')
         self.tree.bind('<Button-1>', self.on_row_click)
 
@@ -59,17 +59,17 @@ class resultsDialog:
         self.tree.tag_configure('evenrow', background='white smoke')
         self.tree.tag_configure('oddrow', background='white')
         self.tree.tag_configure('active', background=config.calibrating_colour())
-        
+
         for col in headings:
             self.tree.heading(col, text=col, anchor='e')
             self.tree.column(col, width=125, anchor='e')
 
         # Add rows (if any)
-        self.update_with(data)            
-                    
+        self.update_with(data)
+
     def update_with(self, data, active_beam_label: str = ''):
         """Update dialog's display with given calibration data."""
-        
+
         def format(value):
             """Format floats to 1 decimal place."""
             if isinstance(value, float):
@@ -105,13 +105,13 @@ class resultsDialog:
                 rowness = 'active'  # gets highlighted
 
             # Set the row colour in the tree widget
-            self.tree.item(self.item_ids[beam_label], tags=(rowness,))    
+            self.tree.item(self.item_ids[beam_label], tags=(rowness,))
 
     def remove_rows(self):
         """Remove selected rows from the results table."""
 
         selected = self.tree.selection()  # returns a tuple of item_ids
-        
+
         # Get the beam labels of the selected rows
         to_remove = []
         for iid in selected:
@@ -144,7 +144,7 @@ class resultsDialog:
 
     def on_row_click(self, event):
         """Implement selection and deselection."""
-        # TODO - work out why it can take multiple clicks on a row to get it unselected
+        # TODO: - work out why it can take multiple clicks on a row to get it unselected
         item_id = self.tree.identify_row(event.y)
         if item_id and item_id in self.tree.selection():
             self.tree.selection_remove(item_id)

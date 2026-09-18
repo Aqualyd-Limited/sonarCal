@@ -16,7 +16,7 @@ class rawDatagramProcessor:
         self._raw_dgs = []
         self._power = []
 
-        # There are multiple fans. 
+        # There are multiple fans.
         # In the example data:
         #
         # SN90 has 'Horizontal-H', 'Vertical-H', and 'InspectionC-H'
@@ -44,7 +44,7 @@ class rawDatagramProcessor:
         self.sa_correction = None  # [dB]
         self.sa_correction_adjust = None  # [dB]
         self.absorption_coefficient = None  # [dB/m]
-        
+
     def add_datagram(self, dg: dict) -> bool:
         """Accumulates datagrams for a ping.
 
@@ -52,13 +52,13 @@ class rawDatagramProcessor:
         ----------
         dg :
             A Simrad sonar datagram
-        
+
         Returns
         -------
         : True if all pings for a datagram have been received and processed ping data
             are available, otherwise False
         """
-        
+
         if dg['type'] == 'EOP0':
             # have now received all data for a ping
             self._calculate_sv_ts()
@@ -67,20 +67,19 @@ class rawDatagramProcessor:
             self._power.clear()
 
             return True
-        else:
-            # Pick out data that doesn't need end of ping processing
-            match dg['type']:
-                case 'VER0':
-                    self.product_name = dg['product_name']
-                case 'PCO0' | 'PCO1':  # ping configuration, once per file
-                    self._extract_ping_config(dg)
-                case 'PIN0' | 'PIN1':  # ping information, once per ping
-                    self.sound_speed = dg['sound_velocity']
-                    self.ping_time = dg['ping_time'].datetime
-                case 'RAW2':  # multiple per ping
-                    self._accumulate_raw(dg)
+        # Pick out data that doesn't need end of ping processing
+        match dg['type']:
+            case 'VER0':
+                self.product_name = dg['product_name']
+            case 'PCO0' | 'PCO1':  # ping configuration, once per file
+                self._extract_ping_config(dg)
+            case 'PIN0' | 'PIN1':  # ping information, once per ping
+                self.sound_speed = dg['sound_velocity']
+                self.ping_time = dg['ping_time'].datetime
+            case 'RAW2':  # multiple per ping
+                self._accumulate_raw(dg)
 
-            return False
+        return False
 
     def _calculate_sv_ts(self) -> None:
         """Calculate Sv and TS for the just finished ping."""
@@ -116,12 +115,12 @@ class rawDatagramProcessor:
         self.ts = power + tvg[np.newaxis, :] - ts_const[:, np.newaxis]
 
     def _accumulate_raw(self, raw: dict) -> None:
-        
-        # the raw datagrams can be from different beams and are also split into 
+
+        # the raw datagrams can be from different beams and are also split into
         # separate blocks (split by sample it seems). It also seems they they always
-        # arrive with lowest samples first. Will need to change the code a bit if 
+        # arrive with lowest samples first. Will need to change the code a bit if
         # that isn't always the case.
-        
+
         # beam id's can be:
         # SMSU - non-match-filtered samples intended for generating audio output
         # SMSM - main beam matched-filtered samples
@@ -130,15 +129,15 @@ class rawDatagramProcessor:
         #   B - back
         #   S - starboard
         #   P - port
-        
+
         # print(raw['datagram_number'], raw['sample_index'], raw['ping_number'],
         #       raw['beam_index_start'], num_samples)
-        
+
         if raw['id'] == 'SMSM':
             # a SMSM message with no samples and the most significant bit of the
             # datagram_number field set marks the end of the current ping
             if (raw['datagram_number'] & (1 << 31)) != 0:
-                # But we use the EOP datagram rather than this empty RAW2 datagram to 
+                # But we use the EOP datagram rather than this empty RAW2 datagram to
                 # know when to process the backscatter into Sv and TS
                 return
 
@@ -150,7 +149,7 @@ class rawDatagramProcessor:
             #                       beam_index_start == 64 selects the inspection beams
             # print(raw['beam_index_start'])
             beam_index_start = 32 if self.product_name == 'SN90' else 0
-            
+
             if raw['beam_index_start'] == beam_index_start:
                 # don't need the complex values so save some space...
                 self._power.append(20.0*np.log10(np.abs(raw['data'])))
@@ -158,8 +157,8 @@ class rawDatagramProcessor:
 
     def _extract_ping_config(self, pco: dict) -> None:
         """Extract various parameters that are needed to calculate Sv and TS."""
-        
-        # TODO assumes that there is only one transcevier config!!!
+
+        # TODO: assumes that there is only one transceiver config!!!
         cfg =  pco['ping_configuration']['transceiver_config'][0]
 
         # Find which fan dataset is self.selected_fan_name
@@ -168,7 +167,7 @@ class rawDatagramProcessor:
         # and same for selected ping
         tx_config = [ping for ping in cfg['tx_config']['tx_ping_config']
                      if ping['ping_name'] == self.selected_ping_name]
-        
+
         if not rx_fan:
             logger.error('No fan with name of %s found in the ping configuration datagram',
                          self.selected_fan_name)
@@ -179,11 +178,12 @@ class rawDatagramProcessor:
 
         self.sample_interval = rx_fan['sample_interval']
         # there is an absorption value for each beam so use that instead of this one
-        # self.absorption_coefficient = rx_fan['rx_beams'][0]['performance_info']['absorption_coefficient']
+        # self.absorption_coefficient \
+        #   = rx_fan['rx_beams'][0]['performance_info']['absorption_coefficient']
         self.transmit_power = tx_config['performance_info']['tx_power']
         self.frequency = tx_config['frequency']
         self.pulse_duration = tx_config['pulse_duration']
-        
+
         g = []
         g_a = []
         sa = []

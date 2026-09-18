@@ -34,16 +34,16 @@ class calibrationGUI:
 
         # The GUI window
         self.echogram.root.title(f'{cfg.title()} (v{version("sonarcal")})')
-        
+
         # Dialogs that we keep around
         self.results_dialog = None
         self.config_dialog = None
-        
+
         # The toolbar and window icon/logo
         self.icon = ImageTk.PhotoImage(Image.open(cfg.iconFile()))
         self.echogram.root.iconphoto(False, self.icon)
 
-        # Things to do with new pings 
+        # Things to do with new pings
         self.echogram.set_ping_callback(self.new_ping)
 
         # Put the matplotlib plots into the GUI window.
@@ -86,14 +86,17 @@ class calibrationGUI:
 
         frame.pack(side=tk.TOP, fill=tk.BOTH)
         sv_ttk.set_theme('light')
-        
+
         # At startup ask the user for the directory to watch for sonar files
         if cfg.askForWatchDir():
-            d = filedialog.askdirectory(parent=self.echogram.root, title='Select sonar data directory',
-                                            initialdir=cfg.watchDir())
+            d = filedialog.askdirectory(
+                parent=self.echogram.root,
+                title='Select sonar data directory',
+                initialdir=cfg.watchDir()
+                )
             if d:
                 cfg.watchDir(d)
-        
+
         # Start listening for sonar data
         self.echogram.newPing(self.status_label())
 
@@ -132,7 +135,10 @@ class calibrationGUI:
             # store the current ping's sphere echo info
             self.sphere_echoes.append((datetime.now().isoformat(), e.amp[1, -1], e.rangeMax))
             # calculate the beam gain and other stats
-            (cal_offset, ts, rms, r, num) = calculate_calibration(self.sphere_echoes, cfg.sphereTS())
+            (cal_offset, ts, rms, r, num) = calculate_calibration(
+                self.sphere_echoes,
+                cfg.sphereTS()
+                )
             # store the latest beam gain values
             self.cal_data.update(e.beamLabel, datetime.now().strftime('%H:%M:%S'),
                                  e.gains[e.beamIdx], cal_offset, ts, rms, r, num)
@@ -141,9 +147,9 @@ class calibrationGUI:
                 self.results_dialog.update_with(self.cal_data, e.beamLabel)
 
     def about(self):
-        message = (f'Sonarcal, version {version("sonarcal")}, running on Python {python_version()}\n\n'
-                   'Sonarcal is a program to assist with calibrating omni-directional sonars.\n\n'
-                   'Developed by Aqualyd Ltd, www.aqualyd.nz')
+        message = (f'Sonarcal, version {version("sonarcal")}, running on Python {python_version()}'
+                   '\n\nSonarcal is a program to assist with calibrating omni-directional sonars.'
+                   '\n\nDeveloped by Aqualyd Ltd, www.aqualyd.nz')
 
         messagebox.showinfo(title='About', message=message)
 
@@ -167,7 +173,7 @@ class calibrationGUI:
         """Open the help documentation in a web browser."""
         if not webbrowser.open(self.help_uri, new=2):
             logger.warning('Failed to start a webbrowser to show the help documentation')
-        
+
     def config(self):
         """Open the Config dialog box."""
         if not self.config_dialog:
@@ -183,7 +189,7 @@ class calibrationGUI:
         self.echogram.updateMaxRange()
         self.echogram.updateNumPings()
         self.echogram.updatePolarAxisLabels()
-        
+
         # If data directory or live play config has changed, tell the file reader to reload.
         # The strings in the get call come from the setting name in the config file (also in the
         # SonarcalConfig() class).
