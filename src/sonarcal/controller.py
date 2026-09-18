@@ -4,18 +4,18 @@ Provides omni and echogram displays and sphere amplitude plots for use when
 calibrating sonars with horizontal beams.
 """
 
-import tkinter as tk
-from functools import partial
-import threading
 import queue
 import sys
+import threading
+import tkinter as tk
+from functools import partial
 from importlib.metadata import version
 from platform import python_version, uname
 
-from .echogram_plotter import echogramPlotter
-from .utils import setupLogging, on_exit, window_closed
-from .file_ops import sonar_file_read
 from .calibration_gui import calibrationGUI
+from .echogram_plotter import echogramPlotter
+from .file_ops import sonar_file_read
+from .utils import on_exit, setupLogging, window_closed
 
 logger = setupLogging()
 

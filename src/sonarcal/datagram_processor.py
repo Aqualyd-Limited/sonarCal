@@ -1,13 +1,15 @@
 """Code to process Simrad raw sonar datagrams into Sv and TS."""
 import logging
+
 import numpy as np
+
+from .configuration import config
 from .utils import cartesian_to_spherical
-from .configuration import config as config
 
 logger = logging.getLogger(config.appName())
 
 
-class rawDatagramProcessor():
+class rawDatagramProcessor:
     """Calculates Sv and TS from Simrad raw datagrams from sonars."""
 
     def __init__(self):

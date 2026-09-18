@@ -8,14 +8,39 @@ The classes defined here are used by code in the simrad_raw_file.py file.
 """
 
 import struct
-import numpy as np
-from construct import Struct, Array, this, Container, PaddedString, GreedyString
-from construct import If, IfThenElse, Timestamp, GreedyBytes
-from construct import Int32ul, Int32sl, Int16ul, Float32l, Float64l, Int64ul, Bytes
 
-__all__ = ['SimradSINParser', 'SimradVERParser', 'SimradPHYParser',
-            'SimradPCOParser', 'SimradPINParser', 'SimradEOPParser',
-            'SimradSENParser', 'SimradSECParser', 'SimradRAWParser']
+import numpy as np
+from construct import (
+    Array,
+    Bytes,
+    Container,
+    Float32l,
+    Float64l,
+    GreedyBytes,
+    GreedyString,
+    If,
+    IfThenElse,
+    Int16ul,
+    Int32sl,
+    Int32ul,
+    Int64ul,
+    PaddedString,
+    Struct,
+    Timestamp,
+    this,
+)
+
+__all__ = [
+    'SimradEOPParser',
+    'SimradPCOParser',
+    'SimradPHYParser',
+    'SimradPINParser',
+    'SimradRAWParser',
+    'SimradSECParser',
+    'SimradSENParser',
+    'SimradSINParser',
+    'SimradVERParser',
+]
 
 def construct_to_dict(obj):
     """Recursively convert a construct data stucture into a dict."""
@@ -30,7 +55,7 @@ def construct_to_dict(obj):
         return obj
 
 
-class _SimradDatagramParser():
+class _SimradDatagramParser:
     """Base class for a Simrad datagram parser class."""
 
     def __init__(self, header_type, versions = []):

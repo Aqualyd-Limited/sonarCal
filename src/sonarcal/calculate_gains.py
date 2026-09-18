@@ -5,9 +5,9 @@ def calculate_calibration(sphere_echoes: list[tuple], sphere_ts: float)\
     """Calculate the beam calibration gain and other stats."""
 
     # deferred imports to reduce program startup time
+    import numpy as np
     import pandas as pd
     import scipy.stats.mstats as ms
-    import numpy as np
 
     df = pd.DataFrame(sphere_echoes, columns=['timestamp', 'ts', 'range'])
 

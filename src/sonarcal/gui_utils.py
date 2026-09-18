@@ -1,5 +1,7 @@
-import numpy as np
 from math import pi
+
+import numpy as np
+
 # from matplotlib import lines
 from .configuration import config
 

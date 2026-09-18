@@ -1,19 +1,21 @@
 
-import webbrowser
 import logging
-from datetime import datetime
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox, filedialog
+import webbrowser
+from datetime import datetime
 from importlib.metadata import version
 from platform import python_version
-from PIL import Image, ImageTk
-from .utils import window_closed
-from .calibration_data import calibrationData
-from .calculate_gains import calculate_calibration
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from .configuration import config as cfg
+from tkinter import filedialog, messagebox, ttk
+
 import sv_ttk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from PIL import Image, ImageTk
+
+from .calculate_gains import calculate_calibration
+from .calibration_data import calibrationData
+from .configuration import config as cfg
+from .utils import window_closed
+
 logger = logging.getLogger(cfg.appName())
 
 class calibrationGUI:
@@ -164,7 +166,7 @@ class calibrationGUI:
     def help(self):
         """Open the help documentation in a web browser."""
         if not webbrowser.open(self.help_uri, new=2):
-            logging.warning('Failed to start a webbrowser to show the help documentation')
+            logger.warning('Failed to start a webbrowser to show the help documentation')
         
     def config(self):
         """Open the Config dialog box."""
@@ -174,7 +176,7 @@ class calibrationGUI:
         else:
             self.config_dialog.reopen()
 
-    def config_updated(self, updated: list = None):
+    def config_updated(self, updated: list | None = None):
         """Things to do when the configuration is updated."""
         self.echogram.updateRangeSliderSettings()
         self.echogram.updateDiffPlotYLim()

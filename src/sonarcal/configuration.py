@@ -1,10 +1,11 @@
 """Manage and provide access to the sonarcal config file."""
 
-from pathlib import Path
 import configparser
 import logging
-from platformdirs import PlatformDirs
 from importlib.metadata import distribution
+from pathlib import Path
+
+from platformdirs import PlatformDirs
 
 app_name = 'sonarcal'
 logger = logging.getLogger(app_name)
@@ -46,7 +47,7 @@ def str_config(func):
     return wrapper
 
 
-class sonarcalConfig():
+class sonarcalConfig:
 
     def __init__(self):
         self.app_name = app_name

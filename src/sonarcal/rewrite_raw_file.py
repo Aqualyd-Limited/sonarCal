@@ -9,9 +9,10 @@ datagrams as they get added to a file.
 # ]
 # ///
 
-from time import sleep
 from pathlib import Path
-from construct import PaddedString, Timestamp, Bytes, Int32sl, Int64ul, this, Struct, StreamError
+from time import sleep
+
+from construct import Bytes, Int32sl, Int64ul, PaddedString, StreamError, Struct, Timestamp, this
 
 base_dir = Path(r'C:\Users\GavinMacaulay\OneDrive - Aqualyd Limited\Documents\Aqualyd\Projects'
                 r'\2025-08 AZTI coding\example data')

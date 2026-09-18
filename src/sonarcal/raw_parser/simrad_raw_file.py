@@ -9,13 +9,14 @@ in Simrad's .raw file format. The datagram concept is the same as in Simrad echo
 output files (e.g., EK80), but none of the datagrams are the same as in EK80 files.
 """
 
-from io import BufferedReader, FileIO, SEEK_SET, SEEK_CUR, SEEK_END
 import datetime
-import struct
 import logging
 import re
-from . import simrad_parsers
+import struct
+from io import SEEK_CUR, SEEK_END, SEEK_SET, BufferedReader, FileIO
 from time import sleep
+
+from . import simrad_parsers
 
 __all__ = ['RawSimradFile']
 
@@ -70,9 +71,9 @@ class DatagramReadError(Exception):
     def __str__(self):
         errstr = [self.message]
         if self.expected_size is not None:
-            errstr.append('%s != %s' % (self.expected_size, self.retrieved_size))
+            errstr.append(f'{self.expected_size} != {self.retrieved_size}')
         if self.file_pos_bytes is not None:
-            errstr.append('@ (%sL, %s)' % (self.file_pos_bytes, self.file_pos_dgrams))
+            errstr.append(f'@ ({self.file_pos_bytes}L, {self.file_pos_dgrams})')
 
         return ' '.join(errstr)
 
@@ -226,8 +227,8 @@ class RawSimradFile(BufferedReader):
         #  set the total bytes of this datagram including header and trailing size
         bytes_read = dgram_size + 20
 
-        return dict(size=dgram_size, type=dgram_type, low_date=lowDateField,
-                high_date=highDateField, raw_bytes=raw_bytes, bytes_read=bytes_read)
+        return {'size': dgram_size, 'type': dgram_type, 'low_date': lowDateField,
+                'high_date': highDateField, 'raw_bytes': raw_bytes, 'bytes_read': bytes_read}
 
 
     def _read_bytes(self, k):
@@ -783,7 +784,8 @@ class RawSimradFile(BufferedReader):
         elif whence == SEEK_CUR:
             pass
         else:
-            raise ValueError('Illegal value for \'whence\' (%s), use 0 (beginning), 1 (current), or 2 (end)' % (str(whence)))
+            msg = f"Illegal value for 'whence' ({whence!s}), use 0 (beginning), 1 (current), or 2 (end)"
+            raise ValueError(msg)
 
         if offset > 0:
             for k in range(offset):

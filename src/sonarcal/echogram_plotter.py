@@ -1,15 +1,18 @@
+import logging
+from datetime import UTC, datetime
 from queue import Empty
-from datetime import datetime, timezone
-import matplotlib.pyplot as plt
+
+import humanize
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
+
 # from scipy import signal
 from matplotlib.widgets import RangeSlider
-from .gui_utils import draggable_ring, draggable_radial
-from .utils import get_adjacent_beams
-import humanize
-import logging
+
 from .configuration import config
+from .gui_utils import draggable_radial, draggable_ring
+from .utils import get_adjacent_beams
 
 # Matplotlib for tkinter
 mpl.use('TkAgg')
@@ -478,7 +481,7 @@ class echogramPlotter:
                     self.gains = gains
 
                     # Update the plots with the data in the new ping
-                    timeBehind = datetime.now(timezone.utc) - pingTime
+                    timeBehind = datetime.now(UTC) - pingTime
                     milliseconds = pingTime.microsecond / 1000
                     label.config(text=f'Ping at {pingTime:%Y-%m-%d %H:%M:%S}.' +
                                  f'{milliseconds:03.0f} '

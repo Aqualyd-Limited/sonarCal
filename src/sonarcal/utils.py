@@ -1,13 +1,16 @@
-import os
-from datetime import datetime, timezone
-import numpy as np
 import logging
 import logging.handlers
+import os
+from datetime import UTC, datetime
+
+import numpy as np
+
 from .configuration import config
+
 
 def setupLogging():
     """Set info, warning, and error message logger to a file and to the console."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     logger_filename = os.path.join(config.logDir(),
                                    now.strftime('log_' + config.appName() + '-%Y%m%d-T%H%M%S.log'))
     logger = logging.getLogger(config.appName())
@@ -125,7 +128,7 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
         sv = []
         ts = []
         with np.errstate(divide='ignore', invalid='ignore'):
-            for j in range(0, bs.shape[0]):  # loop over each beam
+            for j in range(bs.shape[0]):  # loop over each beam
                 # [m] range vector for the current beam
                 r = samInt * c/2.0 * np.arange(0, bs[j].size) - r_offset
                 sv.append(20.0*np.log10(bs[j]/np.sqrt(2.0)) + 20.0*np.log10(r)\
@@ -169,7 +172,7 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
         sv = []
         ts = []
         with np.errstate(divide='ignore', invalid='ignore'):
-            for k in range(0, bs.shape[0]):  # loop over each beam
+            for k in range(bs.shape[0]):  # loop over each beam
                 # [m] range vector for the current beam
                 r = samInt * c/2.0 * np.arange(0, bs[k].size) - r_offset
                 sv.append(20.0*np.log10(bs[k]) + 20.0*np.log10(r) + 2*alpha*r\
@@ -183,7 +186,7 @@ def SvTSFromSonarNetCDF4(f, beamGroup, i, tilt):
     else:  # unsupported format - just take the log10 of the numbers. Usually usefull.
         sv = f[beamGroup + '/backscatter_r'][i]
         with np.errstate(divide='ignore'):
-            for j in range(0, sv.shape[0]):
+            for j in range(sv.shape[0]):
                 sv[j] = np.log10(sv[j])
         ts = sv
 
@@ -266,4 +269,4 @@ def nt_time_to_datetime(nt_time: int):
     timestamp = (nt_time - unix_epoch_diff) / 10000000
 
     # Create a datetime object from the Unix timestamp
-    return datetime.fromtimestamp(timestamp, timezone.utc)
+    return datetime.fromtimestamp(timestamp, UTC)

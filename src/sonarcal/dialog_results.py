@@ -1,15 +1,17 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import filedialog as fd
-import natsort as nt
 from datetime import datetime
+from tkinter import filedialog as fd
+from tkinter import ttk
+
+import natsort as nt
+
 from .configuration import config
 
 
 class resultsDialog:
     """A dialog box to show completed calibration results per beam."""
 
-    def __init__(self, parent, data: dict=None, icon=None):
+    def __init__(self, parent, data: dict | None = None, icon=None):
         
         self.data = data
         

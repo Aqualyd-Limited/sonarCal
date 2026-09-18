@@ -1,14 +1,15 @@
+import logging
+from datetime import UTC, datetime
+from pathlib import Path
 from time import sleep
+
 # import h5py
 import numpy as np
-from datetime import datetime, timezone
-from .utils import beamAnglesFromNetCDF4, SvTSFromSonarNetCDF4, nt_time_to_datetime
-from .datagram_processor import rawDatagramProcessor
-import logging
-from pathlib import Path
-from .configuration import config
-from .raw_parser import simrad_raw_file as raw
 
+from .configuration import config
+from .datagram_processor import rawDatagramProcessor
+from .raw_parser import simrad_raw_file as raw
+from .utils import SvTSFromSonarNetCDF4, beamAnglesFromNetCDF4, nt_time_to_datetime
 
 logger = logging.getLogger(config.appName())
 
@@ -98,7 +99,7 @@ def get_horiz_beam_group(hdf, log=True) -> str:
     """Work out which beam group has the horizontal beam data."""
 
     # List of all Beam_group paths in the Sonar group file
-    groups = ['Sonar/' + k for k in (hdf['Sonar'].keys()) if 'Beam_group' in k]
+    groups = ['Sonar/' + k for k in (hdf['Sonar']) if 'Beam_group' in k]
     modes = [hdf[g].attrs['beam_mode'].decode('utf-8') for g in groups]
 
     # Some info that may be useful in the log when things don't work out as expected
@@ -133,7 +134,7 @@ def file_listen_netcdf(watchDir, msg_queue, reload_event):
 
     pingIndex = -1  # which ping to read. -1 means the last ping, -2 the second to last ping
 
-    t_previous = datetime(1970, 1, 1, tzinfo=timezone.utc)  # timestamp of previous ping
+    t_previous = datetime(1970, 1, 1, tzinfo=UTC)  # timestamp of previous ping
     f_previous = ''  # previously used file
 
     while True:  # could add a timeout on this loop...
@@ -230,7 +231,7 @@ def file_replay_netcdf(watchDir, msg_queue, reload_event):
         t = f[beam_group + '/ping_time']
 
         # Send off each ping at a sedate rate...
-        for i in range(0, t.shape[0]):
+        for i in range(t.shape[0]):
             theta, tilts = beamAnglesFromNetCDF4(f, beam_group, i)
             sv, ts, gains = SvTSFromSonarNetCDF4(f, beam_group, i, tilts)
 

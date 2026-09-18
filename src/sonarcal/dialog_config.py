@@ -1,10 +1,10 @@
-from dataclasses import dataclass
-import tkinter as tk
-from tkinter import ttk
-from tkinter import filedialog
-from .configuration import config as cfg
 import logging
 import re
+import tkinter as tk
+from dataclasses import dataclass
+from tkinter import filedialog, ttk
+
+from .configuration import config as cfg
 
 logger = logging.getLogger(cfg.appName())
 
@@ -151,8 +151,8 @@ class configDialog:
 
 
     def create_config_row(self, label: str, variable, var_type: str, unit: str = '',
-                          vmin: float|int|None = None,
-                          vmax: float|int|None = None):
+                          vmin: float | None = None,
+                          vmax: float | None = None):
         """Create a row in the dialog for a config parameter.
 
         Parameters
