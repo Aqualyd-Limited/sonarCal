@@ -31,7 +31,7 @@ class calibrationGUI:
         self.sphere_echoes = []
 
         # The GUI window
-        self.echogram.root.title(cfg.title())
+        self.echogram.root.title(f'{cfg.title()} (v{version("sonarcal")})')
         
         # Dialogs that we keep around
         self.results_dialog = None
