@@ -47,6 +47,8 @@ theme:
 plugins:
     - search
     - autorefs
+    - offline:
+        enabled: !ENV [OFFLINE_PLUGIN_ENABLED, false]
 
 watch:
     - ./docs
