@@ -9,11 +9,11 @@ in Simrad's .raw file format. The datagram concept is the same as in Simrad echo
 output files (e.g., EK80), but none of the datagrams are the same as in EK80 files.
 """
 
-import datetime
 import logging
 import re
 import struct
 from contextlib import suppress
+from datetime import UTC, datetime, timedelta
 from io import SEEK_CUR, SEEK_END, SEEK_SET, BufferedReader, FileIO
 from time import sleep
 
@@ -23,7 +23,7 @@ __all__ = ['RawSimradFile']
 
 log = logging.getLogger(__name__)
 
-UTC_NT_EPOCH = datetime.datetime(1601, 1, 1, 0, 0, 0)
+UTC_NT_EPOCH = datetime(1601, 1, 1, 0, 0, 0, tzinfo=UTC)
 
 class SimradEOF(Exception):
 
@@ -574,7 +574,7 @@ class RawSimradFile(BufferedReader):
 
         #  add some convenience values to the header dict
         us_past_nt_epoch = ((dgram_header['high_date'] << 32) + dgram_header['low_date']) // 10
-        dgram_header['timestamp'] = UTC_NT_EPOCH + datetime.timedelta(microseconds=us_past_nt_epoch)
+        dgram_header['timestamp'] = UTC_NT_EPOCH + timedelta(microseconds=us_past_nt_epoch)
         dgram_header['bytes_read'] = dgram_header['size'] + 20
 
         return dgram_header
