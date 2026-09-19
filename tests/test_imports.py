@@ -19,28 +19,26 @@ def test_import_sonarcal():
 def test_calibration_data(tmp_path):
     """Accumulate, delete, and save calibration results."""
 
-    import os
-    from datetime import datetime
+    from datetime import UTC, datetime
 
     from sonarcal import calibration_data
 
     c = calibration_data.calibrationData()
 
-    c.update('34', datetime.now().isoformat(), 16.0, 0.2, -42.4, 0.2, 25.4, 16)
-    c.update('64', datetime.now().isoformat(), 16.0, 0.4, -42.4, 0.3, 23.4, 26)
-    c.update('S123', datetime.now().isoformat(), 16.0, 0.8, -42.4, 0.25, 20.4, 56)
-    c.update('4', datetime.now().isoformat(), 16.0, 0.34, -42.4, 0.55, 29.4, 12)
+    c.update('34', datetime.now(UTC).isoformat(), 16.0, 0.2, -42.4, 0.2, 25.4, 16)
+    c.update('64', datetime.now(UTC).isoformat(), 16.0, 0.4, -42.4, 0.3, 23.4, 26)
+    c.update('S123', datetime.now(UTC).isoformat(), 16.0, 0.8, -42.4, 0.25, 20.4, 56)
+    c.update('4', datetime.now(UTC).isoformat(), 16.0, 0.34, -42.4, 0.55, 29.4, 12)
     assert len(c.df()) == 4
 
     c.remove('4')
     assert len(c.df() == 3)
 
     save_file = tmp_path/'test_save_results.csv'
-    if os.path.exists(save_file):
-        os.remove(save_file)
+    save_file.unlink(missing_ok=True)
 
     c.save(save_file)
-    assert os.path.exists(save_file)
+    assert save_file.exists()
 
 def test_calculate_gain():
     """Test calculation of transducer gains."""

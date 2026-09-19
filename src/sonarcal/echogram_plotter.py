@@ -485,6 +485,7 @@ class echogramPlotter:
                     milliseconds = pingTime.microsecond / 1000
                     label.config(text=f'Ping at {pingTime:%Y-%m-%d %H:%M:%S}.'
                                  f'{milliseconds:03.0f} '
+                                 f'{pingTime:%Z} '
                                  f'({humanize.precisedelta(timeBehind)} ago)')
                     logger.debug('Displaying ping from %s.', pingTime)
 

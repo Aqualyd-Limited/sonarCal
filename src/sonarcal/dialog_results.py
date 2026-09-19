@@ -1,5 +1,5 @@
 import tkinter as tk
-from datetime import datetime
+from datetime import UTC, datetime
 from tkinter import filedialog as fd
 from tkinter import ttk
 
@@ -133,7 +133,7 @@ class resultsDialog:
 
     def save(self):
         """Save the results to a file."""
-        timestamp = datetime.now().strftime('%Y%m%dT%H%M%S')
+        timestamp = datetime.now(UTC).strftime('%Y%m%dT%H%M%S%Z')
         default_filename = 'sonar_calibration_' + timestamp + '.csv'
         save_filename = fd.asksaveasfilename(title='Save as CSV', defaultextension='.csv',
                                              initialdir=config.userDocumentsDir(),

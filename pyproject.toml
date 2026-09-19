@@ -62,7 +62,7 @@ exclude-newer = "7 days"
 
 [tool.ruff]
 line-length = 100
-ignore = [
+lint.ignore = [
     "TD002", # missing todo author
     "TD003", # missing todo link
 ]

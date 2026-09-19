@@ -9,8 +9,9 @@ class CustomBuildHook(BuildHookInterface):
     def initialize(self, version, build_data):
         """Run zensical build in an OS independent way."""
 
-        shell = True if platform.system() == "Windows" else False
+        shell = platform.system() == "Windows"
 
         run(['uv', 'tool', 'run', 'zensical', 'build'],
+            check=False,
             shell=shell,
             env=environ | {'OFFLINE_PLUGIN_ENABLED': 'true'})

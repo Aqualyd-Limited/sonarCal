@@ -721,9 +721,9 @@ class RawSimradFile(BufferedReader):
 
             try:
                 new_dgram = next(self)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 log.debug('Caught EOF?')
-                raise StopIteration
+                return
 
             yield new_dgram
 

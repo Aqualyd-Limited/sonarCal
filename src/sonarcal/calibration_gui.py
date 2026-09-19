@@ -2,7 +2,7 @@
 import logging
 import tkinter as tk
 import webbrowser
-from datetime import datetime
+from datetime import UTC, datetime
 from importlib.metadata import version
 from platform import python_version
 from tkinter import filedialog, messagebox, ttk
@@ -124,7 +124,7 @@ class calibrationGUI:
 
     def auto_save(self):
         """Save cal results to an autosave location."""
-        timestamp = datetime.now().strftime('%Y%m%dT%H%M%S')
+        timestamp = datetime.now(UTC).strftime('%Y%m%dT%H%M%S%Z')
         filename = cfg.autoSaveDir()/('results_' + timestamp + '.csv')
         self.cal_data.save(filename)
 
@@ -133,14 +133,18 @@ class calibrationGUI:
         e = self.echogram
         if e.beamLine.frozen():  # a beam is being calibrated
             # store the current ping's sphere echo info
-            self.sphere_echoes.append((datetime.now().isoformat(), e.amp[1, -1], e.rangeMax))
+            self.sphere_echoes.append((
+                datetime.now(UTC).isoformat(),
+                e.amp[1, -1],
+                e.rangeMax
+                ))
             # calculate the beam gain and other stats
             (cal_offset, ts, rms, r, num) = calculate_calibration(
                 self.sphere_echoes,
                 cfg.sphereTS()
                 )
             # store the latest beam gain values
-            self.cal_data.update(e.beamLabel, datetime.now().strftime('%H:%M:%S'),
+            self.cal_data.update(e.beamLabel, datetime.now(UTC).strftime('%H:%M:%S'),
                                  e.gains[e.beamIdx], cal_offset, ts, rms, r, num)
             # update the results dialog if present
             if self.results_dialog:
