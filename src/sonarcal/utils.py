@@ -1,18 +1,18 @@
 import logging
 import logging.handlers
-import os
 from datetime import UTC, datetime
 
 import numpy as np
 
 from .configuration import config
 
+logger = logging.getLogger(config.appName())
 
 def setupLogging():
     """Set info, warning, and error message logger to a file and to the console."""
     now = datetime.now(UTC)
-    logger_filename = os.path.join(config.logDir(),
-                                   now.strftime('log_' + config.appName() + '-%Y%m%d-T%H%M%S.log'))
+    logger_filename = \
+        config.logDir() / now.strftime('log_' + config.appName() + '-%Y%m%d-T%H%M%S.log')
     logger = logging.getLogger(config.appName())
     logger.setLevel(logging.INFO)
 
@@ -37,7 +37,7 @@ def setupLogging():
 def on_exit(root, job, sig):
     """Call when the Windows cmd console closes."""
     root.after_cancel(job)
-    logging.info('Program ending...')
+    logger.info('Program ending...')
     root.quit()
     # not sure why this call is needed...
     window_closed(root, job)
@@ -47,9 +47,9 @@ def window_closed(root, job):
     """Call to nicely end the whole program."""
     config.save_config()
     root.after_cancel(job)
-    logging.info('Program ending...')
-    logging.shutdown()  # not working???
+    logger.info('Program ending...')
     root.quit()
+
 
 def get_adjacent_beams(beam_idx: int, num_beams: int):
     """Work out the indices of the port and starboard beams."""

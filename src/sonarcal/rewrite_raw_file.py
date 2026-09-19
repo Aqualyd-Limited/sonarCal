@@ -43,7 +43,7 @@ for root, dirs, files in out_dir.walk(top_down=False):
 
 for in_file in raw_files:
     out_file = out_dir / in_file.name
-    with open(in_file, 'rb') as fin, open(out_file, 'wb') as fout:
+    with in_file.open(mode='rb') as fin, out_file.open(mode='wb') as fout:
         print(f'Rewriting {in_file.name}')
         try:
             while True:

@@ -13,6 +13,7 @@ import datetime
 import logging
 import re
 import struct
+from contextlib import suppress
 from io import SEEK_CUR, SEEK_END, SEEK_SET, BufferedReader, FileIO
 from time import sleep
 
@@ -53,9 +54,10 @@ class DatagramSizeError(Exception):
 
 
     def __str__(self):
-        errstr = self.message + '%s != %s @ (%s, %s)' % (self.expected_size, self.retrieved_size,
-            self.file_pos_bytes, self.file_pos_dgrams)
-        return errstr
+        return self.message + (
+             f'{self.expected_size} != {self.retrieved_size} @ '
+             f'({self.file_pos_bytes}, {self.file_pos_dgrams})'
+             )
 
 
 class DatagramReadError(Exception):
@@ -85,17 +87,6 @@ class RawSimradFile(BufferedReader):
 
     Calls to the read method return parse datagrams as dicts.
     '''
-    #: Dict object with datagram header/python class key/value pairs
-    DGRAM_TYPE_KEY = {'RAW': simrad_parsers.SimradRAWParser(),
-                      'SIN': simrad_parsers.SimradSINParser(),
-                      'VER': simrad_parsers.SimradVERParser(),
-                      'PHY': simrad_parsers.SimradPHYParser(),
-                      'PCO': simrad_parsers.SimradPCOParser(),
-                      'PIN': simrad_parsers.SimradPINParser(),
-                      'EOP': simrad_parsers.SimradEOPParser(),
-                      'SEN': simrad_parsers.SimradSENParser(),
-                      'SEC': simrad_parsers.SimradSECParser(),
-                      }
 
     def __init__(self, name, mode='rb', closefd=True, return_raw=False, buffer_size=1024*1024):
 
@@ -110,6 +101,19 @@ class RawSimradFile(BufferedReader):
         self._current_dgram_offset = 0
         self._total_dgram_count = None
         self._return_raw = return_raw
+
+        #: Dict object with datagram header/python class key/value pairs
+        self.DGRAM_TYPE_KEY = {
+            'RAW': simrad_parsers.SimradRAWParser(),
+            'SIN': simrad_parsers.SimradSINParser(),
+            'VER': simrad_parsers.SimradVERParser(),
+            'PHY': simrad_parsers.SimradPHYParser(),
+            'PCO': simrad_parsers.SimradPCOParser(),
+            'PIN': simrad_parsers.SimradPINParser(),
+            'EOP': simrad_parsers.SimradEOPParser(),
+            'SEN': simrad_parsers.SimradSENParser(),
+            'SEC': simrad_parsers.SimradSECParser(),
+            }
 
 
     def _seek_bytes(self, bytes_, whence=0):
@@ -257,7 +261,7 @@ class RawSimradFile(BufferedReader):
                 header = self._read_dgram_header()
             except DatagramReadError as e:
                 e.message = 'Short read while getting raw file datagram header'
-                raise e
+                raise
 
         else:
             #  we've already read the header so subtract 16 bytes from the
@@ -267,7 +271,7 @@ class RawSimradFile(BufferedReader):
         #  basic sanity check on size
         if header['size'] < 12:
             #  size can't be smaller than the header size
-            log.warning('Invalid datagram header: size: %d, type: %s, nt_date: %s.  dgram_size < 12',
+            log.warning('Invalid datagram header: size: %d, type: %s, nt_date: %s. dgram_size < 12',
                 header['size'], header['type'], str((header['low_date'], header['high_date'])))
 
             #  see if we can find the next datagram
@@ -300,7 +304,7 @@ class RawSimradFile(BufferedReader):
         except DatagramReadError as e:
             self._seek_bytes(old_file_pos, SEEK_SET)
             e.message = 'Short read while getting trailing raw file datagram size for check'
-            raise e
+            raise
 
         #  make sure they match
         if header['size'] != dgram_size_check:
@@ -460,13 +464,13 @@ class RawSimradFile(BufferedReader):
                     dgram = self._read_next_dgram()
                     dgram_list.append(dgram)
 
-                except Exception:
+                except Exception:  # noqa: BLE001
                     break
 
             return dgram_list
 
-        elif k < 0:
-            return self.readall()
+        # elif k < 0:
+        return self.readall()
 
 
     def readall(self):
@@ -475,12 +479,7 @@ class RawSimradFile(BufferedReader):
         '''
 
         self.seek(0, SEEK_SET)
-        dgram_list = []
-
-        for raw_dgram in self.iter_dgrams():
-            dgram_list.append(raw_dgram)
-
-        return dgram_list
+        return list(self.iter_dramgs)
 
 
     def _find_next_datagram(self):
@@ -524,7 +523,9 @@ class RawSimradFile(BufferedReader):
                 next_dgram = current_file_pos + match.start() - 4
 
                 #  issue a warning
-                log.warning('Found next datagram:  %s @ %d', match.group().decode('utf-8'), next_dgram)
+                log.warning(
+                    'Found next datagram:  %s @ %d', match.group().decode('utf-8'), next_dgram
+                    )
 
                 #  seek to the datagram
                 self._seek_bytes(next_dgram)
@@ -650,7 +651,7 @@ class RawSimradFile(BufferedReader):
             header = self._read_dgram_header()
 
         if header['size'] < 16:
-            log.warning('Invalid datagram header: size: %d, type: %s, nt_date: %s.  dgram_size < 16',
+            log.warning('Invalid datagram header: size: %d, type: %s, nt_date: %s. dgram_size < 16',
                 header['size'], header['type'], str((header['low_date'], header['high_date'])))
 
             self._find_next_datagram()
@@ -682,10 +683,7 @@ class RawSimradFile(BufferedReader):
 
         old_file_pos = self._tell_bytes()
 
-        try:
-            self._seek_bytes(-4, SEEK_CUR)
-        except OSError:
-            raise
+        self._seek_bytes(-4, SEEK_CUR)
 
         dgram_size_check = self._read_dgram_size()
 
@@ -761,11 +759,9 @@ class RawSimradFile(BufferedReader):
                 raise ValueError('Use negative offsets when seeking backward from end of file')
 
             #Do we need to generate the total number of datagrams w/in the file?
-            try:
+            with suppress(ValueError):
+                # Throws a value error if _total_dgram_count has already been set. We can ignore it
                 self._set_total_dgram_count()
-                #Throws a value error if _total_dgram_count has already been set.  We can ignore it
-            except ValueError:
-                pass
 
             self._seek_bytes(0, SEEK_END)
             self._current_dgram_offset = self._total_dgram_count
@@ -773,7 +769,10 @@ class RawSimradFile(BufferedReader):
         elif whence == SEEK_CUR:
             pass
         else:
-            msg = f"Illegal value for 'whence' ({whence!s}), use 0 (beginning), 1 (current), or 2 (end)"
+            msg = (
+                f"Illegal value for 'whence' ({whence!s}), "
+                f"use 0 (beginning), 1 (current), or 2 (end)"
+            )
             raise ValueError(msg)
 
         if offset > 0:

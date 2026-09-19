@@ -236,7 +236,7 @@ class configDialog:
             if p.name:
                 try:
                     dialog_value = self.vars[p.name].get()
-                except Exception:
+                except Exception:  # noqa: BLE001
                     return False
 
                 if p.vmin and dialog_value < p.vmin:

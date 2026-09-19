@@ -103,7 +103,7 @@ class sonarcalConfig:
     # Note: decorated functions below can get and set config values.
     # Non-decorated functions only get config values.
     def save_config(self):
-        with open(self.config_filename, 'w', encoding='utf-8') as configfile:
+        with self.config_filename.open(mode='w', encoding='utf-8') as configfile:
             self.config.write(configfile)
         logger.info('Saved configuration to %s', str(self.config_filename))
 

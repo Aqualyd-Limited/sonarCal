@@ -57,9 +57,12 @@ def construct_to_dict(obj):
 class _SimradDatagramParser:
     """Base class for a Simrad datagram parser class."""
 
-    def __init__(self, header_type, versions = []):
+    def __init__(self, header_type, versions = None):
         self._id = header_type
-        self._versions = versions
+        if versions is None:
+            self.versions = []
+        else:
+            self._versions = versions
 
     def validate_data_header(self, data):
 
@@ -73,10 +76,10 @@ class _SimradDatagramParser:
             raise TypeError('Expected a dict or str')
 
         if type_ != self._id:
-            raise ValueError('Expected data of type %s, not %s' %(self._id, type_))
+            raise ValueError(f'Expected data of type {self._id}, not {type_}')
 
         if version not in self._versions:
-            raise ValueError('No parser available for type %s version %d' %(self._id, version))
+            raise ValueError(f'No parser available for type {self.id} version {version}')
 
         return type_, version
 
@@ -85,25 +88,27 @@ class _SimradDatagramParser:
 
         header = raw_string[:4]
         header = header.decode()
-        id_, version = self.validate_data_header(header)
+        _id, version = self.validate_data_header(header)
         return self._unpack_contents(raw_string, bytes_read, version=version)
 
-    def to_string(self, data={}):
+    def to_string(self, data=None):
 
-        id_, version = self.validate_data_header(data)
+        if data is None:
+            data = {}
+        _id, version = self.validate_data_header(data)
         datagram_content_str = self._pack_contents(data, version=version)
         return self.finalize_datagram(datagram_content_str)
 
     def _unpack_contents(self, raw_string='', version=0):
         raise NotImplementedError
 
-    def _pack_contents(self, data={}, version=0):
+    def _pack_contents(self, data=None, version=0):
         raise NotImplementedError
 
     @classmethod
     def finalize_datagram(cls, datagram_content_str):
         datagram_size = len(datagram_content_str)
-        final_fmt = '=l%dsl' % (datagram_size)
+        final_fmt = f'=l{datagram_size}sl'
         return struct.pack(final_fmt, datagram_size, datagram_content_str, datagram_size)
 
 
@@ -126,8 +131,7 @@ class SimradUnknownParser(_SimradDatagramParser):
 
     def _unpack_contents(self, raw_string, bytes_read, version):
         data = self.dg_def.parse(raw_string)
-        data = construct_to_dict(data)
-        return data
+        return construct_to_dict(data)
 
 
 class SimradSINParser(_SimradDatagramParser):
@@ -153,8 +157,7 @@ class SimradSINParser(_SimradDatagramParser):
 
     def _unpack_contents(self, raw_string, bytes_read, version):
         data = self.dg_def.parse(raw_string)
-        data = construct_to_dict(data)
-        return data
+        return construct_to_dict(data)
 
 
 class SimradVERParser(_SimradDatagramParser):
@@ -175,8 +178,7 @@ class SimradVERParser(_SimradDatagramParser):
 
     def _unpack_contents(self, raw_string, bytes_read, version):
         data = self.dg_def.parse(raw_string)
-        data = construct_to_dict(data)
-        return data
+        return construct_to_dict(data)
 
 
 class SimradPHYParser(_SimradDatagramParser):
@@ -219,8 +221,7 @@ class SimradPHYParser(_SimradDatagramParser):
 
     def _unpack_contents(self, raw_string, bytes_read, version):
         data = self.dg_def.parse(raw_string)
-        data = construct_to_dict(data)
-        return data
+        return construct_to_dict(data)
 
 
 class SimradPINParser(_SimradDatagramParser):
@@ -254,8 +255,7 @@ class SimradPINParser(_SimradDatagramParser):
     def _unpack_contents(self, raw_string, bytes_read, version):
 
         data = self.dg_def.parse(raw_string)
-        data = construct_to_dict(data)
-        return data
+        return construct_to_dict(data)
 
 
 class SimradEOPParser(_SimradDatagramParser):
@@ -273,8 +273,7 @@ class SimradEOPParser(_SimradDatagramParser):
 
     def _unpack_contents(self, raw_string, bytes_read, version):
         data = self.dg_def.parse(raw_string)
-        data = construct_to_dict(data)
-        return data
+        return construct_to_dict(data)
 
 
 class SimradSENParser(_SimradDatagramParser):
@@ -299,8 +298,7 @@ class SimradSENParser(_SimradDatagramParser):
 
     def _unpack_contents(self, raw_string, bytes_read, version):
         data = self.dg_def.parse(raw_string)
-        data = construct_to_dict(data)
-        return data
+        return construct_to_dict(data)
 
 
 class SimradPCOParser(_SimradDatagramParser):
@@ -379,13 +377,17 @@ class SimradPCOParser(_SimradDatagramParser):
                                     'sample_interval' / Float64l,
                                     'tx_ping_id' / Int32sl,
                                     'main_beam_rx_weight_x_len' / Int32sl,
-                                    'main_beam_rx_weight_x' / Array(this.main_beam_rx_weight_x_len, Float32l),
+                                    'main_beam_rx_weight_x' / \
+                                        Array(this.main_beam_rx_weight_x_len, Float32l),
                                     'main_beam_rx_weight_y_len' / Int32sl,
-                                    'main_beam_rx_weight_y' / Array(this.main_beam_rx_weight_y_len, Float32l),
+                                    'main_beam_rx_weight_y' / \
+                                        Array(this.main_beam_rx_weight_y_len, Float32l),
                                     'split_beam_rx_weight_x_len' / Int32sl,
-                                    'split_beam_rx_weight_x' / Array(this.split_beam_rx_weight_x_len, Float32l),
+                                    'split_beam_rx_weight_x' / \
+                                        Array(this.split_beam_rx_weight_x_len, Float32l),
                                     'split_beam_rx_weight_y_len' / Int32sl,
-                                    'split_beam_rx_weight_y' / Array(this.split_beam_rx_weight_y_len, Float32l),
+                                    'split_beam_rx_weight_y' / \
+                                        Array(this.split_beam_rx_weight_y_len, Float32l),
                                     'noise_filter' / Int32sl,
                                     'processing' / Struct(
                                         'fan_processing_size' / Int32sl,
@@ -402,7 +404,8 @@ class SimradPCOParser(_SimradDatagramParser):
                                             'rx_beam_config_size' / Int32sl,
                                             'id' / Int32sl,
                                             'beam_name_len' / Int16ul,
-                                            'beam_name' / PaddedString(this.beam_name_len*2, 'utf_16_le'),
+                                            'beam_name' / \
+                                                PaddedString(this.beam_name_len*2, 'utf_16_le'),
                                             'beam_width_x' / Float32l,
                                             'beam_width_y' / Float32l,
                                             'steering_x' / Float32l,
@@ -444,8 +447,7 @@ class SimradPCOParser(_SimradDatagramParser):
     def _unpack_contents(self, raw_string, bytes_read, version):
 
         data = self.dg_def.parse(raw_string)
-        data = construct_to_dict(data)
-        return data
+        return construct_to_dict(data)
 
 
 class SimradSECParser(_SimradDatagramParser):
@@ -462,8 +464,7 @@ class SimradSECParser(_SimradDatagramParser):
 
     def _unpack_contents(self, raw_string, bytes_read, version):
         data = self.dg_def.parse(raw_string)
-        data = construct_to_dict(data)
-        return data
+        return construct_to_dict(data)
 
 
 class SimradRAWParser(_SimradDatagramParser):
