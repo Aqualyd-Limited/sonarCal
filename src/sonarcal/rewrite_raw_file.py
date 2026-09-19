@@ -31,7 +31,7 @@ dg_def =\
     Struct(
         'size' / Int32sl,
         'type' / PaddedString(4, 'ascii'),
-        'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+        'timestamp' / Timestamp(Int64ul, 1e-7, 1601),
         'data' / Bytes(this.size-12),
         'size' / Int32sl
     )

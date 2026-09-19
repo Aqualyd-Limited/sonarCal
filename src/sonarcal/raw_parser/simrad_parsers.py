@@ -125,7 +125,7 @@ class SimradUnknownParser(_SimradDatagramParser):
         self.dg_def =\
             Struct(
                 'type' / PaddedString(4, 'ascii'),
-                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1601),
                 'data' / GreedyBytes
             )
 
@@ -143,7 +143,7 @@ class SimradSINParser(_SimradDatagramParser):
         self.dg_def =\
             Struct(
                 'type' / PaddedString(4, 'ascii'),
-                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1601),
                 'transceiver_count' / Int32ul,
                 'transceivers' / Array(this.transceiver_count,
                                     Struct(
@@ -169,7 +169,7 @@ class SimradVERParser(_SimradDatagramParser):
         self.dg_def =\
             Struct(
                 'type' / PaddedString(4, 'ascii'),
-                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1601),
                 'file_version' / PaddedString(32, 'ascii'),
                 'software_version' / PaddedString(32, 'ascii'),
                 'version_info' / PaddedString(64, 'ascii'),
@@ -190,7 +190,7 @@ class SimradPHYParser(_SimradDatagramParser):
         self.dg_def =\
             Struct(
                 'type' / PaddedString(4, 'ascii'),
-                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1601),
                 'platform_count' / Int32sl,
                 'platforms' / Array(this.platform_count,
                     Struct(
@@ -233,8 +233,8 @@ class SimradPINParser(_SimradDatagramParser):
         self.dg_def =\
             Struct(
                 'type' / PaddedString(4, 'ascii'),
-                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
-                'ping_time' / Timestamp(Int64ul, 1e-7, 1600),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1601),
+                'ping_time' / Timestamp(Int64ul, 1e-7, 1601),
                 'ping_number' / Int32sl,
                 'latitude' / Float64l,
                 'longitude' / Float64l,
@@ -268,7 +268,7 @@ class SimradEOPParser(_SimradDatagramParser):
         self.dg_def =\
             Struct(
                 'type' / PaddedString(4, 'ascii'),
-                'timestamp' / Timestamp(Int64ul, 1e-7, 1600)
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1601)
             )
 
     def _unpack_contents(self, raw_string, bytes_read, version):
@@ -286,8 +286,8 @@ class SimradSENParser(_SimradDatagramParser):
         self.dg_def =\
             Struct(
                 'type' / PaddedString(4, 'ascii'),
-                'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
-                'received_time' / Timestamp(Int64ul, 1e-7, 1600),
+                'timestamp' / Timestamp(Int64ul, 1e-7, 1601),
+                'received_time' / Timestamp(Int64ul, 1e-7, 1601),
                 'protocol' / PaddedString(32, 'ascii'),
                 'port_name' / PaddedString(32, 'ascii'),
                 'message_length' / Int32sl,
@@ -310,7 +310,7 @@ class SimradPCOParser(_SimradDatagramParser):
 
         self.dg_def = Struct(
             'type' / PaddedString(4, 'ascii'),
-            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+            'timestamp' / Timestamp(Int64ul, 1e-7, 1601),
             'ping_configuration' / Struct(
                 'no_of_transceivers' / Int32sl,
                 'transceiver_config' / Array(this.no_of_transceivers,
@@ -458,7 +458,7 @@ class SimradSECParser(_SimradDatagramParser):
 
         self.dg_def = Struct(
             'type' / PaddedString(4, 'ascii'),
-            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+            'timestamp' / Timestamp(Int64ul, 1e-7, 1601),
             'xml' / GreedyString('utf_8')
         )
 
@@ -475,14 +475,14 @@ class SimradRAWParser(_SimradDatagramParser):
 
         self.dg_def = Struct(
             'type' / PaddedString(4, 'ascii'),
-            'timestamp' / Timestamp(Int64ul, 1e-7, 1600),
+            'timestamp' / Timestamp(Int64ul, 1e-7, 1601),
             'ip_address' / Int32ul,
             'port' / Int16ul,
             'padding' / Int16ul,
             'message_length' / Int32sl,
             'length' / Int32ul,
             'id' / PaddedString(4, 'ascii'),
-            'time' / Timestamp(Int64ul, 1e-7, 1600),
+            'time' / Timestamp(Int64ul, 1e-7, 1601),
             'ping_number' / Int32ul,
             'datagram_number' / Int32ul,
             'sample_index' / Int32sl,
