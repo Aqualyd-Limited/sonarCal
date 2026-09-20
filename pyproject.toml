@@ -1,113 +1,99 @@
 [build-system]
-requires = ["hatchling", 'hatch-vcs']
 build-backend = "hatchling.build"
+requires = [ "hatch-vcs", "hatchling" ]
 
 [project]
-name = 'sonarcal'
-license = {file = "LICENSE"}
-keywords = ["acoustic", "sonar", "calibration"]
-authors = [
-  { name="Gavin Macaulay"}
-]
-description = 'Software to facilitate standard-sphere calibration of omni-directional sonars'
+name = "sonarcal"
+description = "Software to facilitate standard-sphere calibration of omni-directional sonars"
 readme = "README.md"
+keywords = [ "acoustic", "calibration", "sonar" ]
+license = { file = "LICENSE" }
+authors = [ { name = "Gavin Macaulay" } ]
 requires-python = ">=3.12"
-dependencies = [
-	"numpy",
-	"scipy",
-  "matplotlib",
-  "pandas",
-  "humanize",
-  "h5py",
-  "Pillow",
-  "platformdirs",
-  "construct",
-  "arrow",
-  "natsort",
-  "sv-ttk",
-  'pywin32; platform_system == "Windows"'
-]
 classifiers = [
-    'Development Status :: 3 - Alpha',
-    'Intended Audience :: Science/Research',
-    'License :: OSI Approved :: MIT License',
-    'Operating System :: OS Independent',
-    'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.12',
-    'Programming Language :: Python :: 3.13',
-    'Programming Language :: Python :: 3.14',
-    'Topic :: Scientific/Engineering',
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering",
 ]
-dynamic = [ 'version']
-
-[project.scripts]
-sonarcal = "sonarcal.controller:main"
+dynamic = [ "version" ]
+dependencies = [
+  "arrow",
+  "construct",
+  "h5py",
+  "humanize",
+  "matplotlib",
+  "natsort",
+  "numpy",
+  "pandas",
+  "pillow",
+  "platformdirs",
+  "pywin32; platform_system=='Windows'",
+  "scipy",
+  "sv-ttk"
+]
+urls.Documentation = "https://aqualyd-limited.github.io/sonarCal/"
+urls.Homepage = "https://github.com/Aqualyd-Limited/sonarCal"
+urls.Issues = "https://github.com/Aqualyd-Limited/sonarCal/issues"
+urls.Repository = "https://github.com/Aqualyd-Limited/sonarCal"
+scripts.sonarcal = "sonarcal.controller:main"
 
 [dependency-groups]
 dev = [
-  "pre-commit>=4.6.2",
+  "prek>=0.5.3",
   "pytest",
   "ruff>=0.16.7",
   "zensical>=0.0.50",
 ]
 
-[project.urls]
-Homepage = 'https://github.com/Aqualyd-Limited/sonarCal'
-Issues =  'https://github.com/Aqualyd-Limited/sonarCal/issues'
-Documentation = 'https://aqualyd-limited.github.io/sonarCal/'
-Repository = 'https://github.com/Aqualyd-Limited/sonarCal'
+[tool.hatch]
+version.source = "vcs"
+version.raw-options.local_scheme = "no-local-version"  # otherwise the non-tagged version is not accepted by testpypi
+build.targets.wheel.packages = [ "src/sonarcal" ]
+build.targets.wheel.force-include.site = "sonarcal/offline-docs"
+build.targets.wheel.hooks.custom.path = "docs/hatch_build_docs.py"
+build.targets.sdist.force-include.site = "site"
+build.targets.sdist.hooks.custom.path = "docs/hatch_build_docs.py"
 
 [tool.uv]
 exclude-newer = "7 days"
 
 [tool.ruff]
 line-length = 100
-lint.ignore = [
-    "TD002", # missing todo author
-    "TD003", # missing todo link
-]
 lint.extend-select = [
-    "B006",     # do not use mutable structures for argument defaults
-    "F",        # Pyflakes rules
-    "W",        # PyCodeStyle warnings
-    "E",        # PyCodeStyle errors
-    "I",        # Sort imports properly
-    "UP",       # Warn if certain things can changed due to newer Python versions
-    "C4",       # Catch incorrect use of comprehensions, dict, list, etc
-    "FA",       # Enforce from __future__ import annotations
-    "ISC",      # Good use of string concatenation
-    "ICN",      # Use common import conventions
-    "RET",      # Good return practices
-    "SIM",      # Common simplification rules
-    "TID",      # Some good import practices
-    "TC",       # Enforce importing certain types in a TYPE_CHECKING block
-    "PTH",      # Use pathlib instead of os.path
-    "TD",       # Be diligent with TODO comments
-    "NPY",      # Some numpy-specific things
-    "FURB",     # Suggest more idiomatic Python patterns
+  "B006", # do not use mutable structures for argument defaults
+  "C4",   # Catch incorrect use of comprehensions, dict, list, etc
+  "E",    # PyCodeStyle errors
+  "F",    # Pyflakes rules
+  "FA",   # Enforce from __future__ import annotations
+  "FURB", # Suggest more idiomatic Python patterns
+  "I",    # Sort imports properly
+  "ICN",  # Use common import conventions
+  "ISC",  # Good use of string concatenation
+  "NPY",  # Some numpy-specific things
+  "PTH",  # Use pathlib instead of os.path
+  "RET",  # Good return practices
+  "SIM",  # Common simplification rules
+  "TC",   # Enforce importing certain types in a TYPE_CHECKING block
+  "TD",   # Be diligent with TODO comments
+  "TID",  # Some good import practices
+  "UP",   # Warn if certain things can changed due to newer Python versions
+  "W",    # PyCodeStyle warnings
+]
+lint.ignore = [
+  "TD002", # missing todo author
+  "TD003", # missing todo link
 ]
 
-[tool.pytest.ini_options]
-testpaths = ['tests',]
-addopts = ["--import-mode=importlib",]
-
-[tool.hatch.version]
-source = 'vcs'
-
-[tool.hatch.version.raw-options]
-local_scheme = "no-local-version"  # otherwise the non-tagged version is not accepted by testpypi
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/sonarcal"]
-
-[tool.hatch.build.targets.sdist.hooks.custom]
-path = "docs/hatch_build_docs.py"
-
-[tool.hatch.build.targets.wheel.hooks.custom]
-path = "docs/hatch_build_docs.py"
-
-[tool.hatch.build.targets.sdist.force-include]
-"site" = "site"
-
-[tool.hatch.build.targets.wheel.force-include]
-"site" = "sonarcal/offline-docs"
+[tool.pytest]
+ini_options.testpaths = [
+  "tests",
+]
+ini_options.addopts = [
+  "--import-mode=importlib",
+]
