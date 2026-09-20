@@ -47,6 +47,9 @@ theme:
 plugins:
     - search
     - autorefs
+    - macros:
+        module_name: docs/src/macros
+        on_error_fail: true
     - offline:
         enabled: !ENV [OFFLINE_PLUGIN_ENABLED, false]
 
