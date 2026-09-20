@@ -23,19 +23,19 @@ classifiers = [
 ]
 dynamic = [ "version" ]
 dependencies = [
-  "arrow",
+  "arrow>=1.4.0",
   "construct",
-  "h5py",
-  "humanize",
-  "matplotlib",
+  "h5py>=3.12.0",
+  "humanize>=4.11.0",
+  "matplotlib>=3.10.0",
   "natsort",
-  "numpy",
-  "pandas",
-  "pillow",
-  "platformdirs",
-  "pywin32; platform_system=='Windows'",
-  "scipy",
-  "sv-ttk"
+  "numpy>=2.2.0",
+  "pandas>=2.3.0",
+  "pillow>=11.0.0",
+  "platformdirs>=4.3.7",
+  "pywin32>=307; platform_system=='Windows'",
+  "scipy>=1.15.0",
+  "sv-ttk>=2.6.1"
 ]
 urls.Documentation = "https://aqualyd-limited.github.io/sonarCal/"
 urls.Homepage = "https://github.com/Aqualyd-Limited/sonarCal"
@@ -46,7 +46,7 @@ scripts.sonarcal = "sonarcal.controller:main"
 [dependency-groups]
 dev = [
   "prek>=0.5.3",
-  "pytest",
+  "pytest>=8.3.4",
   "ruff>=0.16.7",
   "zensical>=0.0.50",
 ]
