@@ -37,7 +37,7 @@ jobs:
       - name: Install tkinter (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install python-tk
+          brew install python-tk${{ matrix.python-version }}
       - name: Run tests
         run: |
           # export DISPLAY=:99
